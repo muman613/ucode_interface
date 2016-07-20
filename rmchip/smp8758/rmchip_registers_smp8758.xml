@@ -1,0 +1,1736 @@
+<chip name="smp8758">
+
+<module category="AudioCapture" datatransfer="enable" comment="This module provides access to the HDMI and Stereo Audio capture settings">
+	<register name="audio_SI_L0_DATA" type="RMuint32" address="0x3e50" />
+	<register name="audio_SI_R0_DATA" type="RMuint32" address="0x3e51" />
+	<register name="audio_SI_STATUS" type="RMuint32" address="0x3e52" />
+	<register name="audio_SI_CONF" type="RMuint32" address="0x3e53" />
+	<register name="audio_SI_SPDIF_STATUS" type="RMuint32" address="0x3e54" />
+	<register name="audio_SI_L1_DATA" type="RMuint32" address="0x3e55" />
+	<register name="audio_SI_R1_DATA" type="RMuint32" address="0x3e56" />
+	<register name="audio_SI_L2_DATA" type="RMuint32" address="0x3e57" />
+	<register name="audio_SI_R2_DATA" type="RMuint32" address="0x3e58" />
+	<register name="audio_SI_L3_DATA" type="RMuint32" address="0x3e59" />
+	<register name="audio_SI_R3_DATA" type="RMuint32" address="0x3e5a" />
+	<register name="audio_SI_SPDIF_CONF" type="RMuint32" address="0x3e5b" />
+	<register name="audio_SI_SPDIF_STATUS2" type="RMuint32" address="0x3e5c" />
+	<register name="audio_STEREO_IN_LS_DATA" type="RMuint32" address="0x3f10" />
+	<register name="audio_STEREO_IN_RR_DATA" type="RMuint32" address="0x3f11" />
+	<register name="audio_STEREO_IN_STATUS" type="RMuint32" address="0x3f12" />
+	<register name="audio_STEREO_IN_CONF" type="RMuint32" address="0x3f13" />
+</module>
+
+<module category="AudioEngine" comment="This module provides access to the Audio DSP specific functionalities">
+	<register name="REG_BASE_audio_engine_0"  type="RMuint32" address="0x00084000" />
+	<register name="MEM_BASE_audio_engine_0"  type="RMuint32" address="0x00180000" />
+	<register name="PMEM_BASE_audio_engine_0" type="RMuint32" address="0x00180000" />
+	<register name="PMEM_SIZE_audio_engine_0" type="RMuint32" address="0x8000" />
+	<register name="DMEM_BASE_audio_engine_0" type="RMuint32" address="0x00190000" />
+	<register name="DMEM_SIZE_audio_engine_0" type="RMuint32" address="0xf000" />
+
+	<register name="audio_SO_L0_DATA" type="RMuint32" address="0x3e00" />
+	<register name="audio_SO_R0_DATA" type="RMuint32" address="0x3e01" />
+	<register name="audio_SO_L1_DATA" type="RMuint32" address="0x3e02" />
+	<register name="audio_SO_R1_DATA" type="RMuint32" address="0x3e03" />
+	<register name="audio_SO_L2_DATA" type="RMuint32" address="0x3e04" />
+	<register name="audio_SO_R2_DATA" type="RMuint32" address="0x3e05" />
+	<register name="audio_SO_LS_DATA" type="RMuint32" address="0x3e06" />
+	<register name="audio_SO_RS_DATA" type="RMuint32" address="0x3e07" />
+	<register name="audio_SO_CH_INTR" type="RMuint32" address="0x3e08" />
+	<register name="audio_SO_CH_CTRL" type="RMuint32" address="0x3e09" />
+	<register name="audio_SO_SPDIF_CH_STAT" type="RMuint32" address="0x3e0a" />
+	<register name="audio_SO_L3_DATA" type="RMuint32" address="0x3e0b" />
+	<register name="audio_SO_R3_DATA" type="RMuint32" address="0x3e0c" />
+	<register name="audio_SO_L4_DATA" type="RMuint32" address="0x3e0d" />
+	<register name="audio_SO_AUDIO_CLK_DIV" type="RMuint32" address="0x3e0e" />
+	<register name="audio_SO_R4_DATA" type="RMuint32" address="0x3e0f" />
+
+	<register name="audio_STEREO_OUT_LS_DATA" type="RMuint32" address="0x3f00" />
+	<register name="audio_STEREO_OUT_RS_DATA" type="RMuint32" address="0x3f01" />
+	<register name="audio_STEREO_OUT_CH_INTR" type="RMuint32" address="0x3f02" />
+	<register name="audio_STEREO_OUT_CH_CTRL" type="RMuint32" address="0x3f03" />
+	<register name="audio_STEREO_OUT_AUDIO_CLK_DIV" type="RMuint32" address="0x3f04" />
+	<register name="audio_STEREO_OUT_AUX_CLK_HI" type="RMuint32" address="0x3f05" />
+	<register name="audio_STEREO_OUT_AUX_CLK_LO" type="RMuint32" address="0x3f06" />
+	<register name="audio_STEREO_OUT_AUX_CLK_CFG" type="RMuint32" address="0x3f07" />
+
+	<register name="audio_mutex0" type="RMuint32" address="0x3e90" />
+	<register name="audio_mutex1" type="RMuint32" address="0x3e91" />
+	<register name="audio_mutex2" type="RMuint32" address="0x3e92" />
+	<register name="audio_mutex3" type="RMuint32" address="0x3e93" />
+	<register name="audio_mutex4" type="RMuint32" address="0x3e94" />
+	<register name="audio_mutex5" type="RMuint32" address="0x3e95" />
+	<register name="audio_mutex6" type="RMuint32" address="0x3e96" />
+	<register name="audio_mutex7" type="RMuint32" address="0x3e97" />
+
+	<register name="audio_MBUSIF_w0_add" type="RMuint32" address="0x3ec0" />
+	<register name="audio_MBUSIF_w0_cnt" type="RMuint32" address="0x3ec1" />
+	<register name="audio_MBUSIF_w0_skip" type="RMuint32" address="0x3ec2" />
+	<register name="audio_MBUSIF_w0_cmd" type="RMuint32" address="0x3ec3" />
+
+	<register name="audio_MBUSIF_r0_add" type="RMuint32" address="0x3ed0" />
+	<register name="audio_MBUSIF_r0_cnt" type="RMuint32" address="0x3ed1" />
+	<register name="audio_MBUSIF_r0_skip" type="RMuint32" address="0x3ed2" />
+	<register name="audio_MBUSIF_r0_cmd" type="RMuint32" address="0x3ed3" />
+
+	<register name="audio_GBUSIF_MAIN_WADD" type="RMuint32" address="0x3ea0" />
+	<register name="audio_GBUSIF_MAIN_RADD" type="RMuint32" address="0x3ea1" />
+	<register name="audio_GBUSIF_MAIN_BYTE" type="RMuint32" address="0x3ea2" />
+	<register name="audio_GBUSIF_MAIN_WORD" type="RMuint32" address="0x3ea3" />
+	<register name="audio_GBUSIF_MAIN_DWORD" type="RMuint32" address="0x3ea4" />
+	<register name="audio_GBUSIF_MAIN_STATUS" type="RMuint32" address="0x3ea5" />
+
+	<register name="audio_GBUSIF_ISR_WADD" type="RMuint32" address="0x3ea8" />
+	<register name="audio_GBUSIF_ISR_RADD" type="RMuint32" address="0x3ea9" />
+	<register name="audio_GBUSIF_ISR_BYTE" type="RMuint32" address="0x3eaa" />
+	<register name="audio_GBUSIF_ISR_WORD" type="RMuint32" address="0x3eab" />
+	<register name="audio_GBUSIF_ISR_DWORD" type="RMuint32" address="0x3eac" />
+	<register name="audio_GBUSIF_ISR_STATUS" type="RMuint32" address="0x3ead" />
+
+	<register name="audio_MISC_dr_mode" type="RMuint32" address="0x3e80" />
+	<register name="audio_MISC_dr_length" type="RMuint32" address="0x3e81" />
+	<register name="audio_MISC_dr_address" type="RMuint32" address="0x3e82" />
+
+	<register name="audio_MISC_dw_mode" type="RMuint32" address="0x3e84" />
+	<register name="audio_MISC_dw_length" type="RMuint32" address="0x3e85" />
+	<register name="audio_MISC_dw_address" type="RMuint32" address="0x3e86" />
+
+	<register name="audio_MISC_reset0" type="RMuint32" address="0x3e88" />
+	<register name="audio_MISC_reset1" type="RMuint32" address="0x3e89" />
+	<register name="audio_MISC_interrupt" type="RMuint32" address="0x3e8A" />
+	<register name="audio_MISC_timer_div" type="RMuint32" address="0x3e8B" />
+	<register name="audio_MISC_timer_count" type="RMuint32" address="0x3e8C" />
+	<register name="audio_MISC_ALTERNATIVE_IO" type="RMuint32" address="0x3E8D" />
+	<register name="audio_MISC_GROUND_I2S_IO" type="RMuint32" address="0x3E8E" />
+	<register name="audio_MISC_GROUND_SPDIF_IO" type="RMuint32" address="0x3E8F" />
+	<register name="audio_MISC_I2S_IO_SOURCE_SEL" type="RMuint32" address="0x3E98" />
+	<register name="audio_MISC_VERSION_REVISION" type="RMuint32" address="0x3E9F" />
+
+	<register name="audio_MISC_UNRESET_MASK" type="RMuint32" address="0xc300" />
+	<register name="audio_MISC_RESET_MASK" type="RMuint32" address="0xc3c3" />
+
+</module>
+
+<module category="DemuxEngine">
+	<register name="REG_BASE_demux_engine_0"  type="RMuint32" address="0x00082000" />
+	<register name="MEM_BASE_demux_engine_0"  type="RMuint32" address="0x00140000" />
+	<register name="PMEM_BASE_demux_engine_0" type="RMuint32" address="0x00140000" />
+	<register name="PMEM_SIZE_demux_engine_0" type="RMuint32" address="0x8000" />
+	<register name="DMEM_BASE_demux_engine_0" type="RMuint32" address="0x00150000" />
+	<register name="DMEM_SIZE_demux_engine_0" type="RMuint32" address="0x8000" />
+
+	<register  name="demux_MISC_dr_mode"            type="RMuint32" address="0x2f00" />
+	<register  name="demux_MISC_dr_length"          type="RMuint32" address="0x2f01" />
+	<register  name="demux_MISC_dr_address"         type="RMuint32" address="0x2f02" />
+	<register  name="demux_MISC_dw_mode"            type="RMuint32" address="0x2f04" />
+	<register  name="demux_MISC_dw_length"          type="RMuint32" address="0x2f05" />
+	<register  name="demux_MISC_dw_address"         type="RMuint32" address="0x2f06" />
+	<register  name="demux_MISC_reset0"             type="RMuint32" address="0x2f08" />
+	<register  name="demux_MISC_reset1"             type="RMuint32" address="0x2f09" />
+	<register  name="demux_MISC_interrupt"          type="RMuint32" address="0x2f0a" />
+	<register  name="demux_MISC_timer_div"          type="RMuint32" address="0x2f0b" />
+	<register  name="demux_MISC_timer_count"        type="RMuint32" address="0x2f0c" />
+
+	<register  name="demux_mutex0"                  type="RMuint32" address="0x2f10" />
+	<register  name="demux_mutex1"                  type="RMuint32" address="0x2f11" />
+	<register  name="demux_mutex2"                  type="RMuint32" address="0x2f12" />
+	<register  name="demux_mutex3"                  type="RMuint32" address="0x2f13" />
+	<register  name="demux_mutex4"                  type="RMuint32" address="0x2f14" />
+	<register  name="demux_mutex5"                  type="RMuint32" address="0x2f15" />
+	<register  name="demux_mutex6"                  type="RMuint32" address="0x2f16" />
+	<register  name="demux_mutex7"                  type="RMuint32" address="0x2f17" />
+
+	<register  name="demux_GBUSIF_MAIN_WADD"        type="RMuint32" address="0x2ea0" />
+	<register  name="demux_GBUSIF_MAIN_RADD"        type="RMuint32" address="0x2ea1" />
+	<register  name="demux_GBUSIF_MAIN_BYTE"        type="RMuint32" address="0x2ea2" />
+	<register  name="demux_GBUSIF_MAIN_WORD"        type="RMuint32" address="0x2ea3" />
+	<register  name="demux_GBUSIF_MAIN_DWORD"       type="RMuint32" address="0x2ea4" />
+	<register  name="demux_GBUSIF_MAIN_STATUS"      type="RMuint32" address="0x2ea5" />
+	<register  name="demux_GBUSIF_ISR_WADD"         type="RMuint32" address="0x2ea8" />
+	<register  name="demux_GBUSIF_ISR_RADD"         type="RMuint32" address="0x2ea9" />
+	<register  name="demux_GBUSIF_ISR_BYTE"         type="RMuint32" address="0x2eaa" />
+	<register  name="demux_GBUSIF_ISR_WORD"         type="RMuint32" address="0x2eab" />
+	<register  name="demux_GBUSIF_ISR_DWORD"        type="RMuint32" address="0x2eac" />
+	<register  name="demux_GBUSIF_ISR_STATUS"       type="RMuint32" address="0x2ead" />
+
+	<register  name="demux_MBUSIF_w0_add"           type="RMuint32" address="0x2ec0" />
+	<register  name="demux_MBUSIF_w0_cnt"           type="RMuint32" address="0x2ec1" />
+	<register  name="demux_MBUSIF_w0_skip"          type="RMuint32" address="0x2ec2" />
+	<register  name="demux_MBUSIF_w0_cmd"           type="RMuint32" address="0x2ec3" />
+	<register  name="demux_MBUSIF_r0_add"           type="RMuint32" address="0x2ed0" />
+	<register  name="demux_MBUSIF_r0_cnt"           type="RMuint32" address="0x2ed1" />
+	<register  name="demux_MBUSIF_r0_skip"          type="RMuint32" address="0x2ed2" />
+	<register  name="demux_MBUSIF_r0_cmd"           type="RMuint32" address="0x2ed3" />
+
+	<register  name="demux_sync_lock_status_config" type="RMuint32" address="0x3e02" comment="sync lock status and config" />
+	<register  name="demux_ts_frame_size_3_0"       type="RMuint32" address="0x3e03" comment="8 bits for each channel 3,2,1,0"/>
+	<register  name="demux_ts_frame_size_7_4"       type="RMuint32" address="0x3e04" comment="8 bits for each channel 7,6,5,4"/>
+	<register  name="demux_tsout0_config"           type="RMuint32" address="0x2e3d" comment=""/>
+	<register  name="demux_tsout1_config"           type="RMuint32" address="0x2e3f" comment=""/>
+	<register  name="demux_ats_channel_sel"         type="RMuint32" address="0x3e08" comment=""/>
+	<register  name="demux_ats_counter_config"      type="RMuint32" address="0x3e09" comment=""/>
+	<register  name="demux_ats0_load"               type="RMuint32" address="0x3e0a" comment=""/>
+	<register  name="demux_ats0_counter"            type="RMuint32" address="0x3e0b" comment=""/>
+	<register  name="demux_ats1_load"               type="RMuint32" address="0x3e0c" comment=""/>
+	<register  name="demux_ats1_counter"            type="RMuint32" address="0x3e0d" comment=""/>
+	<register  name="demux_ats_global_load"         type="RMuint32" address="0x3e0e" comment=""/>
+	<register  name="demux_ats_global_counter"      type="RMuint32" address="0x3e0f" comment=""/>
+	<register  name="TDMX_gpio_data"               type="RMuint32" address="0x2e38" comment=""/>
+	<register  name="TDMX_gpio_dir"                type="RMuint32" address="0x2e39" comment=""/>
+	<register  name="TDMX_gpio_select"             type="RMuint32" address="0x2e3a" comment=""/>
+
+	<register  name="demux_section_filter_start"    type="RMuint32" address="0x3800" comment="32 entries of 12 RMuint32"/>
+	<register  name="demux_pid_bank"                type="RMuint32" address="0x3000" comment="256 pid entries"/>
+	<register  name="demux_pat0_pidentry"           type="RMuint32" address="0x3cc0" comment="? where is it"/>
+
+	<register  name="demux_section_filter_link"     type="RMuint32" address="0x3400" comment="128 expanding links for the 128 sections "/>
+	<register  name="demux_section_filter"          type="RMuint32" address="0x3480" comment="128 sections, with three entries: value, mode and mask, each one 16 bytes"/>
+
+	<register  name="demux_pcr0_pidentry"           type="RMuint32" address="0x3cc6" />
+
+	<register name="demux_spi_write_ptr0"    type="RMuint32" address="0x1e08" />
+	<register name="demux_spi_write_ptr1"    type="RMuint32" address="0x1e09" />
+	<register name="demux_spi_write_ptr2"    type="RMuint32" address="0x1e0a" />
+	<register name="demux_spi_write_ptr3"    type="RMuint32" address="0x1e0b" />
+	<register name="demux_spi_routing"       type="RMuint32" address="0x1e0c" />
+	<register name="demux_spi_clk_phase"     type="RMuint32" address="0x1e0d" />
+	<register name="demux_spi_sync_bytes"    type="RMuint32" address="0x1e0e" />
+
+	<register name="demux_idma_write_ptr"    type="RMuint32" address="0x1e18" />
+	<register name="demux_idma_cnt"          type="RMuint32" address="0x1e19" />
+
+	<register name="demux_odma_read_ptr"     type="RMuint32" address="0x1e20" />
+	<register name="demux_odma_cnt"          type="RMuint32" address="0x1e21" />
+	<register name="demux_odma_sc_stat"      type="RMuint32" address="0x1e22" />
+	<register name="demux_odma_sc_match"     type="RMuint32" address="0x1e23" />
+
+	<register name="demux_sbox_mode"         type="RMuint32" address="0x1e28" />
+
+	<register name="demux_MISC_UNRESET_MASK" type="RMuint32" address="0xd800" />
+	<register name="demux_MISC_RESET_MASK"   type="RMuint32" address="0xd8d8" />
+
+	<register  name="demux_key_31_00"               type="RMuint32" address="0x2cc0" comment="clear key"/>
+	<register  name="demux_key_control"             type="RMuint32" address="0x2cc8" comment="control clear key"/>
+	<register  name="demux_cw_ram_multi2_iv"        type="RMuint32" address="0x2ac0" comment="32 ivs" />
+	<register  name="demux_cw_ram_aes_iv"           type="RMuint32" address="0x2a00" comment="48 ivs of 128 bits" />
+	<register  name="demux_cw_ram_des_iv"           type="RMuint32" address="0x2b00" comment="32 ivs" />
+
+	<register  name="demux_kl_key_31_00"            type="RMuint32" address="0x2d60" comment="clear key"/>
+	<register  name="demux_kl_key_control"          type="RMuint32" address="0x2d66" comment="control clear key"/>
+	<register  name="demux_kl_aes_iv"               type="RMuint32" address="0x3b80" comment="16 iv of 16 bytes"/>
+	<register  name="demux_kl_des_iv"               type="RMuint32" address="0x3bc0" comment="16 iv of 8 bytes"/>
+	<register  name="demux_kl_data_31_00"           type="RMuint32" address="0x3b40" comment="encrypted key"/>
+	<register  name="demux_kl_data_access"          type="RMuint32" address="0x3b45" comment="control encrypted key"/>
+	<register  name="demux_kl_data_ctl"             type="RMuint32" address="0x3b44" comment="control encrypted key"/>
+
+</module>
+
+<module category="DispAnalogOutput" parent="DispOutput">
+	<!--
+	<register address="0x70400" name="REG_BASE_disp_analog_output_0" type="RMuint32" />
+	<register address="0x70500" name="REG_BASE_disp_analog_output_1" type="RMuint32" />
+	-->
+
+	<register name="VO_main_analog_reset_bit" type="RMuint32" address="0x7" />
+	<register name="VO_main_analog_conv0" type="RMuint32" address="0x0400" />
+	<register name="VO_main_analog_conv1" type="RMuint32" address="0x0404" />
+	<register name="VO_main_analog_conv2" type="RMuint32" address="0x0408" />
+	<register name="VO_main_analog_conv3" type="RMuint32" address="0x040c" />
+	<register name="VO_main_analog_conv4" type="RMuint32" address="0x0410" />
+	<register name="VO_main_analog_conv5" type="RMuint32" address="0x0414" />
+	<register name="VO_main_analog_xoffset_field" type="RMuint32" address="0x0418" />
+	<register name="VO_main_analog_yoffset" type="RMuint32" address="0x041c" />
+	<register name="VO_main_analog_cvbs_conv0" type="RMuint32" address="0x0420" />
+	<register name="VO_main_analog_cvbs_conv1" type="RMuint32" address="0x0424" />
+	<register name="VO_main_analog_cvbs_conv2" type="RMuint32" address="0x0428" />
+	<register name="VO_main_analog_cvbs_conv3" type="RMuint32" address="0x042c" />
+	<register name="VO_main_analog_cvbs_conv4" type="RMuint32" address="0x0430" />
+	<register name="VO_main_analog_cvbs_conv5" type="RMuint32" address="0x0434" />
+	<register name="VO_main_analog_TV_config" type="RMuint32" address="0x0440" />
+	<register name="VO_main_analog_TV_size" type="RMuint32" address="0x0444" />
+	<register name="VO_main_analog_TV_hsync" type="RMuint32" address="0x0448" />
+	<register name="VO_main_analog_TV_vsync_O_0" type="RMuint32" address="0x044c" />
+	<register name="VO_main_analog_TV_vsync_O_1" type="RMuint32" address="0x0450" />
+	<register name="VO_main_analog_TV_vsync_E_0" type="RMuint32" address="0x0454" />
+	<register name="VO_main_analog_TV_vsync_E_1" type="RMuint32" address="0x0458" />
+	<register name="VO_main_analog_TV_HD_hsync_info" type="RMuint32" address="0x045c" />
+	<register name="VO_main_analog_TV_HD_vsync" type="RMuint32" address="0x0460" />
+	<register name="VO_main_analog_TV_CGMS" type="RMuint32" address="0x0464" />
+	<register name="VO_main_analog_TV_CC_AGC" type="RMuint32" address="0x0468" />
+	<register name="VO_main_analog_TV_test_config" type="RMuint32" address="0x046c" />
+	<register name="VO_main_analog_TV_teletext_config" type="RMuint32" address="0x0470" />
+	<register name="VO_main_analog_TV_config2" type="RMuint32" address="0x0474" />
+	<register name="VO_main_analog_TV_cav_minmax" type="RMuint32" address="0x0478" />
+	<register name="VO_main_analog_TV_timing_sync" type="RMuint32" address="0x047c" />
+	<register name="VO_main_analog_TV_MV_N_0_22" type="RMuint32" address="0x0480" />
+	<register name="VO_main_analog_TV_MV_N_1_2_3_4" type="RMuint32" address="0x0484" />
+	<register name="VO_main_analog_TV_MV_N_5_6_7_8" type="RMuint32" address="0x0488" />
+	<register name="VO_main_analog_TV_MV_N_9_10_11" type="RMuint32" address="0x048c" />
+	<register name="VO_main_analog_TV_MV_N_12_13_14" type="RMuint32" address="0x0490" />
+	<register name="VO_main_analog_TV_MV_N_15_16_17_18" type="RMuint32" address="0x0494" />
+	<register name="VO_main_analog_TV_MV_N_19_20_21" type="RMuint32" address="0x0498" />
+	<register name="VO_main_analog_ext_sync0" type="RMuint32" address="0x04A0" />
+	<register name="VO_main_analog_ext_sync1" type="RMuint32" address="0x04A4" />
+	<register name="VO_main_analog_ext_sync2" type="RMuint32" address="0x04A8" />
+	<register name="VO_main_analog_ext_sync3" type="RMuint32" address="0x04AC" />
+	<register name="VO_main_analog_extra_pixel" type="RMuint32" address="0x04B0" />
+	<register name="VO_main_analog_starv_config" type="RMuint32" address="0x04B4" />
+	<register name="VO_main_analog_starv_default1" type="RMuint32" address="0x04B8" />
+	<register name="VO_main_analog_starv_default2" type="RMuint32" address="0x04BC" />
+	<register name="VO_main_analog_vbi_EIA805B_ctrl" type="RMuint32" address="0x04c0" />
+	<register name="VO_main_analog_vbi_EIA805B_data0" type="RMuint32" address="0x04c0" />
+	<register name="VO_main_analog_vbi_EIA805B_data1" type="RMuint32" address="0x04c4" />
+	<register name="VO_main_analog_vbi_EIA805B_data2" type="RMuint32" address="0x04c8" />
+	<register name="VO_main_analog_vbi_EIA805B_data3" type="RMuint32" address="0x04d0" />
+
+	<register name="VO_main_analog_tlxt0" type="RMuint32" address="0x1000" />
+
+	<register name="VO_component_out_reset_bit" type="RMuint32" address="0x8" />
+	<register name="VO_component_out_conv0" type="RMuint32" address="0x0500" />
+	<register name="VO_component_out_conv1" type="RMuint32" address="0x0504" />
+	<register name="VO_component_out_conv2" type="RMuint32" address="0x0508" />
+	<register name="VO_component_out_conv3" type="RMuint32" address="0x050c" />
+	<register name="VO_component_out_conv4" type="RMuint32" address="0x0510" />
+	<register name="VO_component_out_conv5" type="RMuint32" address="0x0514" />
+	<register name="VO_component_out_xoffset_field" type="RMuint32" address="0x0518" />
+	<register name="VO_component_out_yoffset" type="RMuint32" address="0x051c" />
+	<register name="VO_component_out_cvbs_conv0" type="RMuint32" address="0x0520" />
+	<register name="VO_component_out_cvbs_conv1" type="RMuint32" address="0x0524" />
+	<register name="VO_component_out_cvbs_conv2" type="RMuint32" address="0x0528" />
+	<register name="VO_component_out_cvbs_conv3" type="RMuint32" address="0x052c" />
+	<register name="VO_component_out_cvbs_conv4" type="RMuint32" address="0x0530" />
+	<register name="VO_component_out_cvbs_conv5" type="RMuint32" address="0x0534" />
+	<register name="VO_component_out_TV_config" type="RMuint32" address="0x0540" />
+	<register name="VO_component_out_TV_size" type="RMuint32" address="0x0544" />
+	<register name="VO_component_out_TV_hsync" type="RMuint32" address="0x0548" />
+	<register name="VO_component_out_TV_vsync_O_0" type="RMuint32" address="0x054c" />
+	<register name="VO_component_out_TV_vsync_O_1" type="RMuint32" address="0x0550" />
+	<register name="VO_component_out_TV_vsync_E_0" type="RMuint32" address="0x0554" />
+	<register name="VO_component_out_TV_vsync_E_1" type="RMuint32" address="0x0558" />
+	<register name="VO_component_out_TV_HD_hsync_info" type="RMuint32" address="0x055c" />
+	<register name="VO_component_out_TV_HD_vsync" type="RMuint32" address="0x0560" />
+	<register name="VO_component_out_TV_CGMS" type="RMuint32" address="0x0564" />
+	<register name="VO_component_out_TV_CC_AGC" type="RMuint32" address="0x0568" />
+	<register name="VO_component_out_TV_test_config" type="RMuint32" address="0x056c" />
+	<register name="VO_component_out_TV_teletext_config" type="RMuint32" address="0x0570" />
+	<register name="VO_component_out_TV_config2" type="RMuint32" address="0x0574" />
+	<register name="VO_component_out_TV_cav_minmax" type="RMuint32" address="0x0578" />
+	<register name="VO_component_out_TV_timing_sync" type="RMuint32" address="0x057c" />
+	<register name="VO_component_out_TV_MV_N_0_22" type="RMuint32" address="0x0580" />
+	<register name="VO_component_out_TV_MV_N_1_2_3_4" type="RMuint32" address="0x0584" />
+	<register name="VO_component_out_TV_MV_N_5_6_7_8" type="RMuint32" address="0x0588" />
+	<register name="VO_component_out_TV_MV_N_9_10_11" type="RMuint32" address="0x058c" />
+	<register name="VO_component_out_TV_MV_N_12_13_14" type="RMuint32" address="0x0590" />
+	<register name="VO_component_out_TV_MV_N_15_16_17_18" type="RMuint32" address="0x0594" />
+	<register name="VO_component_out_TV_MV_N_19_20_21" type="RMuint32" address="0x0598" />
+	<register name="VO_component_out_ext_sync0" type="RMuint32" address="0x05A0" />
+	<register name="VO_component_out_ext_sync1" type="RMuint32" address="0x05A4" />
+	<register name="VO_component_out_ext_sync2" type="RMuint32" address="0x05A8" />
+	<register name="VO_component_out_ext_sync3" type="RMuint32" address="0x05AC" />
+	<register name="VO_component_out_extra_pixel" type="RMuint32" address="0x05B0" />
+	<register name="VO_component_out_starv_config" type="RMuint32" address="0x05B4" />
+	<register name="VO_component_out_starv_default1" type="RMuint32" address="0x05B8" />
+	<register name="VO_component_out_starv_default2" type="RMuint32" address="0x05BC" />
+	<register name="VO_component_out_vbi_EIA805B_ctrl" type="RMuint32" address="0x05c0" />
+	<register name="VO_component_out_vbi_EIA805B_data0" type="RMuint32" address="0x05c0" />
+	<register name="VO_component_out_vbi_EIA805B_data1" type="RMuint32" address="0x05c4" />
+	<register name="VO_component_out_vbi_EIA805B_data2" type="RMuint32" address="0x05c8" />
+	<register name="VO_component_out_vbi_EIA805B_data3" type="RMuint32" address="0x05d0" />
+</module>
+
+<module category="DispDigitalOutput" parent="DispOutput">
+	<!--
+	<register address="0x71400" name="MEM_BASE_disp_digital_output_0" type="RMuint32" />
+	<register address="0x70200" name="REG_BASE_disp_digital_output_0" type="RMuint32" />
+	-->
+
+	<register name="VO_digit_out_reset_bit" type="RMuint32" address="0x0" />
+	<register name="VO_digit_out_conv0" type="RMuint32" address="0x0200" />
+	<register name="VO_digit_out_conv1" type="RMuint32" address="0x0204" />
+	<register name="VO_digit_out_conv2" type="RMuint32" address="0x0208" />
+	<register name="VO_digit_out_conv3" type="RMuint32" address="0x020c" />
+	<register name="VO_digit_out_conv4" type="RMuint32" address="0x0210" />
+	<register name="VO_digit_out_conv5" type="RMuint32" address="0x0214" />
+	<register name="VO_digit_out_format" type="RMuint32" address="0x0220" />
+	<register name="VO_digit_out_Xoffset" type="RMuint32" address="0x0224" />
+	<register name="VO_digit_out_Yoffset" type="RMuint32" address="0x0228" />
+	<register name="VO_digit_out_hz_sync" type="RMuint32" address="0x022c" />
+	<register name="VO_digit_out_vt_sync" type="RMuint32" address="0x0230" />
+	<register name="VO_digit_out_vsync_coord" type="RMuint32" address="0x0234" />
+	<register name="VO_digit_out_sync_ext_sync" type="RMuint32" address="0x0238" />
+	<register name="VO_digit_out_color_depth" type="RMuint32" address="0x023c" />
+	<register name="VO_digit_out_ext_sync0" type="RMuint32" address="0x0240" />
+	<register name="VO_digit_out_ext_sync1" type="RMuint32" address="0x0244" />
+	<register name="VO_digit_out_ext_sync2" type="RMuint32" address="0x0248" />
+	<register name="VO_digit_out_ext_sync3" type="RMuint32" address="0x024C" />
+	<register name="VO_digit_out_starv_config" type="RMuint32" address="0x0250" />
+	<register name="VO_digit_out_starv_default1" type="RMuint32" address="0x0254" />
+	<register name="VO_digit_out_starv_default2" type="RMuint32" address="0x0258" />
+	<register name="VO_digit_out_field_alternative_mode_ctrl" type="RMuint32" address="0x025C" />
+	<register name="VO_digit_out_gamma_lut0" type="RMuint32" address="0x1400" />
+	<register name="VO_digit_out_temp_lut0" type="RMuint32" address="0x1600" />
+
+	<register name="VO_pads_config" type="RMuint32" address="0x0180" />
+	<register name="VO_pads_delay_limits" type="RMuint32" address="0x0184" />
+	<register name="VO_pads_ref_delay_limits" type="RMuint32" address="0x0188" />
+	<register name="VO_pads_ref_delay_init" type="RMuint32" address="0x018C" />
+	<register name="VO_pads_DLL_config" type="RMuint32" address="0x0190" />
+</module>
+
+<module category="DispBlkScaler">
+	<register name="VO_BlkSclr_reset_bit" type="RMuint32" address="0x0c" />
+	<register name="REG_BASE_blk_sclr" type="RMuint32" address="0x381000" />
+	<register name="VO_OutPSO_reset_base" type="RMuint32" address="0x380000" />
+	<register name="VO_BlkSclr_format_hds" type="RMuint32" address="0x00" />
+	<register name="VO_BlkSclr_alpha" type="RMuint32" address="0x04" />
+	<register name="VO_BlkSclr_stripe" type="RMuint32" address="0x08" />
+	<register name="VO_BlkSclr_stripe_color" type="RMuint32" address="0x0c" />
+</module>
+
+<module category="DispHardwareCursor" parent="DispBase" comment="The hardware cursor block generates a small picture to the main mixer block.@n An arbitrary bitmap is stored in 4 bit/pixel format in  a 512x32 on-chip SRAM. Thus no external memory bandwidth is required to support the cursor.@n On chips earlier than SMP8634, each 4-bit pixel is fed to a 16x6x4 lookup table to produce an output stream of 24-bit (6-6-6-6 format) aYcbCr pixels.@note Each video component is multiplied by four, and the akpha value is extended to 8 bits before being sent to the main mixer.@n On SMP8634 and later chips, each 4-bit pixel is fed to a 16x32 look-up table which outputs 32 bit 8888 aYCbCr pixels.@n The horizontal and vertical dimensions of the cursor picture is constrained as follows: @li X size less than or equal to 255 @li Y size less than or equal to 255">
+	<register address="0x380180" name="REG_BASE_disp_hardware_cursor_0" type="RMuint32" />
+	<register address="0x380200" name="MEM_LUT_BASE_disp_hardware_cursor_0" type="RMuint32" />
+	<register address="0x380800" name="MEM_CUR_BASE_disp_hardware_cursor_0" type="RMuint32" />
+</module>
+
+<module category="DispHDMITx">
+	<!--
+	<register address="0x70800" name="REG_BASE_disp_hdmi_0" type="RMuint32" />
+	-->
+
+	<register name="VO_hdmi_reset_bit" type="RMuint32" address="0x03" />
+	<register name="VO_hdmi_pads_reset_bit" type="RMuint32" address="0x04" />
+	<register name="VO_hdmi_regmap"  type="RMuint32" address="0x0800" />
+	<register name="VO_hdmi_config"  type="RMuint32" address="0x0d00" />
+	<register name="VO_hdmi_ctrl"    type="RMuint32" address="0x0d04" />
+	<register name="VO_hdmi_write"   type="RMuint32" address="0x0d08" comment="reserved on T4" />
+	<register name="VO_hdmi_read"    type="RMuint32" address="0x0d0c" comment="reserved on T4" />
+	<register name="VO_hdmi_test0"   type="RMuint32" address="0x0d10" />
+	<register name="VO_hdmi_test1"   type="RMuint32" address="0x0d14" />
+	<register name="VO_hdmi_test2"   type="RMuint32" address="0x0d18" />
+	<register name="VO_hdmi_test3"   type="RMuint32" address="0x0d1c" />
+	<register name="VO_hdmi_i2c"     type="RMuint32" address="0x0dc0" comment="reserved on T4" />
+	<register name="VO_hdmi_keymem"  type="RMuint32" address="0x0e00" />
+</module>
+
+<module category="DisplayHDMIRx">
+	<register name="VO_hdmi_rx_reset_bit" type="RMuint32" address="0x5" comment="same as ResetBitsBviPso_Hdmi0ResetBit" />
+	<register name="VO_hdmi_rx_regmap"  type="RMuint32" address="0x3900" comment="relative to REG_BASE_video_input" />
+	<register name="VO_hdmi_rx_keymem"  type="RMuint32" address="0x3c00" comment="relative to REG_BASE_video_input" />
+</module>
+
+<module category="DispConstrainedImage" comment="Constraints an HD source by filtering it" parent="DispSingleSource">
+	<register address="0x380170" name="REG_BASE_disp_constrained_image_0" type="RMuint32" />
+
+	<register name="VO_CI_reset_bit" type="RMuint32" address="0x00" />
+	<register name="VO_CI_read_reset_bit" type="RMuint32" address="0x01" />
+</module>
+
+<module category="DispHDSD" comment="Converts a HD content to a SD content" parent="DispSingleSource" >
+	<register name="VO_HDSD_reset_bit" type="RMuint32" address="0x02" />
+	<register name="VO_HDSD_read_reset_bit" type="RMuint32" address="0x03" />
+	<register name="VO_HDSD_config" type="RMuint32" address="0x381400" />
+	<register name="VO_HDSD_xscale" type="RMuint32" address="0x381404" />
+	<register name="VO_HDSD_yscale" type="RMuint32" address="0x381408" />
+	<register name="VO_HDSD_dump" type="RMuint32" address="0x38140c" />
+</module>
+
+<module category="DispInput" parent="DispBase" datatransfer="enable">
+	<register address="0x50000" name="REG_BASE_video_input" type="RMuint32" comment="same as psoRegBase[VSYNC_PSO_DOMAIN_BVI]"/>
+	<register address="0x53900" name="REG_BASE_disp_input_0" type="RMuint32" comment="TODO: check if it is used"/>
+
+	<register name="VI_digital_in_format" type="RMuint32" address="0x0" />
+</module>
+
+<module category="VideoProcessing"  parent="DispBase">
+	<register name="REG_BASE_video_processing"  type="RMuint32" address="0x0008a000" comment="Merge of BVP misc, BVP out and BVP src"/>
+	<register name="REG_RANGE_video_processing" type="RMuint32" address="0x00001000"/>
+	<register name="MEM_BASE_video_processing"  type="RMuint32" address="0x00300000" comment="Merge of BVP misc, BVP out and BVP src"/>
+	<register name="MEM_RANGE_video_processing" type="RMuint32" address="0x00100000" />
+	<register name="MEM_BASE_VP_src"            type="RMuint32" address="0x00360000" comment="BVP src"/>
+	<register name="MEM_BASE_VP_misc"            type="RMuint32" address="0x00300000" comment="BVP src"/>
+	<register name="PMEM_BASE_display_block"    type="RMuint32" address="0x00300000" />
+
+	<!-- DFD offsets, relative to MEM_BASE_VP_misc -->
+	<register name="VO_dfd0_base"  type="RMuint32" address="0x08000" />
+	<register name="VO_dfd1_base"  type="RMuint32" address="0x08800" />
+	<register name="VO_dfd2_base"  type="RMuint32" address="0x09000" />
+	<register name="VO_dfd3_base"  type="RMuint32" address="0x09800" />
+	<register name="VO_dfd4_base"  type="RMuint32" address="0x0a000" />
+	<register name="VO_dfd5_base"  type="RMuint32" address="0x0a800" />
+	<register name="VO_dfd6_base"  type="RMuint32" address="0x0b000" />
+	<register name="VO_dfd7_base"  type="RMuint32" address="0x0b800" />
+	<register name="VO_dfd8_base"  type="RMuint32" address="0x0c000" />
+	<register name="VO_dfd9_base"  type="RMuint32" address="0x0c800" />
+	<register name="VO_dfd10_base" type="RMuint32" address="0x0d000" />
+	<register name="VO_dfd11_base" type="RMuint32" address="0x0d800" />
+	<register name="VO_dfd12_base" type="RMuint32" address="0x0e000" />
+	<register name="VO_dfe0_base"  type="RMuint32" address="0x12000" />
+	<register name="VO_dfe1_base"  type="RMuint32" address="0x12010" />
+	<register name="VO_dfe2_base"  type="RMuint32" address="0x12020" />
+
+	<!-- DFD reset bits, to be used in the VO_reset_run or VO_reset_datapath regs -->
+	<register name="VO_dfd0_reset_bit"  type="RMuint32" address="0" />
+	<register name="VO_dfd1_reset_bit"  type="RMuint32" address="1" />
+	<register name="VO_dfd2_reset_bit"  type="RMuint32" address="2" />
+	<register name="VO_dfd3_reset_bit"  type="RMuint32" address="3" />
+	<register name="VO_dfd4_reset_bit"  type="RMuint32" address="4" />
+	<register name="VO_dfd5_reset_bit"  type="RMuint32" address="5" />
+	<register name="VO_dfd6_reset_bit"  type="RMuint32" address="6" />
+	<register name="VO_dfd7_reset_bit"  type="RMuint32" address="7" />
+	<register name="VO_dfd8_reset_bit"  type="RMuint32" address="8" />
+	<register name="VO_dfd9_reset_bit"  type="RMuint32" address="9" />
+	<register name="VO_dfd10_reset_bit"  type="RMuint32" address="10" />
+	<register name="VO_dfd11_reset_bit"  type="RMuint32" address="11" />
+	<register name="VO_dfd12_reset_bit"  type="RMuint32" address="12" />
+	<register name="VO_dfd13_reset_bit"  type="RMuint32" address="13" />
+	<register name="VO_dfd14_reset_bit"  type="RMuint32" address="14" />
+	<register name="VO_dfd15_reset_bit"  type="RMuint32" address="15" />
+
+	<register name="VO_dfe0_reset_bit"  type="RMuint32" address="16" />
+	<register name="VO_dfe1_reset_bit"  type="RMuint32" address="17" />
+	<register name="VO_dfe2_reset_bit"  type="RMuint32" address="18" />
+	<register name="VO_dfe3_reset_bit"  type="RMuint32" address="19" />
+	<register name="VO_dfe4_reset_bit"  type="RMuint32" address="20" />
+	<register name="VO_dfe5_reset_bit"  type="RMuint32" address="21" />
+	<register name="VO_dfe6_reset_bit"  type="RMuint32" address="22" />
+	<register name="VO_dfe7_reset_bit"  type="RMuint32" address="23" />
+</module>
+
+<module category="DisplayBlock"  parent="DispBase">
+	<register name="REG_BASE_display_block" type="RMuint32" address="0x00070000" />
+	<register name="PMEM_BASE_display_block" type="RMuint32" address="0x00300000" />
+
+	<register name="VO_run" type="RMuint32" address="0x0000" />
+	<register name="VO_reset_datapath" type="RMuint32" address="0x0004" />
+	<register name="VO_reset_timing" type="RMuint32" address="0x0008" />
+	<register name="VO_reset_config" type="RMuint32" address="0x000c" />
+	<register name="VO_reset_mode_0" type="RMuint32" address="0x0014" />
+	<register name="VO_reset_mode_1" type="RMuint32" address="0x0018" />
+
+	<register address="0x303000" name="REG_BASE_VIF0_r_0" type="RMuint32" />
+	<register address="0x303040" name="REG_BASE_VIF0_r_1" type="RMuint32" />
+	<register address="0x303080" name="REG_BASE_VIF0_r_2" type="RMuint32" />
+	<register address="0x3030c0" name="REG_BASE_VIF0_r_3" type="RMuint32" />
+	<register address="0x303100" name="REG_BASE_VIF0_r_4" type="RMuint32" />
+	<register address="0x303140" name="REG_BASE_VIF0_r_5" type="RMuint32" />
+	<register address="0x303180" name="REG_BASE_VIF0_r_6" type="RMuint32" />
+	<register address="0x3031c0" name="REG_BASE_VIF0_r_7" type="RMuint32" />
+	<register address="0x303200" name="REG_BASE_VIF0_r_8" type="RMuint32" />
+	<register address="0x303240" name="REG_BASE_VIF0_r_9" type="RMuint32" />
+	<register address="0x303280" name="REG_BASE_VIF0_r_10" type="RMuint32" />
+	<register address="0x3032c0" name="REG_BASE_VIF0_r_11" type="RMuint32" />
+	<register address="0x303300" name="REG_BASE_VIF0_r_12" type="RMuint32" />
+	<register address="0x303340" name="REG_BASE_VIF0_r_13" type="RMuint32" />
+	<register address="0x303380" name="REG_BASE_VIF0_r_14" type="RMuint32" />
+	<register address="0x3033c0" name="REG_BASE_VIF0_r_15" type="RMuint32" />
+	<register address="0x303400" name="REG_BASE_VIF0_r_16" type="RMuint32" />
+
+	<register address="0x305000" name="REG_BASE_VIF1_r_0" type="RMuint32" />
+	<register address="0x305040" name="REG_BASE_VIF1_r_1" type="RMuint32" />
+	<register address="0x305080" name="REG_BASE_VIF1_r_2" type="RMuint32" />
+	<register address="0x3050c0" name="REG_BASE_VIF1_r_3" type="RMuint32" />
+
+
+	<register address="0x302000" name="REG_BASE_VIF0_w_0" type="RMuint32" />
+	<register address="0x302040" name="REG_BASE_VIF0_w_1" type="RMuint32" />
+	<register address="0x302080" name="REG_BASE_VIF0_w_2" type="RMuint32" />
+	<register address="0x3020c0" name="REG_BASE_VIF0_w_3" type="RMuint32" />
+	<register address="0x302100" name="REG_BASE_VIF0_w_4" type="RMuint32" />
+	<register address="0x302140" name="REG_BASE_VIF0_w_5" type="RMuint32" />
+	<register address="0x302180" name="REG_BASE_VIF0_w_6" type="RMuint32" />
+	<register address="0x3021c0" name="REG_BASE_VIF0_w_7" type="RMuint32" />
+
+	<register address="0x304000" name="REG_BASE_VIF1_w_0" type="RMuint32" />
+
+	<register name="VO_dac_mux_config0"  type="RMuint32" address="0x0100" />
+	<register name="VO_dac_mux_config1"  type="RMuint32" address="0x0104" />
+
+	<register name="VIF_offs" type="RMuint32" address="0x0100" />
+	<register name="VIF_add" type="RMuint32" address="0x0000" />
+	<register name="VIF_cnt" type="RMuint32" address="0x0004" />
+	<register name="VIF_skip" type="RMuint32" address="0x0008" />
+	<register name="VIF_cmd" type="RMuint32" address="0x000c" />
+	<register name="VIF_addB" type="RMuint32" address="0x0010" />
+	<register name="VIF_cntB" type="RMuint32" address="0x0014" />
+	<register name="VIF_skipB" type="RMuint32" address="0x0018" />
+
+	<register name="VBUS_IDLE"  type="RMuint32" address="0x0" />
+	<register name="VBUS_LINEAR"  type="RMuint32" address="0x1" />
+	<register name="VBUS_DOUBLE"  type="RMuint32" address="0x2" />
+	<register name="VBUS_RECTANGLE"  type="RMuint32" address="0x3" />
+	<register name="VBUS_DOUBLE_FIELD"  type="RMuint32" address="0x4" />
+	<register name="VBUS_DOUBLE_RECTANGLE"  type="RMuint32" address="0x5" />
+	<register name="VBUS_8BYTE_COLUMN"  type="RMuint32" address="0x6" />
+</module>
+
+<module category="DispVXPDeinterlacer" parent="DispPreMixerModules" comment="VXP DeInterlacer block">
+	<register address="0x321f00" name="REG_BASE_disp_vxp_deinterlacer_0" type="RMuint32" />
+</module>
+
+<module category="DispColorBars">
+	<register address="0x380150" name="REG_BASE_disp_color_bars_0" type="RMuint32" />
+</module>
+
+<module category="DispMPScaler" parent="DispFullScaler" >
+	<register address="0x321000" name="REG_BASE_disp_mp_scaler_0" type="RMuint32" />
+	<register address="0x361000" name="REG_BASE_disp_mp_scaler_1" type="RMuint32" />
+	<register address="0x361400" name="REG_BASE_disp_mp_scaler_2" type="RMuint32" />
+	<register address="0x381000" name="REG_BASE_disp_mp_scaler_3" type="RMuint32" />
+	<register address="0x361800" name="REG_BASE_disp_mp_scaler_4" type="RMuint32" />
+	<register address="0x361c00" name="REG_BASE_disp_mp_scaler_5" type="RMuint32" />
+</module>
+
+<module category="DispVXPACE" parent="DispPreMixerModules" comment="This module controls the adaptive contrast enhancement.">
+	<register address="0x321800" name="REG_BASE_disp_vxpace_0" type="RMuint32" />
+	<register address="0x341800" name="REG_BASE_disp_vxpace_1" type="RMuint32" />
+</module>
+
+<module category="DispMixer" parent="DispMultipleSource" >
+	<register address="0x300240" name="REG_BASE_disp_mixer_0" type="RMuint32" />
+	<register address="0x300200" name="REG_BASE_disp_mixer_1" type="RMuint32" />
+</module>
+
+<module category="CPUBlock">
+	<register name="REG_BASE_cpu_block" type="RMuint32" address="0x00060000" />
+	<register name="MEM_BASE_cpu_block" type="RMuint32" address="0x00800000" />
+
+	<register name="CPU_ARM_SCU_BASE" type="RMuint32" address="0x20000000" />
+	<register name="CPU_ARM_L2CACHE_BASE" type="RMuint32" address="0x20100000" />
+
+	<register name="CPU_time0_load" type="RMuint32" address="0xc500" />
+	<register name="CPU_time0_value" type="RMuint32" address="0xc504" />
+	<register name="CPU_time0_ctrl" type="RMuint32" address="0xc508" />
+	<register name="CPU_time0_clr" type="RMuint32" address="0xc50c" />
+	<register name="CPU_time1_load" type="RMuint32" address="0xc600" />
+	<register name="CPU_time1_value" type="RMuint32" address="0xc604" />
+	<register name="CPU_time1_ctrl" type="RMuint32" address="0xc608" />
+	<register name="CPU_time1_clr" type="RMuint32" address="0xc60c" />
+
+	<register name="CPU_rtc_data" type="RMuint32" address="0xc800" />
+	<register name="CPU_rtc_match" type="RMuint32" address="0xc804" />
+	<register name="CPU_rtc_stat" type="RMuint32" address="0xc808" />
+	<register name="CPU_rtc_load" type="RMuint32" address="0xc80c" />
+	<register name="CPU_rtc_ctrl" type="RMuint32" address="0xc810" />
+
+	<register name="CPU_irq_status" type="RMuint32" address="0xe000" />
+	<register name="CPU_irq_rawstat" type="RMuint32" address="0xe004" />
+	<register name="CPU_irq_enableset" type="RMuint32" address="0xe008" />
+	<register name="CPU_irq_enableclr" type="RMuint32" address="0xe00c" />
+	<register name="CPU_irq_softset" type="RMuint32" address="0xe010" />
+	<register name="CPU_irq_softclr" type="RMuint32" address="0xe014" />
+	<register name="CPU_irq_status_hi" type="RMuint32" address="0xe018" />
+	<register name="CPU_irq_rawstat_hi" type="RMuint32" address="0xe01c" />
+	<register name="CPU_irq_enableset_hi" type="RMuint32" address="0xe020" />
+	<register name="CPU_irq_enableclr_hi" type="RMuint32" address="0xe024" />
+
+	<register name="CPU_fiq_status" type="RMuint32" address="0xe100" />
+	<register name="CPU_fiq_rawstat" type="RMuint32" address="0xe104" />
+	<register name="CPU_fiq_enableset" type="RMuint32" address="0xe108" />
+	<register name="CPU_fiq_enableclr" type="RMuint32" address="0xe10c" />
+	<register name="CPU_fiq_softset" type="RMuint32" address="0xe110" />
+	<register name="CPU_fiq_softclr" type="RMuint32" address="0xe114" />
+	<register name="CPU_fiq_status_hi" type="RMuint32" address="0xe118" />
+	<register name="CPU_fiq_rawstat_hi" type="RMuint32" address="0xe11c" />
+	<register name="CPU_fiq_enableset_hi" type="RMuint32" address="0xe120" />
+	<register name="CPU_fiq_enableclr_hi" type="RMuint32" address="0xe124" />
+
+	<register name="CPU_edge_status" type="RMuint32" address="0xe200" />
+	<register name="CPU_edge_rawstat" type="RMuint32" address="0xe204" />
+	<register name="CPU_edge_config_rise" type="RMuint32" address="0xe208" />
+	<register name="CPU_edge_config_fall" type="RMuint32" address="0xe20c" />
+
+	<register name="CPU_SOFT_INT"         type="RMuint32" address="0x00000001" />
+	<register name="CPU_UART0_INT"        type="RMuint32" address="0x00000002" />
+	<register name="CPU_UART1_INT"        type="RMuint32" address="0x00000004" />
+	<register name="CPU_TIMER0_INT"       type="RMuint32" address="0x00000020" />
+	<register name="CPU_TIMER1_INT"       type="RMuint32" address="0x00000040" />
+	<register name="CPU_HOST_MBUS_W0_INT" type="RMuint32" address="0x00000200" />
+	<register name="CPU_HOST_MBUS_W1_INT" type="RMuint32" address="0x00000400" />
+	<register name="CPU_HOST_MBUS_R0_INT" type="RMuint32" address="0x00000800" />
+	<register name="CPU_HOST_MBUS_R1_INT" type="RMuint32" address="0x00001000" />
+	<register name="CPU_PCI_INTA"         type="RMuint32" address="0x00002000" />
+	<register name="CPU_PCI_INTB"         type="RMuint32" address="0x00004000" />
+	<register name="CPU_PCI_INTC"         type="RMuint32" address="0x00008000" />
+	<register name="CPU_PCI_INTD"         type="RMuint32" address="0x00010000" />
+	<register name="CPU_PCI_FAULT_INT"    type="RMuint32" address="0x00100000" />
+	<register name="CPU_INFRARED_INT"     type="RMuint32" address="0x00200000" />
+
+	<register name="CPU_SFLA_INT"        type="RMuint32" address="0x00000010" />
+	<register name="CPU_DVD_INT"         type="RMuint32" address="0x00000080" />
+	<register name="CPU_ETH_INT"         type="RMuint32" address="0x00000100" />
+	<register name="CPU_VBUS1_WRITE_CH1_INT"      type="RMuint32" address="0x00020000" />
+	<register name="CPU_DIGITAL0_EOF_INT"         type="RMuint32" address="0x00040000" />
+	<register name="CPU_FRONTPANEL_INT"  type="RMuint32" address="0x00080000" />
+	<register name="CPU_ANALOG0_EOF_INT" type="RMuin32" address="0x00100000" />
+	<register name="CPU_I2C_INT"         type="RMuint32" address="0x00400000" />
+	<register name="CPU_GFX_ACCEL_INT"   type="RMuint32" address="0x00800000" />
+	<register name="CPU_MISC_PSO_DMA2LBUS_READ_INT"      type="RMuint32" address="0x01000000" />
+	<register name="CPU_ANALOG0_VSYNC_INT"      type="RMuint32" address="0x02000000" />
+	<register name="CPU_ANALOG1_VSYNC_INT"      type="RMuint32" address="0x04000000" />
+	<register name="CPU_DIGITAL0_VSYNC_INT"      type="RMuint32" address="0x08000000" />
+	<register name="CPU_DIGITALIN0_VSYNC_INT"      type="RMuint32" address="0x10000000" />
+	<register name="CPU_DIGITALIN0_VBI_INT" type="RMuint32" address="0x20000000" />
+	<register name="CPU_VBUS0_WRITE_CH2_INT"      type="RMuint32" address="0x40000000" />
+	<register name="CPU_VBUS0_WRITE_CH4_INT" type="RMuint32" address="0x80000000" />
+
+	<register name="CPU_SMARTCARD_HI_INT"     type="RMuint32" address="0x00000001" />
+	<register name="CPU_HDMI_HI_INT"          type="RMuint32" address="0x00000002" />
+	<register name="CPU_ANALOG1_EOF_HI_INT"      type="RMuint32" address="0x00000004" />
+	<register name="CPU_VBUS0_WRITE_CH0_HI_INT"       type="RMuint32" address="0x00000008" />
+	<register name="CPU_VIDSRC0_PSO_DMA2LBUS_READ_HI_INT"       type="RMuint32" address="0x00000010" />
+	<register name="CPU_ETH_PHY_HI_INT"       type="RMuint32" address="0x00000020" />
+	<register name="CPU_ETH_MAC_HI_INT"       type="RMuint32" address="0x00000040" />
+	<register name="CPU_SRC_PSO_DMA2LBUS_READ_HI_INT"  type="RMuint32" address="0x00000080" />
+	<register name="CPU_USB_EHCI_MAC_HI_INT"  type="RMuint32" address="0x00000100" />
+	<register name="CPU_OUT_PSO_DMA2LBUS_READ_HI_INT" type="RMuint32" address="0x00080000" />
+	<register name="CPU_3D_OFMT_FIELD_HI_INT" type="RMuint32" address="0x20000000" />
+
+	<register name="LOG2_CPU_SOFT_INT"         type="RMuint32" address="0" />
+	<register name="LOG2_CPU_UART0_INT"        type="RMuint32" address="1" />
+	<register name="LOG2_CPU_UART1_INT"        type="RMuint32" address="2" />
+	<register name="LOG2_CPU_TIMER0_INT"       type="RMuint32" address="5" />
+	<register name="LOG2_CPU_TIMER1_INT"       type="RMuint32" address="6" />
+	<register name="LOG2_CPU_DVD_INT"          type="RMuint32" address="7" />
+	<register name="LOG2_CPU_RTC_INT"          type="RMuint32" address="8" />
+	<register name="LOG2_CPU_HOST_MBUS_W0_INT" type="RMuint32" address="9" />
+	<register name="LOG2_CPU_HOST_MBUS_W1_INT" type="RMuint32" address="10" />
+	<register name="LOG2_CPU_HOST_MBUS_R0_INT" type="RMuint32" address="11" />
+	<register name="LOG2_CPU_HOST_MBUS_R1_INT" type="RMuint32" address="12" />
+	<register name="LOG2_CPU_PCI_INTA"         type="RMuint32" address="13" />
+	<register name="LOG2_CPU_PCI_INTB"         type="RMuint32" address="14" />
+	<register name="LOG2_CPU_PCI_INTC"         type="RMuint32" address="15" />
+	<register name="LOG2_CPU_PCI_INTD"         type="RMuint32" address="16" />
+	<register name="LOG2_CPU_VBUS1_WRITE_CH1_INT"       type="RMuint32" address="17" />
+	<register name="LOG2_CPU_DIGITAL0_EOF_INT"          type="RMuint32" address="18" />
+	<register name="LOG2_CPU_FRONTPANEL_INT"   type="RMuint32" address="19" />
+	<register name="LOG2_CPU_ANALOG0_EOF_INT"    type="RMuint32" address="20" />
+	<register name="LOG2_CPU_INFRARED_INT"     type="RMuint32" address="21" />
+	<register name="LOG2_CPU_I2C_INT"          type="RMuint32" address="22" />
+	<register name="LOG2_CPU_GFX_ACCEL_INT"    type="RMuint32" address="23" />
+	<register name="LOG2_CPU_MISC_PSO_DMA2LBUS_READ_INT"       type="RMuint32" address="24" />
+	<register name="LOG2_ANALOG0_VSYNC_INT"       type="RMuint32" address="25" />
+	<register name="LOG2_ANALOG1_VSYNC_INT"       type="RMuint32" address="26" />
+	<register name="LOG2_CPU_DIGITAL0_VSYNC_INT"       type="RMuint32" address="27" />
+	<register name="LOG2_CPU_DIGITALIN0_VSYNC_INT"       type="RMuint32" address="28" />
+	<register name="LOG2_CPU_DIGITALIN0_VBI_INT"  type="RMuint32" address="29" />
+	<register name="LOG2_CPU_VBUS0_WRITE_CH2_INT"       type="RMuint32" address="30" />
+	<register name="LOG2_CPU_VBUS0_WRITE_CH4_INT"  type="RMuint32" address="31" />
+	<register name="LOG2_CPU_SMARTCARD_INT"    type="RMuint32" address="32" />
+
+	<register name="LOG2_CPU_HDMI_INT"         type="RMuint32" address="33" />
+	<register name="LOG2_CPU_ANALOG1_EOF_HI_INT"     type="RMuint32" address="34" />
+	<register name="LOG2_CPU_VBUS0_WRITE_CH0_HI_INT"      type="RMuint32" address="35" />
+	<register name="LOG2_CPU_VIDSRC0_PSO_DMA2LBUS_READ_HI_INT"      type="RMuint32" address="36" />
+	<register name="LOG2_CPU_ETH_PHY_INT"      type="RMuint32" address="37" />
+	<register name="LOG2_CPU_ETH_MAC_INT"      type="RMuint32" address="38" />
+	<register name="LOG2_CPU_SRC_PSO_DMA2LBUS_READ_HI_INT"     type="RMuint32" address="39" />
+	<register name="LOG2_CPU_USB_EHCI_INT"     type="RMuint32" address="40" />
+
+	<register name="LOG2_CPU_SATA_INT"         type="RMuint32" address="41" />
+	<register name="LOG2_CPU_DMASATA_INT"      type="RMuint32" address="42" />
+	<register name="LOG2_XPU_W0_INT"           type="RMuint32" address="43" />
+	<register name="LOG2_XPU_R0_INT"           type="RMuint32" address="44" />
+	<register name="LOG2_XPU_W_SP_INT"         type="RMuint32" address="45" />
+	<register name="LOG2_XPU_R_SP_INT"         type="RMuint32" address="46" />
+	<register name="LOG2_CPU_GPIO24_INT"       type="RMuint32" address="47" />
+	<register name="LOG2_CPU_GPIO25_INT"       type="RMuint32" address="48" />
+	<register name="LOG2_CPU_GPIO26_INT"       type="RMuint32" address="49" />
+	<register name="LOG2_CPU_GPIO27_INT"       type="RMuint32" address="50" />
+	<register name="LOG2_CPU_OUT_PSO_DMA2LBUS_READ_HI_INT"      type="RMuint32" address="51" />
+	<register name="LOG2_CPU_SMARTCARD1_INT"   type="RMuint32" address="52" />
+	<register name="LOG2_CPU_HDMI_CEC_INT"     type="RMuint32" address="53" />
+
+	<register name="LOG2_CPU_SATA1_INT"        type="RMuint32" address="54" />
+	<register name="LOG2_CPU_DMASATA1_INT"     type="RMuint32" address="55" />
+	<register name="LOG2_CPU_ETH_PHY1_INT"     type="RMuint32" address="56" />
+	<register name="LOG2_CPU_ETH_MAC1_INT"     type="RMuint32" address="57" />
+
+	<register name="LOG2_CPU_HOST_MBUS_W2_INT" type="RMuint32" address="58" />
+	<register name="LOG2_CPU_HOST_MBUS_R2_INT" type="RMuint32" address="59" />
+	<register name="LOG2_CPU_SDIO0_INT"        type="RMuint32" address="60" />
+	<register name="LOG2_CPU_3D_OFMT_FIELD_HI_INT"        type="RMuint32" address="61" />
+	<register name="LOG2_CPU_SPI_INT"          type="RMuint32" address="62" />
+	<register name="LOG2_CPU_UART2_INT"        type="RMuint32" address="63" />
+
+	<register name="CPU_edge_status_hi" type="RMuint32" address="0xe220" />
+	<register name="CPU_edge_rawstat_hi" type="RMuint32" address="0xe224" />
+	<register name="CPU_edge_config_rise_hi" type="RMuint32" address="0xe228" />
+	<register name="CPU_edge_config_fall_hi" type="RMuint32" address="0xe22c" />
+
+	<register name="CPU_irq_status_hi" type="RMuint32" address="0xe018" />
+	<register name="CPU_irq_rawstat_hi" type="RMuint32" address="0xe01c" />
+	<register name="CPU_irq_enableset_hi" type="RMuint32" address="0xe020" />
+	<register name="CPU_irq_enableclr_hi" type="RMuint32" address="0xe024" />
+
+	<register name="CPU_fiq_status_hi" type="RMuint32" address="0xe118" />
+	<register name="CPU_fiq_rawstat_hi" type="RMuint32" address="0xe11c" />
+	<register name="CPU_fiq_enableset_hi" type="RMuint32" address="0xe120" />
+	<register name="CPU_fiq_enableclr_hi" type="RMuint32" address="0xe124" />
+
+	<register name="CPU_iiq_status" type="RMuint32" address="0xe300" />
+	<register name="CPU_iiq_rawstat" type="RMuint32" address="0xe304" />
+	<register name="CPU_iiq_enableset" type="RMuint32" address="0xe308" />
+	<register name="CPU_iiq_enableclr" type="RMuint32" address="0xe30c" />
+	<register name="CPU_iiq_softset" type="RMuint32" address="0xe310" />
+	<register name="CPU_iiq_softclr" type="RMuint32" address="0xe314" />
+
+	<register name="CPU_iiq_status_hi" type="RMuint32" address="0xe318" />
+	<register name="CPU_iiq_rawstat_hi" type="RMuint32" address="0xe31c" />
+	<register name="CPU_iiq_enableset_hi" type="RMuint32" address="0xe320" />
+	<register name="CPU_iiq_enableclr_hi" type="RMuint32" address="0xe324" />
+
+	<register name="CPU_UART_GPIOMODE" type="RMuint32" address="0x38" />
+	<register name="CPU_UART_GPIODIR" type="RMuint32" address="0x30" />
+	<register name="CPU_UART_GPIODATA" type="RMuint32" address="0x34" />
+	<register name="CPU_edge_config_rise_set" type="RMuint32" address="0xe210" />
+	<register name="CPU_edge_config_rise_clr" type="RMuint32" address="0xe214" />
+	<register name="CPU_edge_config_fall_set" type="RMuint32" address="0xe218" />
+	<register name="CPU_edge_config_fall_clr" type="RMuint32" address="0xe21c" />
+
+	<register name="CPU_edge_config_rise_set_hi" type="RMuint32" address="0xe230" />
+	<register name="CPU_edge_config_rise_clr_hi" type="RMuint32" address="0xe234" />
+	<register name="CPU_edge_config_fall_set_hi" type="RMuint32" address="0xe238" />
+	<register name="CPU_edge_config_fall_clr_hi" type="RMuint32" address="0xe23c" />
+	<register name="intentionaldiff_em" type="RMuint32" address="0xeee0" />
+
+	<register name="CPU_pm_select_0" type="RMuint32" address="0xc900" />
+	<register name="CPU_pm_counter_0" type="RMuint32" address="0xc904" />
+	<register name="CPU_pm_select_1" type="RMuint32" address="0xc908" />
+	<register name="CPU_pm_counter_1" type="RMuint32" address="0xc90c" />
+
+	<!-- Those are related to the CPU MEM BASE -->
+	<register name="CPU_arm_debug_unlock"      type="RMuint32" address="0x110fb0" comment="Called DBGLAR by ARM"/>
+	<register name="CPU_arm_rst_ctrl_off"      type="RMuint32" address="0x120000" />
+	<register name="CPU_event"                 type="RMuint32" address="0x120000" />
+	<register name="CPU_standby_status"        type="RMuint32" address="0x120004" />
+	<register name="CPU_rst_config"            type="RMuint32" address="0x120008" />
+	<register name="CPU_glob_var"              type="RMuint32" address="0x12000c" />
+	<register name="CPU_watchdog_policy_core0" type="RMuint32" address="0x120010" />
+	<register name="CPU_watchdog_policy_core1" type="RMuint32" address="0x120014" />
+	<register name="CPU_watchdog_policy_core2" type="RMuint32" address="0x120018" />
+	<register name="CPU_watchdog_policy_core3" type="RMuint32" address="0x12001c" />
+	<register name="CPU_apb_en"                type="RMuint32" address="0x120020" />
+	<register name="CPU_debug_en_core0"        type="RMuint32" address="0x120024" />
+	<register name="CPU_debug_en_core1"        type="RMuint32" address="0x120028" />
+	<register name="CPU_debug_en_core2"        type="RMuint32" address="0x12002c" />
+	<register name="CPU_debug_en_core3"        type="RMuint32" address="0x120030" />
+	<register name="CPU_TEMP_SENSOR"           type="RMuint32" address="0x120100" />
+
+
+	<!-- chip specific stuff over -->
+
+	<register name="CPU_remap" type="RMuint32" address="0xf000" />
+	<register name="CPU_remap1" type="RMuint32" address="0xf004" />
+	<register name="CPU_remap2" type="RMuint32" address="0xf008" />
+	<register name="CPU_remap3" type="RMuint32" address="0xf00c" />
+	<register name="CPU_remap4" type="RMuint32" address="0xf010" />
+	<register name="CPU_remap5" type="RMuint32" address="0xf014" />
+	<register name="CPU_remap6" type="RMuint32" address="0xf018" />
+	<register name="CPU_remap7" type="RMuint32" address="0xf01c" />
+
+	<register name="CPU_remap_address" type="RMuint32" address="0x1fc00000" />
+	<register name="CPU_remap1_address" type="RMuint32" address="0" />
+	<register name="CPU_remap2_address" type="RMuint32" address="0x04000000" />
+	<register name="CPU_remap3_address" type="RMuint32" address="0x08000000" />
+	<register name="CPU_remap4_address" type="RMuint32" address="0x0c000000" />
+	<register name="CPU_remap5_address" type="RMuint32" address="0x10000000" />
+	<register name="CPU_remap6_address" type="RMuint32" address="0x14000000" />
+	<register name="CPU_remap7_address" type="RMuint32" address="0x18000000" />
+
+	<register name="REG_BASE_irq_handler_block" type="RMuint32" address="0xf0000" />
+
+	<register name="G2L_BIST_BUSY" type="RMuint32" address="0xffe0" />
+	<register name="G2L_BIST_PASS" type="RMuint32" address="0xffe4" />
+	<register name="G2L_BIST_MASK" type="RMuint32" address="0xffe8" />
+	<register name="G2L_RESET_CONTROL" type="RMuint32" address="0xfffc" />
+	<register name="G2L_ANOTHER_RESET_CONTROL" type="RMuint32" address="0x0ffc" />
+
+	<register name="CPU_UART0_base" type="RMuint32" address="0xc100" />
+	<register name="CPU_UART1_base" type="RMuint32" address="0xc200" />
+	<register name="CPU_UART2_base" type="RMuint32" address="0xcd00" />
+
+	<register name="CPU_UART_RBR" type="RMuint32" address="0x00" />
+	<register name="CPU_UART_THR" type="RMuint32" address="0x04" />
+	<register name="CPU_UART_IER" type="RMuint32" address="0x08" />
+	<register name="CPU_UART_IIR" type="RMuint32" address="0x0c" />
+	<register name="CPU_UART_FCR" type="RMuint32" address="0x10" />
+	<register name="CPU_UART_LCR" type="RMuint32" address="0x14" />
+	<register name="CPU_UART_MCR" type="RMuint32" address="0x18" />
+	<register name="CPU_UART_LSR" type="RMuint32" address="0x1c" />
+	<register name="CPU_UART_MSR" type="RMuint32" address="0x20" />
+	<register name="CPU_UART_SCR" type="RMuint32" address="0x24" />
+	<register name="CPU_UART_CLKDIV" type="RMuint32" address="0x28" />
+	<register name="CPU_UART_CLKSEL" type="RMuint32" address="0x2c" />
+
+	<register name="CPU_scard0_gpio_dir" type="RMuint32" address="0xc358" />
+	<register name="CPU_scard0_gpio_data" type="RMuint32" address="0xc35c" />
+	<register name="CPU_scard0_gpio_mode" type="RMuint32" address="0xc360" />
+	<register name="CPU_scard1_gpio_dir" type="RMuint32" address="0xc3d8" />
+	<register name="CPU_scard1_gpio_data" type="RMuint32" address="0xc3dc" />
+	<register name="CPU_scard1_gpio_mode" type="RMuint32" address="0xc3e0" />
+
+	<register name="CPU_arm_apb_en" type="RMuint32" address="0x120020" />
+	<register name="CPU_arm_core0_debug_en" type="RMuint32" address="0x120024" />
+	<register name="CPU_arm_core1_debug_en" type="RMuint32" address="0x120028" />
+	<register name="CPU_arm_core2_debug_en" type="RMuint32" address="0x12002c" />
+	<register name="CPU_arm_core3_debug_en" type="RMuint32" address="0x120030" />
+</module>
+
+<module category="GFXEngine" datatransfer="disable" >
+	<!-- introduce these once the GACC driver is implemented
+		<register address="0x380400" name="LUT_BASE_graph_acc_0" type="RMuint32" />
+		<register address="0x380300" name="REG_BASE_graph_acc_0" type="RMuint32" />
+		-->
+
+	<register name="REG_BASE_graph_acc" type="RMuint32" address="0x380300" />
+	<register name="VO_graph_acc_reset_bit" type="RMuint32" address="0x0d" />
+
+	<register name="VO_graph_acc_reset_mask" type="RMuint32" address="0x00300000" />
+	<register name="VO_graph_acc_reset_run" type="RMuint32" address="0x00000000" />
+	<register name="VO_graph_acc_reset_path" type="RMuint32" address="0x00100000" />
+	<register name="VO_graph_acc_reset_time" type="RMuint32" address="0x00200000" />
+	<register name="VO_graph_acc_reset_conf" type="RMuint32" address="0x00300000" />
+
+	<register name="VO_graph_acc_X_format" type="RMuint32" address="0x0000" />
+	<register name="VO_graph_acc_X_alpha" type="RMuint32" address="0x0004" />
+	<register name="VO_graph_acc_X_keycolor" type="RMuint32" address="0x0008" />
+	<register name="VO_graph_acc_Y_format" type="RMuint32" address="0x000c" />
+	<register name="VO_graph_acc_Y_keycolor" type="RMuint32" address="0x0010" />
+	<register name="VO_graph_acc_control" type="RMuint32" address="0x0014" />
+	<register name="VO_graph_acc_font" type="RMuint32" address="0x0004" />
+	<register name="VO_graph_acc_fill" type="RMuint32" address="0x0004" />
+	<register name="VO_graph_acc_control2" type="RMuint32" address="0x001c" />
+	<register name="VO_graph_acc_Z_format" type="RMuint32" address="0x0020" />
+	<register name="VO_graph_acc_control3" type="RMuint32" address="0x0024" />
+	<register name="VO_graph_acc_lut0" type="RMuint32" address="0x0100" />
+
+	<register name="VO_graph_acc_FILL" type="RMuint32" address="0" />
+	<register name="VO_graph_acc_BLEND" type="RMuint32" address="1" />
+	<register name="VO_graph_acc_MOVE" type="RMuint32" address="2" />
+	<register name="VO_graph_acc_REPLACE" type="RMuint32" address="3" />
+	<register name="VO_graph_acc_RASTER" type="RMuint32" address="4" />
+
+	<register name="VO_graph_acc_mode_control" type="RMuint32" address="0x0080" />
+	<register name="VO_graph_acc_DRAM_read_address" type="RMuint32" address="0x0084" />
+	<register name="VO_graph_acc_DRAM_write_address" type="RMuint32" address="0x0088" />
+	<register name="VO_graph_acc_X_bounding_box" type="RMuint32" address="0x008c" />
+	<register name="VO_graph_acc_Y_bounding_box" type="RMuint32" address="0x0090" />
+	<register name="VO_graph_acc_scaling_and_contours" type="RMuint32" address="0x0094" />
+	<register name="VO_graph_acc_matrix_coeffs_scale" type="RMuint32" address="0x0098" />
+	<register name="VO_graph_acc_matrix_coeffs_cross_scale" type="RMuint32" address="0x009c" />
+	<register name="VO_graph_acc_matrix_coeffs_offset" type="RMuint32" address="0x00a0" />
+
+	<register name="VO_graph_acc_grd_color0" type="RMuint32" address="0x0040" />
+	<register name="VO_graph_acc_grd_color1" type="RMuint32" address="0x0044" />
+	<register name="VO_graph_acc_grd_scale_factor" type="RMuint32" address="0x0048" />
+	<register name="VO_graph_acc_grd_vt_scale_init" type="RMuint32" address="0x004c" />
+	<register name="VO_graph_acc_grd_init_square_dist" type="RMuint32" address="0x0050" />
+	<register name="VO_graph_acc_grd_ext_radius" type="RMuint32" address="0x0054" />
+	<register name="VO_graph_acc_grd_int_radius" type="RMuint32" address="0x0058" />
+	<register name="VO_graph_acc_grd_center" type="RMuint32" address="0x005c" />
+	<register name="VO_graph_acc_grd_control" type="RMuint32" address="0x0060" />
+</module>
+
+<module category="I2C">
+	<register name="I2C_MASTER_CONFIG"    type="RMuint32" address="0x80" />
+	<register name="I2C_MASTER_CLK_DIV"   type="RMuint32" address="0x84" />
+	<register name="I2C_MASTER_DEV_ADDR"  type="RMuint32" address="0x88" />
+	<register name="I2C_MASTER_ADDR"      type="RMuint32" address="0x8c" />
+	<register name="I2C_MASTER_DATA_OUT"  type="RMuint32" address="0x90" />
+	<register name="I2C_MASTER_DATA_IN"   type="RMuint32" address="0x94" />
+	<register name="I2C_MASTER_STATUS"    type="RMuint32" address="0x98" />
+	<register name="I2C_MASTER_STARTXFER" type="RMuint32" address="0x9c" />
+	<register name="I2C_MASTER_BYTE_CNT"  type="RMuint32" address="0xa0" />
+	<register name="I2C_MASTER_INTEN"     type="RMuint32" address="0xa4" />
+	<register name="I2C_MASTER_INT"       type="RMuint32" address="0xa8" />
+</module>
+
+<module category="I2CSlave">
+	<register name="I2C_SLAVE_ADDR_REG"   type="RMuint32" address="0xC0" />
+	<register name="I2C_SLAVE_DATAOUT"    type="RMuint32" address="0xC4" />
+	<register name="I2C_SLAVE_DATAIN"     type="RMuint32" address="0xC8" />
+	<register name="I2C_SLAVE_STATUS"     type="RMuint32" address="0xCC" />
+	<register name="I2C_SLAVE_INTEN"      type="RMuint32" address="0xD0" />
+	<register name="I2C_SLAVE_INT"        type="RMuint32" address="0xD4" />
+	<register name="I2C_SLAVE_BUS_HOLD"   type="RMuint32" address="0xD8" />
+</module>
+
+<module category="IPUBlock">
+	<register name="REG_BASE_ipu_block" type="RMuint32" address="0x000f0000" />
+</module>
+
+<module category="SystemBlock">
+	<register name="REG_BASE_system_block" type="RMuint32" address="0x00010000" />
+
+	<!-- SystemBlock registers - offsets relative to REG_BASE_system_block -->
+	<register name="SYS_clkgen0_pll" type="RMuint32" address="0x0000" />
+	<register name="SYS_clkgen0_div" type="RMuint32" address="0x0004" />
+	<register name="SYS_clkgen1_pll" type="RMuint32" address="0x0008" />
+	<register name="SYS_clkgen1_div" type="RMuint32" address="0x000C" />
+	<register name="SYS_clkgen2_pll" type="RMuint32" address="0x0010" />
+	<register name="SYS_clkgen2_div" type="RMuint32" address="0x0014" />
+	<register name="SYS_clkgen3_pll" type="RMuint32" address="0x0018" />
+	<register name="SYS_clkgen3_div" type="RMuint32" address="0x001C" />
+
+	<register name="SYS_sysclk_div_ctrl" type="RMuint32" address="0x0020" />
+	<register name="SYS_cpuclk_div_ctrl" type="RMuint32" address="0x0024" />
+	<register name="SYS_gpuclk_div_ctrl" type="RMuint32" address="0x0028" />
+
+	<register name="SYS_gpuhostclk_mux" type="RMuint32" address="0x0030" />
+	<register name="SYS_hostclk_mux" type="RMuint32" address="0x0030" comment="legacy name"/>
+	<register name="SYS_sysclk_premux" type="RMuint32" address="0x0034" />
+	<register name="SYS_avclk_mux" type="RMuint32" address="0x0038" />
+	<register name="SYS_sysclk_mux" type="RMuint32" address="0x003C" />
+
+	<register name="SYS_clk_cnt" type="RMuint32" address="0x0040" />
+	<register name="SYS_rnd_cnt" type="RMuint32" address="0x0044" />
+	<register name="SYS_xtal_in_cnt" type="RMuint32" address="0x0048" />
+	<register name="SYS_cnt_cfg" type="RMuint32" address="0x004c" />
+	<register name="SYS_cfg_cnt0" type="RMuint32" address="0x0050" />
+	<register name="SYS_cfg_cnt1" type="RMuint32" address="0x0054" />
+	<register name="SYS_cfg_cnt2" type="RMuint32" address="0x0058" />
+	<register name="SYS_cfg_cnt3" type="RMuint32" address="0x005c" />
+	<register name="SYS_cfg_cnt4" type="RMuint32" address="0x0060" />
+
+	<register name="SYS_cleandiv0_div" type="RMuint32" address="0x0080" />
+	<register name="SYS_cleandiv0_ctrl" type="RMuint32" address="0x0084" />
+	<register name="SYS_cleandiv1_div" type="RMuint32" address="0x0088" />
+	<register name="SYS_cleandiv1_ctrl" type="RMuint32" address="0x008c" />
+	<register name="SYS_cleandiv2_div" type="RMuint32" address="0x0090" />
+	<register name="SYS_cleandiv2_ctrl" type="RMuint32" address="0x0094" />
+	<register name="SYS_cleandiv3_div" type="RMuint32" address="0x0098" />
+	<register name="SYS_cleandiv3_ctrl" type="RMuint32" address="0x009c" />
+	<register name="SYS_cleandiv4_div" type="RMuint32" address="0x00a0" />
+	<register name="SYS_cleandiv4_ctrl" type="RMuint32" address="0x00a4" />
+	<register name="SYS_cleandiv5_div" type="RMuint32" address="0x00a8" />
+	<register name="SYS_cleandiv5_ctrl" type="RMuint32" address="0x00ac" />
+	<register name="SYS_cleandiv6_div" type="RMuint32" address="0x00b0" />
+	<register name="SYS_cleandiv6_ctrl" type="RMuint32" address="0x00b4" />
+	<register name="SYS_cleandiv7_div" type="RMuint32" address="0x00b8" />
+	<register name="SYS_cleandiv7_ctrl" type="RMuint32" address="0x00bc" />
+	<register name="SYS_cleandiv8_div" type="RMuint32" address="0x00c0" />
+	<register name="SYS_cleandiv8_ctrl" type="RMuint32" address="0x00c4" />
+	<register name="SYS_cleandiv9_div" type="RMuint32" address="0x00c8" />
+	<register name="SYS_cleandiv9_ctrl" type="RMuint32" address="0x00cc" />
+	<register name="SYS_cleandiv10_div" type="RMuint32" address="0x00d0" />
+	<register name="SYS_cleandiv10_ctrl" type="RMuint32" address="0x00d4" />
+	<register name="SYS_cleandiv11_div" type="RMuint32" address="0x00d8" />
+	<register name="SYS_cleandiv11_ctrl" type="RMuint32" address="0x00dc" />
+
+	<!-- DRAM VBUS Unit - offsets relative to REG_BASE_dram_controller -->
+	<register name="DRAM_vbus_w0_cfg"  type="RMuint32" address="0x0300" comment="w0 MainVideo Write" />
+	<register name="DRAM_vbus_w1_cfg"  type="RMuint32" address="0x0304" comment="w1 VXPNRDI IfmdWrite" />
+	<register name="DRAM_vbus_w2_cfg"  type="RMuint32" address="0x0308" comment="w2 HDSD/CI Write" />
+	<register name="DRAM_vbus_w3_cfg"  type="RMuint32" address="0x030c" comment="w3 VXPNRDI Write Y" />
+	<register name="DRAM_vbus_w4_cfg"  type="RMuint32" address="0x0310" comment="w4 VXPNRDI Write C" />
+	<register name="DRAM_vbus_w5_cfg"  type="RMuint32" address="0x0314" comment="w5 Reserved" />
+	<register name="DRAM_vbus_w6_cfg"  type="RMuint32" address="0x036c" comment="w6 DigitalInput Y Write" />
+	<register name="DRAM_vbus_w7_cfg"  type="RMuint32" address="0x0370" comment="w7 DigitalInput C Write" />
+
+	<register name="DRAM_vbus_r0_cfg"  type="RMuint32" address="0x0380" comment="r0 VXPNRDI IFMD" />
+	<register name="DRAM_vbus_r1_cfg"  type="RMuint32" address="0x0384" comment="r1 MainVideo Y" />
+	<register name="DRAM_vbus_r2_cfg"  type="RMuint32" address="0x0388" comment="r2 MainVideo C" />
+	<register name="DRAM_vbus_r3_cfg"  type="RMuint32" address="0x038c" comment="r3 VXPNRDI Current Y" />
+	<register name="DRAM_vbus_r4_cfg"  type="RMuint32" address="0x0390" comment="r4 VXPNRDI Current C" />
+	<register name="DRAM_vbus_r5_cfg"  type="RMuint32" address="0x0394" comment="r5 VXPNRDI Past Y" />
+	<register name="DRAM_vbus_r6_cfg"  type="RMuint32" address="0x0398" comment="r6 VXPNRDI Past C" />
+	<register name="DRAM_vbus_r7_cfg"  type="RMuint32" address="0x039c" comment="r7 Graphics0" />
+	<register name="DRAM_vbus_r8_cfg"  type="RMuint32" address="0x03a0" comment="r8 Secondary Y" />
+	<register name="DRAM_vbus_r9_cfg"  type="RMuint32" address="0x03a4" comment="r9 Graphics2 Y" />
+	<register name="DRAM_vbus_r10_cfg" type="RMuint32" address="0x03a8" comment="r10 Graphics2 C" />
+	<register name="DRAM_vbus_r11_cfg" type="RMuint32" address="0x03ac" comment="r11 Graphics1 Y" />
+	<register name="DRAM_vbus_r12_cfg" type="RMuint32" address="0x03b0" comment="r12 Memory_1 Y" />
+	<register name="DRAM_vbus_r13_cfg" type="RMuint32" address="0x03b4" comment="r13 " />
+	<register name="DRAM_vbus_r14_cfg" type="RMuint32" address="0x03b8" comment="r14 HDSD/CI Read" />
+	<register name="DRAM_vbus_r15_cfg" type="RMuint32" address="0x03bc" comment="r15 VXPNRDI IfmdRead" />
+	<register name="DRAM_vbus_r16_cfg" type="RMuint32" address="0x03c0" comment="r16 Secondary C" />
+	<register name="DRAM_vbus_r17_cfg" type="RMuint32" address="0x03c4" comment="r17 Reserved" />
+	<register name="DRAM_vbus_r18_cfg" type="RMuint32" address="0x03c8" comment="r18 Reserved" />
+	<register name="DRAM_vbus_r19_cfg" type="RMuint32" address="0x03cc" comment="r19 Reserved" />
+	<register name="DRAM_vbus_r20_cfg" type="RMuint32" address="0x03d0" comment="r20 Reserved" />
+
+	<!-- DRAM MBUS Unit - offsets relative to REG_BASE_dram_controller -->
+	<register name="DRAM_mbus_w0_cfg"  type="RMuint32" address="0x0200" comment="HostInterface W0" />
+	<register name="DRAM_mbus_w1_cfg"  type="RMuint32" address="0x0204" comment="HostInterface W1" />
+	<register name="DRAM_mbus_w2_cfg"  type="RMuint32" address="0x0208" comment="HostInterface W2" />
+	<register name="DRAM_mbus_w3_cfg"  type="RMuint32" address="0x020c" comment="VideoDecoder0 W0(Misc)" />
+	<register name="DRAM_mbus_w4_cfg"  type="RMuint32" address="0x0210" comment="VideoDecoder1 W0(Misc)" />
+	<register name="DRAM_mbus_w5_cfg"  type="RMuint32" address="0x0214" comment="TransportDemux0 W0" />
+	<register name="DRAM_mbus_w6_cfg"  type="RMuint32" address="0x0218" comment="TransportDemux0 W1" />
+	<register name="DRAM_mbus_w7_cfg"  type="RMuint32" address="0x021c" comment="Audio0 W0" />
+	<register name="DRAM_mbus_w8_cfg"  type="RMuint32" address="0x0220" comment="Unused - it was Audio1 W0" />
+	<register name="DRAM_mbus_w9_cfg"  type="RMuint32" address="0x0224" comment="VideoDecoder0 W1(Dblk)" />
+	<register name="DRAM_mbus_w10_cfg" type="RMuint32" address="0x0228" comment="VideoDecoder1 W1(Dblk)" />
+	<register name="DRAM_mbus_w11_cfg" type="RMuint32" address="0x022c" comment="VideoDecoder0 W2(Store)" />
+	<register name="DRAM_mbus_w12_cfg" type="RMuint32" address="0x0230" comment="VideoDecoder1 W2(Store)" />
+	<register name="DRAM_mbus_w13_cfg" type="RMuint32" address="0x0234" comment="XPUBlock W0" />
+	<register name="DRAM_mbus_w14_cfg" type="RMuint32" address="0x0238" comment="VideoDecoder0 W3()" />
+	<register name="DRAM_mbus_w15_cfg" type="RMuint32" address="0x023c" comment="VideoDecoder1 W3()" />
+	<register name="DRAM_mbus_w16_cfg" type="RMuint32" address="0x0240" comment="VideoIn W0" />
+	<register name="DRAM_mbus_w17_cfg" type="RMuint32" address="0x0244" comment="VideoIn W1" />
+	<register name="DRAM_mbus_w18_cfg" type="RMuint32" address="0x0248" comment="GACC NX W0" />
+	<register name="DRAM_mbus_w19_cfg" type="RMuint32" address="0x024c" comment="HostInterface W5(PCIe W0) - it was Audio2 W0" />
+	<register name="DRAM_mbus_w20_cfg" type="RMuint32" address="0x0250" comment="HostInterface W3(Eth0 W0)"/>
+	<register name="DRAM_mbus_w21_cfg" type="RMuint32" address="0x0254" comment="HostInterface W4(Eth1 W0)" />
+
+	<register name="DRAM_mbus_r0_cfg"  type="RMuint32" address="0x0280" comment="HostInterface R0" />
+	<register name="DRAM_mbus_r1_cfg"  type="RMuint32" address="0x0284" comment="HostInterface R1" />
+	<register name="DRAM_mbus_r2_cfg"  type="RMuint32" address="0x0288" comment="HostInterface R2" />
+	<register name="DRAM_mbus_r3_cfg"  type="RMuint32" address="0x028c" comment="VideoDecoder0 R0(Misc)" />
+	<register name="DRAM_mbus_r4_cfg"  type="RMuint32" address="0x0290" comment="VideoDecoder0 R1(Huffman)" />
+	<register name="DRAM_mbus_r5_cfg"  type="RMuint32" address="0x0294" comment="VideoDecoder1 R0(Misc)" />
+	<register name="DRAM_mbus_r6_cfg"  type="RMuint32" address="0x0298" comment="VideoDecoder1 R1(Huffman)" />
+	<register name="DRAM_mbus_r7_cfg"  type="RMuint32" address="0x029c" comment="TransportDemux0 R0" />
+	<register name="DRAM_mbus_r8_cfg"  type="RMuint32" address="0x02a0" comment="TransportDemux0 R1" />
+	<register name="DRAM_mbus_r9_cfg"  type="RMuint32" address="0x02a4" comment="Audio0 R0" />
+	<register name="DRAM_mbus_r10_cfg" type="RMuint32" address="0x02a8" comment="Unused - it was Audio1 R0" />
+	<register name="DRAM_mbus_r11_cfg" type="RMuint32" address="0x02ac" comment="VideoDecoder0 R2(Dblk)" />
+	<register name="DRAM_mbus_r12_cfg" type="RMuint32" address="0x02b0" comment="VideoDecoder1 R2(Dblk)" />
+	<register name="DRAM_mbus_r13_cfg" type="RMuint32" address="0x02b4" comment="XPUBlock R0" />
+	<register name="DRAM_mbus_r14_cfg" type="RMuint32" address="0x02b8" comment="GACC X/Y R0" />
+	<register name="DRAM_mbus_r15_cfg" type="RMuint32" address="0x02bc" comment="GACC Z/Y R1" />
+	<register name="DRAM_mbus_r16_cfg" type="RMuint32" address="0x02c0" comment="GACC Z R2" />
+	<register name="DRAM_mbus_r17_cfg" type="RMuint32" address="0x02c4" comment="VideoDecoder1 R3 - it was Audio2 R0" />
+	<register name="DRAM_mbus_r18_cfg" type="RMuint32" address="0x02c8" comment="HostInterface R3(Eth0 R0)"/>
+	<register name="DRAM_mbus_r19_cfg" type="RMuint32" address="0x02cc" comment="HostInterface R4(Eth1 R0)" />
+	<register name="DRAM_mbus_r20_cfg" type="RMuint32" address="0x02d0" comment="dma2lbus" />
+	<register name="DRAM_mbus_r21_cfg" type="RMuint32" address="0x02d4" comment="HostInterface R5(PCIe R0)"/>
+	<register name="DRAM_mbus_r22_cfg" type="RMuint32" address="0x02d8" comment="HostInterface R6(PCIe R1)" />
+
+	<register name="DRAM_mpeg_engine_cfg" type="RMuint32" address="0x016c" comment="" />
+
+	<register name="SYS_watchdog_counter" type="RMuint32" address="0xfd00" />
+	<register name="SYS_watchdog_configuration" type="RMuint32" address="0xfd04" />
+
+	<register name="MARB_mid01_cfg" type="RMuint32" address="0x0200" comment="host_w0" />
+	<register name="MARB_mid21_cfg" type="RMuint32" address="0x0204" comment="host_r0" />
+	<register name="MARB_mid02_cfg" type="RMuint32" address="0x0208" comment="host_w1" />
+	<register name="MARB_mid22_cfg" type="RMuint32" address="0x020c" comment="host_r1" />
+	<register name="MARB_mid03_cfg" type="RMuint32" address="0x0210" comment="host_w2" />
+	<register name="MARB_mid23_cfg" type="RMuint32" address="0x0214" comment="host_r2" />
+	<register name="MARB_mid0D_cfg" type="RMuint32" address="0x0218" comment="host_w3(ETH0)" />
+	<register name="MARB_mid2D_cfg" type="RMuint32" address="0x021c" comment="host_r3(ETH0)" />
+	<register name="MARB_mid0F_cfg" type="RMuint32" address="0x0220" comment="host_w4(ETH1)" />
+	<register name="MARB_mid2F_cfg" type="RMuint32" address="0x0224" comment="host_r4(ETH1)" />
+	<register name="MARB_mid04_cfg" type="RMuint32" address="0x0228" comment="vdec0_w0" />
+	<register name="MARB_mid24_cfg" type="RMuint32" address="0x022c" comment="vdec0_r0" />
+	<register name="MARB_mid25_cfg" type="RMuint32" address="0x0230" comment="vdec0_r1" />
+	<register name="MARB_mid08_cfg" type="RMuint32" address="0x0234" comment="vdec1_w0" />
+	<register name="MARB_mid28_cfg" type="RMuint32" address="0x0238" comment="vdec1_r0" />
+	<register name="MARB_mid29_cfg" type="RMuint32" address="0x023c" comment="vdec1_r1" />
+	<register name="MARB_mid0C_cfg" type="RMuint32" address="0x0240" comment="tdmx0_w0" />
+	<register name="MARB_mid2C_cfg" type="RMuint32" address="0x0244" comment="tdmx0_r0" />
+	<register name="MARB_mid0E_cfg" type="RMuint32" address="0x0248" comment="tdmx1_w0" />
+	<register name="MARB_mid2E_cfg" type="RMuint32" address="0x024c" comment="tdmx1_r0" />
+	<register name="MARB_mid10_cfg" type="RMuint32" address="0x0250" comment="audio0_w0" />
+	<register name="MARB_mid30_cfg" type="RMuint32" address="0x0254" comment="audio0_r0" />
+	<register name="MARB_mid11_cfg" type="RMuint32" address="0x0258" comment="unused - it was audio1_w0" />
+	<register name="MARB_mid31_cfg" type="RMuint32" address="0x025c" comment="unused - it was audio1_r0" />
+	<register name="MARB_mid12_cfg" type="RMuint32" address="0x0260" comment="host_w5(pcie_w0) - it was audio2_w0" />
+	<register name="MARB_mid32_cfg" type="RMuint32" address="0x0264" comment="vdec1_r3 - it was audio2_r0" />
+	<register name="MARB_mid05_cfg" type="RMuint32" address="0x0268" comment="vdec0_w1" />
+	<register name="MARB_mid26_cfg" type="RMuint32" address="0x026c" comment="vdec0_r2" />
+	<register name="MARB_mid09_cfg" type="RMuint32" address="0x0270" comment="vdec1_w1" />
+	<register name="MARB_mid2A_cfg" type="RMuint32" address="0x0274" comment="vdec1_r2" />
+	<register name="MARB_mid06_cfg" type="RMuint32" address="0x0278" comment="vdec0_w2" />
+	<register name="MARB_mid0A_cfg" type="RMuint32" address="0x027c" comment="vdec1_w2" />
+	<register name="MARB_mid1C_cfg" type="RMuint32" address="0x0280" comment="xpu_w0" />
+	<register name="MARB_mid3C_cfg" type="RMuint32" address="0x0284" comment="xpu_r0" />
+	<register name="MARB_mid07_cfg" type="RMuint32" address="0x0288" comment="vdec0_w3" />
+	<register name="MARB_mid0B_cfg" type="RMuint32" address="0x028c" comment="vdec1_w3" />
+	<register name="MARB_mid18_cfg" type="RMuint32" address="0x0290" comment="vin_w0" />
+	<register name="MARB_mid19_cfg" type="RMuint32" address="0x0294" comment="vin_w1" />
+	<register name="MARB_mid1B_cfg" type="RMuint32" address="0x0298" comment="gacc_nx_w0" />
+	<register name="MARB_mid3D_cfg" type="RMuint32" address="0x029c" comment="gacc_x_r0" />
+	<register name="MARB_mid3E_cfg" type="RMuint32" address="0x02a0" comment="gacc_y_r1" />
+	<register name="MARB_mid3F_cfg" type="RMuint32" address="0x02a4" comment="gacc_z_r2" />
+	<register name="MARB_mid3A_cfg" type="RMuint32" address="0x02a8" comment="dma2lbus" />
+	<register name="MARB_mid2B_cfg" type="RMuint32" address="0x02ac" comment="host_r6(pcie_r1)" />
+	<register name="MARB_mid27_cfg" type="RMuint32" address="0x02b0" comment="host_r5(pcie_r0)" />
+
+	<register name="GARB_mid1_cfg"  type="RMuint32" address="0x0104" comment="simulation" />
+	<register name="GARB_mid2_cfg"  type="RMuint32" address="0x0108" comment="XPU" />
+	<register name="GARB_mid3_cfg"  type="RMuint32" address="0x010c" comment="IPU" />
+	<register name="GARB_mid4_cfg"  type="RMuint32" address="0x0110" comment="CPU" />
+	<register name="GARB_mid5_cfg"  type="RMuint32" address="0x0114" comment="CPU" />
+	<register name="GARB_mid6_cfg"  type="RMuint32" address="0x0118" comment="VDEC0" />
+	<register name="GARB_mid7_cfg"  type="RMuint32" address="0x011c" comment="VDEC1" />
+	<register name="GARB_mid8_cfg"  type="RMuint32" address="0x0120" comment="AUDIO0" />
+	<register name="GARB_mid9_cfg"  type="RMuint32" address="0x0124" comment="AUDIO1" />
+	<register name="GARB_midA_cfg"  type="RMuint32" address="0x0128" comment="TDMX0" />
+	<register name="GARB_midB_cfg"  type="RMuint32" address="0x012c" comment="TDMX1" />
+	<register name="GARB_midC_cfg"  type="RMuint32" address="0x0130" comment="HOST-Eth0" />
+	<register name="GARB_midD_cfg"  type="RMuint32" address="0x0134" comment="HOST-Eth1" />
+	<register name="GARB_midE_cfg"  type="RMuint32" address="0x0138" comment="HOST-PCI-USB" />
+	<register name="GARB_spy_addlo" type="RMuint32" address="0x0170" />
+	<register name="GARB_spy_addhi" type="RMuint32" address="0x0174" />
+	<register name="GARB_spy_cfg"   type="RMuint32" address="0x0178" />
+	<register name="GARB_spy_cnt"   type="RMuint32" address="0x017c" />
+
+	<register name="VARB_mid01_cfg" type="RMuint32" address="0x0300" comment="w0 MainVideo Write" />
+	<register name="VARB_mid02_cfg" type="RMuint32" address="0x0304" comment="w1 VXPNRDI IfmdWrite" />
+	<register name="VARB_mid03_cfg" type="RMuint32" address="0x0308" comment="w2 HDSD/CI Write" />
+	<register name="VARB_mid04_cfg" type="RMuint32" address="0x030c" comment="w3 VXPNRDI Write Y" />
+	<register name="VARB_mid05_cfg" type="RMuint32" address="0x0310" comment="w4 VXPNRDI Write C" />
+	<register name="VARB_mid06_cfg" type="RMuint32" address="0x0314" comment="w5 Reserved" />
+	<register name="VARB_mid07_cfg" type="RMuint32" address="0x036c" comment="w6 DigitalInput Y Write" />
+	<register name="VARB_mid08_cfg" type="RMuint32" address="0x0370" comment="w7 DigitalInput C Write" />
+
+	<register name="VARB_mid21_cfg" type="RMuint32" address="0x0318" comment="r0 VXPNRDI IFMD" />
+	<register name="VARB_mid22_cfg" type="RMuint32" address="0x031c" comment="r1 MainVideo Y" />
+	<register name="VARB_mid23_cfg" type="RMuint32" address="0x0320" comment="r2 MainVideo C" />
+	<register name="VARB_mid24_cfg" type="RMuint32" address="0x0324" comment="r3 VXPNRDI Current Y" />
+	<register name="VARB_mid25_cfg" type="RMuint32" address="0x0328" comment="r4 VXPNRDI Current C" />
+	<register name="VARB_mid26_cfg" type="RMuint32" address="0x032c" comment="r5 VXPNRDI Past Y" />
+	<register name="VARB_mid27_cfg" type="RMuint32" address="0x0330" comment="r6 VXPNRDI Past C" />
+	<register name="VARB_mid28_cfg" type="RMuint32" address="0x0334" comment="r7 Graphics0" />
+	<register name="VARB_mid29_cfg" type="RMuint32" address="0x0338" comment="r8 Secondary Y" />
+	<register name="VARB_mid2A_cfg" type="RMuint32" address="0x033c" comment="r9 Graphics2 Y" />
+	<register name="VARB_mid2B_cfg" type="RMuint32" address="0x0340" comment="r10 Graphics2 C" />
+	<register name="VARB_mid2C_cfg" type="RMuint32" address="0x0344" comment="r11 Graphics1 Y" />
+	<register name="VARB_mid2D_cfg" type="RMuint32" address="0x0348" comment="r12 Memory_1 Y" />
+	<register name="VARB_mid2E_cfg" type="RMuint32" address="0x034c" comment="r13 " />
+	<register name="VARB_mid2F_cfg" type="RMuint32" address="0x0350" comment="r14 HDSD/CI Read" />
+	<register name="VARB_mid30_cfg" type="RMuint32" address="0x0354" comment="r15 VXPNRDI IfmdRead" />
+	<register name="VARB_mid31_cfg" type="RMuint32" address="0x0358" comment="r16 Secondary C" />
+	<register name="VARB_mid32_cfg" type="RMuint32" address="0x035c" comment="r17 Reserved" />
+	<register name="VARB_mid33_cfg" type="RMuint32" address="0x0360" comment="r18 Reserved" />
+	<register name="VARB_mid34_cfg" type="RMuint32" address="0x0364" comment="r19 Reserved" />
+	<register name="VARB_mid35_cfg" type="RMuint32" address="0x0368" comment="r20 Reserved" />
+
+	<register name="IARB_mid01_cfg" type="RMuint32" address="0x0400" />
+	<register name="IARB_mid02_cfg" type="RMuint32" address="0x0404" />
+
+	<register name="SYS_gpio_dir" type="RMuint32" address="0x0500" />
+	<register name="SYS_gpio_data" type="RMuint32" address="0x0504" />
+	<register name="SYS_gpio_int" type="RMuint32" address="0x0508" />
+	<register name="SYS_gpio15_pwm" type="RMuint32" address="0x0510" />
+	<register name="SYS_gpio14_pwm" type="RMuint32" address="0x0514" />
+
+	<register name="REG_BASE_dram_controller_0" type="RMuint32" address="0x00030000" />
+	<register name="REG_BASE_dram_controller_1" type="RMuint32" address="0x00040000" />
+
+	<register name="MEM_BASE_dram_controller_0_alias" type="RMuint32" address="0x10000000" />
+	<register name="MEM_BASE_dram_controller_0" type="RMuint32" address="0x80000000" />
+	<register name="MEM_BASE_dram_controller_1_alias" type="RMuint32" address="0x20000000" />
+	<register name="MEM_BASE_dram_controller_1" type="RMuint32" address="0xc0000000" />
+
+	<register name="DRAM_dunit_cfg"                  type="RMuint32" address="0x0000" />
+	<register name="DRAM_dunit_delay0_ctrl"          type="RMuint32" address="0x0004" />
+	<register name="DRAM_dunit_delay1_ctrl"          type="RMuint32" address="0x0008" />
+	<register name="DRAM_dunit_auto_delay"           type="RMuint32" address="0x000c" />
+	<register name="DRAM_dunit_fall_delay0"          type="RMuint32" address="0x0010" />
+	<register name="DRAM_dunit_fall_delay1"          type="RMuint32" address="0x0014" />
+	<register name="DRAM_dunit_bw_lobound"           type="RMuint32" address="0x0018" />
+	<register name="DRAM_dunit_bw_hibound"           type="RMuint32" address="0x001c" />
+	<register name="DRAM_dunit_bw_probe_cfg"         type="RMuint32" address="0x0020" />
+	<register name="DRAM_dunit_bw_probe_cnt"         type="RMuint32" address="0x0024" />
+	<register name="DRAM_dunit_bw_cntall"            type="RMuint32" address="0x0028" />
+	<register name="DRAM_dunit_calibration_delay"    type="RMuint32" address="0x0030" />
+	<register name="DRAM_dunit_calibration_rise_err" type="RMuint32" address="0x0034" />
+	<register name="DRAM_dunit_calibration_fall_err" type="RMuint32" address="0x0038" />
+	<register name="DRAM_dunit_calibration_page"     type="RMuint32" address="0x0088" />
+
+	<register name="DRAM_dunit_flush_buffer" type="RMuint32" address="0x0104" />
+
+	<register name="REG_BASE_host_interface" type="RMuint32" address="0x00020000" />
+	<register name="MEM_BASE_host_interface" type="RMuint32" address="0x40000000" />
+
+	<register name="IDE_data" type="RMuint32" address="0x0000" />
+	<register name="IDE_error" type="RMuint32" address="0x0004" />
+	<register name="IDE_count" type="RMuint32" address="0x0008" />
+	<register name="IDE_start_sector" type="RMuint32" address="0x000c" />
+	<register name="IDE_cylinder_lo" type="RMuint32" address="0x0010" />
+	<register name="IDE_cylinder_hi" type="RMuint32" address="0x0014" />
+	<register name="IDE_head_device" type="RMuint32" address="0x0018" />
+	<register name="IDE_cmd_stat" type="RMuint32" address="0x001c" />
+	<register name="IDE_irq_stat" type="RMuint32" address="0x0218" />
+	<register name="IDE_cmd_stat__" type="RMuint32" address="0x021c" />
+
+	<register name="PB_timing0" type="RMuint32" address="0x0800" />
+	<register name="PB_timing1" type="RMuint32" address="0x0804" />
+	<register name="PB_timing2" type="RMuint32" address="0x0808" />
+	<register name="PB_timing3" type="RMuint32" address="0x080c" />
+	<register name="PB_timing4" type="RMuint32" address="0x0810" />
+	<register name="PB_timing5" type="RMuint32" address="0x0814" />
+	<register name="PB_default_timing" type="RMuint32" address="0x0818" />
+	<register name="PB_use_timing0" type="RMuint32" address="0x081c" />
+	<register name="PB_use_timing1" type="RMuint32" address="0x0820" />
+	<register name="PB_use_timing2" type="RMuint32" address="0x0824" />
+	<register name="PB_use_timing3" type="RMuint32" address="0x0828" />
+	<register name="PB_use_timing4" type="RMuint32" address="0x082c" />
+	<register name="PB_use_timing5" type="RMuint32" address="0x0830" />
+	<register name="PB_CS_config" type="RMuint32" address="0x0834" />
+	<register name="PB_automode_start_address" type="RMuint32" address="0x0840" />
+	<register name="PB_automode_control" type="RMuint32" address="0x0844" />
+
+	<register name="EMHWLIB_IS_HOST" type="RMuint32" address="0xe000" />
+	<register name="HOST_TEMP_SENSOR" type="RMuint32" address="0xe0f0" />
+	<register name="HOST_REG1" type="RMuint32" address="0xfed0" />
+	<register name="HOST_REG2" type="RMuint32" address="0xfed4" />
+
+	<register name="READ_ADDRESS" type="RMuint32" address="0xfec0" />
+	<register name="READ_COUNTER" type="RMuint32" address="0xfec4" />
+	<register name="READ_ENABLE" type="RMuint32" address="0xfec8" />
+	<register name="READ_REVERSE" type="RMuint32" address="0xfecc" />
+	<register name="WRITE_ADDRESS" type="RMuint32" address="0xfed8" />
+	<register name="WRITE_COUNTER" type="RMuint32" address="0xfedc" />
+	<register name="WRITE_ENABLE" type="RMuint32" address="0xfee0" />
+	<register name="BURST" type="RMuint32" address="0xfee4" />
+
+	<register name="PCI_TIMEOUT" type="RMuint32" address="0x8000" />
+	<register name="PCI_TIMEOUT_STATUS" type="RMuint32" address="0x8004" />
+	<register name="PCI_TIMER" type="RMuint32" address="0x8008" />
+	<register name="PCI_TIMER_TEST" type="RMuint32" address="0x800c" />
+	<register name="PCI_WAKEUP" type="RMuint32" address="0x8010" />
+
+	<register name="PCI_REGION_0_BASE" type="RMuint32" address="0x9000" />
+	<register name="PCI_REGION_1_BASE" type="RMuint32" address="0x9004" />
+	<register name="PCI_REGION_2_BASE" type="RMuint32" address="0x9008" />
+	<register name="PCI_REGION_3_BASE" type="RMuint32" address="0x900c" />
+	<register name="PCI_REGION_4_BASE" type="RMuint32" address="0x9010" />
+	<register name="PCI_REGION_5_BASE" type="RMuint32" address="0x9014" />
+	<register name="PCI_REGION_6_BASE" type="RMuint32" address="0x9018" />
+	<register name="PCI_REGION_7_BASE" type="RMuint32" address="0x901c" />
+
+	<register name="PCI_irq_status"   type="RMuint32" address="0x9020" />
+	<register name="PCI_irq_set"      type="RMuint32" address="0x9024" />
+	<register name="PCI_irq_clear"    type="RMuint32" address="0x9028" />
+
+	<register name="SBOX_FIFO_RESET" type="RMuint32" address="0x90a0" />
+	<register name="SBOX_FIFO_RESET2" type="RMuint32" address="0x90a4" />
+	<register name="SBOX_ROUTE"             type="RMuint32" address="0x90a8" />
+	<register name="SBOX_ROUTE2"            type="RMuint32" address="0x90ac" />
+	<register name="output_SBOX_MBUS_W0"    type="RMuint32" address="0x9080" />
+	<register name="output_SBOX_MBUS_W1"    type="RMuint32" address="0x9084" />
+	<register name="output_SBOX_PCI_MASTER" type="RMuint32" address="0x9088" />
+	<register name="output_SBOX_PCI_SLAVE"  type="RMuint32" address="0x908c" />
+	<register name="output_SBOX_SATA"       type="RMuint32" address="0x9090" />
+	<register name="output_SBOX_IDE_ISA"    type="RMuint32" address="0x9094" />
+	<register name="output_SBOX_IDE_DVD"    type="RMuint32" address="0x9098" />
+	<register name="output_SBOX_SATA2"      type="RMuint32" address="0x909c" />
+	<register name="output_SBOX_MBUS_W2"    type="RMuint32" address="0x90b0" />
+	<register name="input_keep_SBOX"        type="RMuint32" address="0" />
+	<register name="input_MBUS_R0_SBOX"     type="RMuint32" address="1" />
+	<register name="input_MBUS_R1_SBOX"     type="RMuint32" address="2" />
+	<register name="input_PCI_MASTER_SBOX"  type="RMuint32" address="3" />
+	<register name="input_PCI_SLAVE_SBOX"   type="RMuint32" address="4" />
+	<register name="input_SATA_SBOX"        type="RMuint32" address="5" />
+	<register name="input_IDE_ISA_SBOX"     type="RMuint32" address="6" />
+	<register name="input_IDE_DVD_SBOX"     type="RMuint32" address="7" />
+	<register name="input_SATA2_SBOX"       type="RMuint32" address="8" />
+	<register name="input_MBUS_R2_SBOX"     type="RMuint32" address="9" />
+	<register name="input_unconnected_SBOX" type="RMuint32" address="0xf" />
+
+	<register name="host_mutex0" type="RMuint32" address="0x9040" />
+	<register name="host_mutex1" type="RMuint32" address="0x9044" />
+	<register name="host_mutex2" type="RMuint32" address="0x9048" />
+	<register name="host_mutex3" type="RMuint32" address="0x904c" />
+	<register name="host_mutex4" type="RMuint32" address="0x9050" />
+	<register name="host_mutex5" type="RMuint32" address="0x9054" />
+	<register name="host_mutex6" type="RMuint32" address="0x9058" />
+	<register name="host_mutex7" type="RMuint32" address="0x905c" />
+	<register name="host_mutex8" type="RMuint32" address="0x9060" />
+	<register name="host_mutex9" type="RMuint32" address="0x9064" />
+	<register name="host_mutex10" type="RMuint32" address="0x9068" />
+	<register name="host_mutex11" type="RMuint32" address="0x906c" />
+	<register name="host_mutex12" type="RMuint32" address="0x9070" />
+	<register name="host_mutex13" type="RMuint32" address="0x9074" />
+	<register name="host_mutex14" type="RMuint32" address="0x9078" />
+	<register name="host_mutex15" type="RMuint32" address="0x907c" />
+	<register name="PCI_host_reg5" type="RMuint32" address="0xfe94" />
+	<register name="PCI_chip_is_host" type="RMuint32" address="0xfe90" />
+
+	<register name="IDECTRL_idesrc" type="RMuint32" address="0x20d0" />
+	<register name="IDECTRL_pri_drv1udmatim1" type="RMuint32" address="0x20e0" />
+	<register name="IDECTRL_pri_drv1udmatim2" type="RMuint32" address="0x20f0" />
+	<register name="IDECTRL_pri_idectl" type="RMuint32" address="0x2100" />
+	<register name="IDECTRL_pri_drv0tim" type="RMuint32" address="0x2110" />
+	<register name="IDECTRL_pri_drv1tim" type="RMuint32" address="0x2120" />
+	<register name="IDECTRL_idemisc" type="RMuint32" address="0x2130" />
+	<register name="IDECTRL_idestatus" type="RMuint32" address="0x2140" />
+	<register name="IDECTRL_udmactl" type="RMuint32" address="0x2150" />
+	<register name="IDECTRL_pri_drv0udmatim1" type="RMuint32" address="0x2160" />
+	<register name="IDECTRL_pri_drv0udmatim2" type="RMuint32" address="0x2170" />
+	<register name="IDECTRL_pref_st" type="RMuint32" address="0x2310" />
+	<register name="IDECTRL_pri_ctrlblock" type="RMuint32" address="0x2398" />
+	<register name="IDECTRL_pri_cmdblock" type="RMuint32" address="0x23c0" />
+	<register name="IDECTRL_bmic" type="RMuint32" address="0x2400" />
+	<register name="IDECTRL_bmis" type="RMuint32" address="0x2410" />
+	<register name="IDECTRL_bmidtp" type="RMuint32" address="0x2420" />
+	<register name="IDECTRL_ide_dmaptr" type="RMuint32" address="0x2780" />
+	<register name="IDECTRL_ide_dmalen" type="RMuint32" address="0x2790" />
+	<register name="IDECTRL_pio_prefetch_data" type="RMuint32" address="0x27c0" />
+
+	<register name="MEM_BASE_pfla" type="RMuint32" address="0x40000000" />
+	<register name="PB_CS0_OFFSET" type="RMuint32" address="0x00000000" />
+	<register name="PB_CS1_OFFSET" type="RMuint32" address="0x04000000" />
+	<register name="PB_CS2_OFFSET" type="RMuint32" address="0x08000000" />
+	<register name="PB_CS3_OFFSET" type="RMuint32" address="0x0c000000" />
+
+	<register name="ETH_gpio_dir1" type="RMuint32" address="0x7100" />
+	<register name="ETH_gpio_data1" type="RMuint32" address="0x7104" />
+	<register name="ETH_gpio_mask1" type="RMuint32" address="0x7108" />
+	<register name="ETH_gpio_dir2" type="RMuint32" address="0x710c" />
+	<register name="ETH_gpio_data2" type="RMuint32" address="0x7110" />
+
+
+	<register name="ETH0_pad_mode" type="RMuint32" address="0x6400" />
+	<register name="ETH0_gpio_dir0" type="RMuint32" address="0x6404" />
+	<register name="ETH0_gpio_data0" type="RMuint32" address="0x6408" />
+	<register name="ETH0_gpio_dir1" type="RMuint32" address="0x640c" />
+	<register name="ETH0_gpio_data1" type="RMuint32" address="0x6410" />
+	<register name="ETH0_gpio_irq_sel" type="RMuint32" address="0x641c" />
+
+	<register name="ETH1_pad_mode" type="RMuint32" address="0x6c00" />
+	<register name="ETH1_gpio_dir0" type="RMuint32" address="0x6c04" />
+	<register name="ETH1_gpio_data0" type="RMuint32" address="0x6c08" />
+	<register name="ETH1_gpio_dir1" type="RMuint32" address="0x6c0c" />
+	<register name="ETH1_gpio_data1" type="RMuint32" address="0x6c10" />
+	<register name="ETH1_gpio_irq_sel" type="RMuint32" address="0x6c1c" />
+
+	<register name="PB_automode_control1" type="RMuint32" address="0x0848" />
+	<register name="PB_CS_config1" type="RMuint32" address="0x0838" />
+	<register name="PB_CS_ctrl" type="RMuint32" address="0x083c" />
+	<register name="PB_strap_ctrl" type="RMuint32" address="0x0880" />
+	<register name="PB_strap0" type="RMuint32" address="0x0884" />
+	<register name="PB_strap1" type="RMuint32" address="0x0888" />
+	<register name="PB_ECC_code0" type="RMuint32" address="0x08c0" />
+	<register name="PB_ECC_code1" type="RMuint32" address="0x08c4" />
+	<register name="PB_ECC_code2" type="RMuint32" address="0x08c8" />
+	<register name="PB_ECC_code3" type="RMuint32" address="0x08cc" />
+	<register name="PB_ECC_clear" type="RMuint32" address="0x08d0" />
+	<register name="PB_ECC1_code0" type="RMuint32" address="0x08d4" />
+	<register name="PB_ECC1_code1" type="RMuint32" address="0x08d8" />
+	<register name="PB_ECC1_code2" type="RMuint32" address="0x08dc" />
+	<register name="PB_ECC1_code3" type="RMuint32" address="0x08e0" />
+	<register name="PB_ECC1_clear" type="RMuint32" address="0x08e4" />
+	<register name="PB_SPI_ctrl" type="RMuint32" address="0x08e8" />
+	<register name="PB_padmode_pbusb" type="RMuint32" address="0x08f0" />
+
+	<register name="PB1_timing0" type="RMuint32" address="0x0900" />
+	<register name="PB1_timing1" type="RMuint32" address="0x0904" />
+	<register name="PB1_timing2" type="RMuint32" address="0x0908" />
+	<register name="PB1_timing3" type="RMuint32" address="0x090c" />
+	<register name="PB1_timing4" type="RMuint32" address="0x0910" />
+	<register name="PB1_timing5" type="RMuint32" address="0x0914" />
+	<register name="PB1_default_timing" type="RMuint32" address="0x0918" />
+	<register name="PB1_use_timing0" type="RMuint32" address="0x091c" />
+	<register name="PB1_use_timing1" type="RMuint32" address="0x0920" />
+	<register name="PB1_use_timing2" type="RMuint32" address="0x0924" />
+	<register name="PB1_use_timing3" type="RMuint32" address="0x0928" />
+	<register name="PB1_use_timing4" type="RMuint32" address="0x092c" />
+	<register name="PB1_use_timing5" type="RMuint32" address="0x0930" />
+	<register name="PB1_CS_config" type="RMuint32" address="0x0934" />
+	<register name="PB1_CS_config1" type="RMuint32" address="0x0938" />
+	<register name="PB1_CS_ctrl" type="RMuint32" address="0x093c" />
+	<register name="PB1_automode_start_address" type="RMuint32" address="0x0940" />
+	<register name="PB1_automode_control" type="RMuint32" address="0x0944" />
+	<register name="PB1_automode_control1" type="RMuint32" address="0x0948" />
+
+	<register name="PB1_strap_ctrl" type="RMuint32" address="0x0980" />
+	<register name="PB1_strap0" type="RMuint32" address="0x0984" />
+	<register name="PB1_strap1" type="RMuint32" address="0x0988" />
+	<register name="PB1_ECC_code0" type="RMuint32" address="0x09c0" />
+	<register name="PB1_ECC_code1" type="RMuint32" address="0x09c4" />
+	<register name="PB1_ECC_code2" type="RMuint32" address="0x09c8" />
+	<register name="PB1_ECC_code3" type="RMuint32" address="0x09cc" />
+	<register name="PB1_ECC_clear" type="RMuint32" address="0x09d0" />
+	<register name="PB1_ECC1_code0" type="RMuint32" address="0x09d4" />
+	<register name="PB1_ECC1_code1" type="RMuint32" address="0x09d8" />
+	<register name="PB1_ECC1_code2" type="RMuint32" address="0x09dc" />
+	<register name="PB1_ECC1_code3" type="RMuint32" address="0x09e0" />
+	<register name="PB1_ECC1_clear" type="RMuint32" address="0x09e4" />
+	<register name="PB1_SPI_ctrl" type="RMuint32" address="0x09e8" />
+
+	<register name="SYS_cec_config" type="RMuint32" address="0x1800" />
+	<register name="SYS_cec_status" type="RMuint32" address="0x1804" />
+	<register name="SYS_cec_clk_div" type="RMuint32" address="0x180C" />
+	<register name="SYS_cec_follower_select" type="RMuint32" address="0x1808" />
+	<register name="SYS_cec_sft" type="RMuint32" address="0x1810" />
+	<register name="SYS_cec_start_lo" type="RMuint32" address="0x1814" />
+	<register name="SYS_cec_start_hi" type="RMuint32" address="0x1818" />
+	<register name="SYS_cec_zero_lo" type="RMuint32" address="0x181C" />
+	<register name="SYS_cec_zero_hi" type="RMuint32" address="0x1820" />
+	<register name="SYS_cec_one_lo" type="RMuint32" address="0x1824" />
+	<register name="SYS_cec_one_hi" type="RMuint32" address="0x1828" />
+	<register name="SYS_cec_ack_win_lo" type="RMuint32" address="0x182C" />
+	<register name="SYS_cec_ack_win_hi" type="RMuint32" address="0x1830" />
+	<register name="SYS_cec_sample_delay" type="RMuint32" address="0x1834" />
+	<register name="SYS_cec_receive_win" type="RMuint32" address="0x1838" />
+	<register name="SYS_cec_init_xfer_hdr" type="RMuint32" address="0x183C" />
+	<register name="SYS_cec_init_xfer_data" type="RMuint32" address="0x1840" />
+	<register name="SYS_cec_follower_header" type="RMuint32" address="0x1860" />
+	<register name="SYS_cec_follower_data" type="RMuint32" address="0x1864" />
+
+	<register name="PCI_host_reg1" type="RMuint32" address="0xfed0" />
+	<register name="PCI_host_reg2" type="RMuint32" address="0xfed4" />
+	<register name="PCI_host_reg3" type="RMuint32" address="0xfe80" />
+	<register name="PCI_host_reg4" type="RMuint32" address="0xfe84" />
+
+	<register name="PCI_pcictrl_reg1" type="RMuint32" address="0xfe88" />
+	<register name="PCI_pcictrl_reg2" type="RMuint32" address="0xfe8c" />
+	<register name="PCI_pcictrl_reg3" type="RMuint32" address="0xfefc" />
+
+	<register name="PCI_REG0" type="RMuint32" address="0xfee8" />
+	<register name="PCI_REG1" type="RMuint32" address="0xfeec" />
+	<register name="PCI_REG2" type="RMuint32" address="0xfef0" />
+	<register name="PCI_REG3" type="RMuint32" address="0xfef4" />
+	<register name="PCI_CONFIG" type="RMuint32" address="0xfef8" />
+
+	<!-- MIF registers have been reordered - offsets relative to REG_BASE_host_interface -->
+	<register name="MIF_W0_ADD"  type="RMuint32" address="0xb000" />
+	<register name="MIF_W0_CNT"  type="RMuint32" address="0xb004" />
+	<register name="MIF_W0_SKIP" type="RMuint32" address="0xb008" />
+	<register name="MIF_W0_CMD"  type="RMuint32" address="0xb00c" />
+
+	<register name="MIF_W1_ADD"  type="RMuint32" address="0xb040" />
+	<register name="MIF_W1_CNT"  type="RMuint32" address="0xb044" />
+	<register name="MIF_W1_SKIP" type="RMuint32" address="0xb048" />
+	<register name="MIF_W1_CMD"  type="RMuint32" address="0xb04c" />
+
+	<register name="MIF_W2_ADD"  type="RMuint32" address="0xb080" />
+	<register name="MIF_W2_CNT"  type="RMuint32" address="0xb084" />
+	<register name="MIF_W2_SKIP" type="RMuint32" address="0xb088" />
+	<register name="MIF_W2_CMD"  type="RMuint32" address="0xb08c" />
+
+<!--
+	<register name="MIF_HOLE_ADD"  type="RMuint32" address="0xb0c0" />
+	<register name="MIF_HOLE_CNT"  type="RMuint32" address="0xb0c4" />
+	<register name="MIF_HOLE_SKIP" type="RMuint32" address="0xb0c8" />
+	<register name="MIF_HOLE_CMD"  type="RMuint32" address="0xb0cc" />
+-->
+
+	<register name="MIF_R0_ADD"  type="RMuint32" address="0xb100" />
+	<register name="MIF_R0_CNT"  type="RMuint32" address="0xb104" />
+	<register name="MIF_R0_SKIP" type="RMuint32" address="0xb108" />
+	<register name="MIF_R0_CMD"  type="RMuint32" address="0xb10c" />
+
+	<register name="MIF_R1_ADD"  type="RMuint32" address="0xb140" />
+	<register name="MIF_R1_CNT"  type="RMuint32" address="0xb144" />
+	<register name="MIF_R1_SKIP" type="RMuint32" address="0xb148" />
+	<register name="MIF_R1_CMD"  type="RMuint32" address="0xb14c" />
+
+	<register name="MIF_R2_ADD"  type="RMuint32" address="0xb180" />
+	<register name="MIF_R2_CNT"  type="RMuint32" address="0xb184" />
+	<register name="MIF_R2_SKIP" type="RMuint32" address="0xb188" />
+	<register name="MIF_R2_CMD"  type="RMuint32" address="0xb18c" />
+
+<!--
+	<register name="MIF_R3_ADD"  type="RMuint32" address="0xb1c0" />
+	<register name="MIF_R3_CNT"  type="RMuint32" address="0xb1c4" />
+	<register name="MIF_R3_SKIP" type="RMuint32" address="0xb1c8" />
+	<register name="MIF_R3_CMD"  type="RMuint32" address="0xb1cc" />
+
+	<register name="MIF_R4_ADD"  type="RMuint32" address="0xb200" />
+	<register name="MIF_R4_CNT"  type="RMuint32" address="0xb204" />
+	<register name="MIF_R4_SKIP" type="RMuint32" address="0xb208" />
+	<register name="MIF_R4_CMD"  type="RMuint32" address="0xb20c" />
+-->
+
+
+	<register name="MBUS_IDLE"           type="RMuint32" address="0x0" />
+	<register name="MBUS_VOID"           type="RMuint32" address="0x1" />
+	<register name="MBUS_LINEAR"         type="RMuint32" address="0x2" />
+	<register name="MBUS_LINEAR_VOID"    type="RMuint32" address="0x3" />
+	<register name="MBUS_DOUBLE"         type="RMuint32" address="0x4" />
+	<register name="MBUS_DOUBLE_VOID"    type="RMuint32" address="0x5" />
+	<register name="MBUS_RECTANGLE"      type="RMuint32" address="0x6" />
+	<register name="MBUS_RECTANGLE_VOID" type="RMuint32" address="0x7" />
+	<register name="MBUS_INTERLACED_RECTANGLE" type="RMuint32" address="0x8" />
+	<register name="MBUS_INTERLACED_RECTANGLE_VOID" type="RMuint32" address="0x9" />
+	<register name="MBUS_DOUBLE_RECTANGLE" type="RMuint32" address="0xa" />
+	<register name="MBUS_DOUBLE_RECTANGLE_VOID" type="RMuint32" address="0xb" />
+	<register name="MBUS_VERTICAL" type="RMuint32" address="0xc" />
+	<register name="MBUS_VERTICAL_VOID" type="RMuint32" address="0xd" />
+	<register name="MBUS_DOUBLE_VERTICAL" type="RMuint32" address="0xe" />
+	<register name="MBUS_DOUBLE_VERTICAL_VOID" type="RMuint32" address="0xf" />
+	<register name="MBUS_TILED"          type="RMuint32" address="0x2000" />
+
+	<register name="GBUS_MUTEX_LOCAL"   type="RMuint32" address="0x10" />
+
+	<register name="GBUS_MUTEX_XPU" type="RMuint32" address="0x12" />
+	<register name="GBUS_MUTEX_IPU" type="RMuint32" address="0x13" />
+	<register name="GBUS_MUTEX_CPU" type="RMuint32" address="0x14" />
+	<register name="GBUS_MUTEX_CPU_1" type="RMuint32" address="0x15" />
+	<register name="GBUS_MUTEX_MPEG_0" type="RMuint32" address="0x16" />
+	<register name="GBUS_MUTEX_MPEG_1" type="RMuint32" address="0x17" />
+	<register name="GBUS_MUTEX_AUDIO_0" type="RMuint32" address="0x18" />
+	<register name="GBUS_MUTEX_AUDIO_1" type="RMuint32" address="0x19" />
+	<register name="GBUS_MUTEX_TDMX" type="RMuint32" address="0x1a" />
+	<register name="GBUS_MUTEX_TDMX_1" type="RMuint32" address="0x1b" />
+	<register name="GBUS_MUTEX_AUDIO_2" type="RMuint32" address="0x1b" />
+	<register name="GBUS_MUTEX_HOST" type="RMuint32" address="0x1c" />
+	<register name="GBUS_MUTEX_HOST_1" type="RMuint32" address="0x1d" />
+	<register name="GBUS_MUTEX_HOST_2" type="RMuint32" address="0x1e" />
+
+	<register name="SYS_UART0_base"       type="RMuint32" address="0x0700" />
+	<register name="SYS_chip_device_id"   type="RMuint32" address="0xfe00" />
+	<register name="SYS_chip_revision_id" type="RMuint32" address="0xfe04" />
+	<register name="SYS_chip_features"    type="RMuint32" address="0xfe0c" />
+</module>
+
+<module category="XPUBlock">
+	<register name="REG_BASE_xpu_block" type="RMuint32" address="0x000e0000" />
+
+	<!-- Montgomery accelerator -->
+	<register name="XPU_montgomery_reg_base_idx0"    type="RMuint32" address="0xd800" />
+	<register name="XPU_montgomery_reg_base_idx1"    type="RMuint32" address="0xd910" />
+	<register name="XPU_montgomery_reg_base_idx2"    type="RMuint32" address="0xda20" />
+	<register name="XPU_montgomery_reg_base_idx3"    type="RMuint32" address="0xdb30" />
+	<register name="XPU_montgomery_reg_base_modulus" type="RMuint32" address="0xdd00" />
+	<register name="XPU_montgomery_control"          type="RMuint32" address="0xdf00" />
+	<register name="XPU_montgomery_operand_sel"      type="RMuint32" address="0xdf04" />
+	<register name="XPU_montgomery_debug_status"     type="RMuint32" address="0xdf08" />
+	<register name="XPU_montgomery_int_clr_enable"   type="RMuint32" address="0xdfd8" />
+	<register name="XPU_montgomery_int_set_enable"   type="RMuint32" address="0xdfdc" />
+	<register name="XPU_montgomery_int_status"       type="RMuint32" address="0xdfe0" />
+	<register name="XPU_montgomery_int_enable"       type="RMuint32" address="0xdfe4" />
+	<register name="XPU_montgomery_clr_status"       type="RMuint32" address="0xdfe8" />
+	<register name="XPU_montgomery_set_status"       type="RMuint32" address="0xdfec" />
+	<register name="XPU_montgomery_soft_reset"       type="RMuint32" address="0xdff0" />
+	<register name="XPU_montgomery_mod_id"           type="RMuint32" address="0xdffc" />
+</module>
+
+<module category="MpegEngine">
+	<register name="REG_BASE_mpeg_engine_0"    type="RMuint32" address="0x00080000" />
+	<register name="MEM_BASE_mpeg_engine_0"    type="RMuint32" address="0x00100000" />
+	<register name="PMEM_BASE_mpeg_engine_0"   type="RMuint32" address="0x00100000" />
+	<register name="PMEM_SIZE_mpeg_engine_0"   type="RMuint32" address="0x4000" />
+	<register name="DMEM_BASE_mpeg_engine_0"   type="RMuint32" address="0x00110000" />
+	<register name="DMEM_SIZE_mpeg_engine_0"   type="RMuint32" address="0x3000" />
+	<register name="REG_BASE_mpeg_engine_1"    type="RMuint32" address="0x00081000" />
+	<register name="MEM_BASE_mpeg_engine_1"    type="RMuint32" address="0x00120000" />
+	<register name="PMEM_BASE_mpeg_engine_1"   type="RMuint32" address="0x00120000" />
+	<register name="PMEM_SIZE_mpeg_engine_1"   type="RMuint32" address="0x8000" />
+	<register name="DMEM_BASE_mpeg_engine_1"   type="RMuint32" address="0x00130000" />
+	<register name="DMEM_SIZE_mpeg_engine_1"   type="RMuint32" address="0x3000" />
+
+	<register name="mpeg_MBUSIF_w0_addlo"      type="RMuint32" address="0x3E80" />
+	<register name="mpeg_MBUSIF_w0_addhi"      type="RMuint32" address="0x3E81" />
+	<register name="mpeg_MBUSIF_w0_xcnt"       type="RMuint32" address="0x3E82" />
+	<register name="mpeg_MBUSIF_w0_ycnt"       type="RMuint32" address="0x3E83" />
+	<register name="mpeg_MBUSIF_w0_skiplo"     type="RMuint32" address="0x3E84" />
+	<register name="mpeg_MBUSIF_w0_skiphi"     type="RMuint32" address="0x3E85" />
+	<register name="mpeg_MBUSIF_w0_cmd"        type="RMuint32" address="0x3E86" />
+	<register name="mpeg_MBUSIF_w0_vbuf_width" type="RMuint32" address="0x3E87" />
+
+	<register name="mpeg_MBUSIF_w1_addlo"      type="RMuint32" address="0x3E90" />
+	<register name="mpeg_MBUSIF_w1_addhi"      type="RMuint32" address="0x3E91" />
+	<register name="mpeg_MBUSIF_w1_xcnt"       type="RMuint32" address="0x3E92" />
+	<register name="mpeg_MBUSIF_w1_ycnt"       type="RMuint32" address="0x3E93" />
+	<register name="mpeg_MBUSIF_w1_skiplo"     type="RMuint32" address="0x3E94" />
+	<register name="mpeg_MBUSIF_w1_skiphi"     type="RMuint32" address="0x3E95" />
+	<register name="mpeg_MBUSIF_w1_cmd"        type="RMuint32" address="0x3E96" />
+	<register name="mpeg_MBUSIF_w1_vbuf_width" type="RMuint32" address="0x3E97" />
+
+	<register name="mpeg_MBUSIF_w2_addlo"      type="RMuint32" address="0x3EA0" />
+	<register name="mpeg_MBUSIF_w2_addhi"      type="RMuint32" address="0x3EA1" />
+	<register name="mpeg_MBUSIF_w2_xcnt"       type="RMuint32" address="0x3EA2" />
+	<register name="mpeg_MBUSIF_w2_ycnt"       type="RMuint32" address="0x3EA3" />
+	<register name="mpeg_MBUSIF_w2_skiplo"     type="RMuint32" address="0x3EA4" />
+	<register name="mpeg_MBUSIF_w2_skiphi"     type="RMuint32" address="0x3EA5" />
+	<register name="mpeg_MBUSIF_w2_cmd"        type="RMuint32" address="0x3EA6" />
+	<register name="mpeg_MBUSIF_w2_vbuf_width" type="RMuint32" address="0x3EA7" />
+
+	<register name="mpeg_MBUSIF_w3_addlo"      type="RMuint32" address="0x3EB0" />
+	<register name="mpeg_MBUSIF_w3_addhi"      type="RMuint32" address="0x3EB1" />
+	<register name="mpeg_MBUSIF_w3_xcnt"       type="RMuint32" address="0x3EB2" />
+	<register name="mpeg_MBUSIF_w3_ycnt"       type="RMuint32" address="0x3EB3" />
+	<register name="mpeg_MBUSIF_w3_skiplo"     type="RMuint32" address="0x3EB4" />
+	<register name="mpeg_MBUSIF_w3_skiphi"     type="RMuint32" address="0x3EB5" />
+	<register name="mpeg_MBUSIF_w3_cmd"        type="RMuint32" address="0x3EB6" />
+	<register name="mpeg_MBUSIF_w3_vbuf_width" type="RMuint32" address="0x3EB7" />
+
+	<register name="mpeg_MBUSIF_r0_addlo"      type="RMuint32" address="0x3EC0" />
+	<register name="mpeg_MBUSIF_r0_addhi"      type="RMuint32" address="0x3EC1" />
+	<register name="mpeg_MBUSIF_r0_xcnt"       type="RMuint32" address="0x3EC2" />
+	<register name="mpeg_MBUSIF_r0_ycnt"       type="RMuint32" address="0x3EC3" />
+	<register name="mpeg_MBUSIF_r0_skiplo"     type="RMuint32" address="0x3EC4" />
+	<register name="mpeg_MBUSIF_r0_skiphi"     type="RMuint32" address="0x3EC5" />
+	<register name="mpeg_MBUSIF_r0_cmd"        type="RMuint32" address="0x3EC6" />
+	<register name="mpeg_MBUSIF_r0_vbuf_width" type="RMuint32" address="0x3EC7" />
+
+	<register name="mpeg_MBUSIF_r1_addlo"      type="RMuint32" address="0x3ED0" />
+	<register name="mpeg_MBUSIF_r1_addhi"      type="RMuint32" address="0x3ED1" />
+	<register name="mpeg_MBUSIF_r1_xcnt"       type="RMuint32" address="0x3ED2" />
+	<register name="mpeg_MBUSIF_r1_ycnt"       type="RMuint32" address="0x3ED3" />
+	<register name="mpeg_MBUSIF_r1_skiplo"     type="RMuint32" address="0x3ED4" />
+	<register name="mpeg_MBUSIF_r1_skiphi"     type="RMuint32" address="0x3ED5" />
+	<register name="mpeg_MBUSIF_r1_cmd"        type="RMuint32" address="0x3ED6" />
+	<register name="mpeg_MBUSIF_r1_vbuf_width" type="RMuint32" address="0x3ED7" />
+
+	<register name="mpeg_MBUSIF_r2_addlo"      type="RMuint32" address="0x3EE0" />
+	<register name="mpeg_MBUSIF_r2_addhi"      type="RMuint32" address="0x3EE1" />
+	<register name="mpeg_MBUSIF_r2_xcnt"       type="RMuint32" address="0x3EE2" />
+	<register name="mpeg_MBUSIF_r2_ycnt"       type="RMuint32" address="0x3EE3" />
+	<register name="mpeg_MBUSIF_r2_skiplo"     type="RMuint32" address="0x3EE4" />
+	<register name="mpeg_MBUSIF_r2_skiphi"     type="RMuint32" address="0x3EE5" />
+	<register name="mpeg_MBUSIF_r2_cmd"        type="RMuint32" address="0x3EE6" />
+	<register name="mpeg_MBUSIF_r2_vbuf_width" type="RMuint32" address="0x3EE7" />
+
+	<register name="mpeg_GBUSIF_MAIN_WADD_LOW"     type="RMuint32" address="0x39C0" />
+	<register name="mpeg_GBUSIF_MAIN_WADD_HIGH"    type="RMuint32" address="0x39C1" />
+	<register name="mpeg_GBUSIF_MAIN_RADD_LOW"     type="RMuint32" address="0x39C2" />
+	<register name="mpeg_GBUSIF_MAIN_RADD_HIGH"    type="RMuint32" address="0x39C3" />
+	<register name="mpeg_GBUSIF_MAIN_BYTE"         type="RMuint32" address="0x39C4" />
+	<register name="mpeg_GBUSIF_MAIN_WORD"         type="RMuint32" address="0x39C6" />
+	<register name="mpeg_GBUSIF_MAIN_DWORD_LOW"    type="RMuint32" address="0x39C8" />
+	<register name="mpeg_GBUSIF_MAIN_DWORD_HIGH"   type="RMuint32" address="0x39C9" />
+	<register name="mpeg_GBUSIF_MAIN_STATUS"       type="RMuint32" address="0x39CA" />
+	<register name="mpeg_GBUSIF_ISR_WADD_LOW"      type="RMuint32" address="0x39D0" />
+	<register name="mpeg_GBUSIF_ISR_WADD_HIGH"     type="RMuint32" address="0x39D1" />
+	<register name="mpeg_GBUSIF_ISR_RADD_LOW"      type="RMuint32" address="0x39D2" />
+	<register name="mpeg_GBUSIF_ISR_RADD_HIGH"     type="RMuint32" address="0x39D3" />
+	<register name="mpeg_GBUSIF_ISR_BYTE"          type="RMuint32" address="0x39D4" />
+	<register name="mpeg_GBUSIF_ISR_WORD"          type="RMuint32" address="0x39D6" />
+	<register name="mpeg_GBUSIF_ISR_DWORD_LOW"     type="RMuint32" address="0x39D8" />
+	<register name="mpeg_GBUSIF_ISR_DWORD_HIGH"    type="RMuint32" address="0x39D9" />
+	<register name="mpeg_GBUSIF_ISR_STATUS"        type="RMuint32" address="0x39DA" />
+
+	<register name="mpeg_MISC_mutex0"              type="RMuint32" address="0x3fc0" />
+	<register name="mpeg_MISC_mutex1"              type="RMuint32" address="0x3fc1" />
+
+	<register name="mpeg_mutex0"                   type="RMuint32" address="0x3FE0" />
+	<register name="mpeg_mutex1"                   type="RMuint32" address="0x3FE1" />
+	<register name="mpeg_mutex2"                   type="RMuint32" address="0x3FE2" />
+	<register name="mpeg_mutex3"                   type="RMuint32" address="0x3FE3" />
+	<register name="mpeg_mutex4"                   type="RMuint32" address="0x3FE4" />
+	<register name="mpeg_mutex5"                   type="RMuint32" address="0x3FE5" />
+	<register name="mpeg_mutex6"                   type="RMuint32" address="0x3FE6" />
+	<register name="mpeg_mutex7"                   type="RMuint32" address="0x3FE7" />
+
+	<register name="mpeg_MISC_w1_cfg"              type="RMuint32" address="0x3FE9" />
+	<register name="mpeg_MISC_dsp_irq_extend"      type="RMuint32" address="0x3FEA" />
+	<register name="mpeg_MISC_dsp_irq_extend_mask" type="RMuint32" address="0x3FEB" />
+	<register name="mpeg_MISC_ssbox_mode"          type="RMuint32" address="0x3FEC" />
+	<register name="mpeg_MISC_reset2"              type="RMuint32" address="0x3FED" />
+	<register name="mpeg_MISC_mvp_hd_read_ctrl"    type="RMuint32" address="0x3FEE" />
+	<register name="mpeg_MISC_mvp_hd_write_ctrl"   type="RMuint32" address="0x3FEF" />
+	<register name="mpeg_MISC_dr_mode"             type="RMuint32" address="0x3FF0" />
+	<register name="mpeg_MISC_dr_length"           type="RMuint32" address="0x3FF1" />
+	<register name="mpeg_MISC_dr_address"          type="RMuint32" address="0x3FF2" />
+	<register name="mpeg_MISC_sbox_mode"           type="RMuint32" address="0x3FF3" />
+	<register name="mpeg_MISC_dw_mode"             type="RMuint32" address="0x3FF4" />
+	<register name="mpeg_MISC_dw_length"           type="RMuint32" address="0x3FF5" />
+	<register name="mpeg_MISC_dw_address"          type="RMuint32" address="0x3FF6" />
+	<register name="mpeg_MISC_codec_type"          type="RMuint32" address="0x3FF7" />
+	<register name="mpeg_MISC_reset0"              type="RMuint32" address="0x3FF8" />
+	<register name="mpeg_MISC_reset1"              type="RMuint32" address="0x3FF9" />
+	<register name="mpeg_MISC_interrupt"           type="RMuint32" address="0x3FFA" />
+	<register name="mpeg_MISC_timer_div"           type="RMuint32" address="0x3FFB" />
+	<register name="mpeg_MISC_timer_count"         type="RMuint32" address="0x3FFC" />
+	<register name="mpeg_MISC_sbox_read_ctrl"      type="RMuint32" address="0x3FFD" />
+	<register name="mpeg_MISC_sbox_write_ctrl"     type="RMuint32" address="0x3FFE" />
+	<register name="mpeg_MISC_version_revision"    type="RMuint32" address="0x3FFF" />
+
+	<register name="mpeg_MISC_UNRESET_MASK"        type="RMuint32" address="0x3500" />
+	<register name="mpeg_MISC_RESET_MASK"          type="RMuint32" address="0x3535" />
+
+	<register name="MPEG_TEMP_SENSOR"              type="RMuint32" address="0xfe80" />
+
+</module>
+
+</chip>
+

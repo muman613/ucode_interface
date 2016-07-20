@@ -1,0 +1,632 @@
+<?xml version="1.0"?>
+<!DOCTYPE em86xxTargetConfig SYSTEM "smpTargetConfig.dtd">
+<em86xxTargetConfig version="2.1">
+  <target id="8634" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0xC0000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0xD0000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0xA0000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x90000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x0FFA=0x101" reset="0xFFFC"/>
+    </block>
+  </target>
+
+  <target id="8644" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0xC0000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0xD0000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="2">
+        <io_map base=""/>
+        <pm_map base="0x160000" size="0x00004000"/>
+        <dm_map base="0x170000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0xA0000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x90000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x0FFA=0x101" reset="0xFFFC"/>
+    </block>
+  </target>
+
+  <target id="8646" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0xC0000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0xD0000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="2">
+        <io_map base=""/>
+        <pm_map base="0x160000" size="0x00004000"/>
+        <dm_map base="0x170000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0xA0000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x90000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x0FFA=0x101" reset="0xFFFC"/>
+    </block>
+  </target>
+
+  <target id="8652" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0xC0000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0xD0000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0xA0000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x90000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x0FFA=0x101" reset="0xFFFC"/>
+    </block>
+  </target>
+
+  <target id="8654" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0xC0000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0xD0000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0xA0000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x90000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x0FFA=0x101" reset="0xFFFC"/>
+    </block>
+  </target>
+
+  <target id="8656" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0xC0000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0xD0000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0xA0000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x90000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x0FFA=0x101" reset="0xFFFC"/>
+    </block>
+  </target>
+
+  <target id="8670" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0xC0000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0xD0000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0xA0000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0xFFFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x90000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x0FFA=0x101" reset="0xFFFC"/>
+    </block>
+  </target>
+
+  <target id="8672" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0x84000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x85000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0x82000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x81000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3FFA=0x101" reset="0x0FFC"/>
+    </block>
+  </target>
+
+  <target id="8674" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0x84000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x85000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0x82000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0xefffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x81000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0xefffffff"/>
+      </engine>
+      <control hostint="0x3FFA=0x101" reset="0x0FFC"/>
+    </block>
+  </target>
+  
+  <target id="SMP8756" name="Chablis" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0x84000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x85000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="2">
+        <io_map base="0x86000"/>
+        <pm_map base="0x1C0000" size="0x00004000"/>
+        <dm_map base="0x1D0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0x82000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x00003000" width="2"/>
+        <dram_map base="0x10000000" size="0xefffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x81000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x00003000" width="2"/>
+        <dram_map base="0x10000000" size="0xefffffff"/>
+      </engine>
+      <control hostint="0x3FDC=0x101;0x3DC9=0x101;0x3FFA=0x101" reset="0x0FFC"/>
+    </block>
+  </target>
+
+  <target id="SMP8758" name="Riesling B" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0x84000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x85000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="2">
+        <io_map base="0x86000"/>
+        <pm_map base="0x1C0000" size="0x00004000"/>
+        <dm_map base="0x1D0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0x82000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x00003000" width="2"/>
+        <dram_map base="0x10000000" size="0xefffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x81000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x00003000" width="2"/>
+        <dram_map base="0x10000000" size="0xefffffff"/>
+      </engine>
+      <control hostint="0x3FDC=0x101;0x3DC9=0x101;0x3FFA=0x101" reset="0x0FFC"/>
+    </block>
+  </target>
+
+  <target id="SMP8910" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0x84000"/>
+        <pm_map base="0x180000" size="0x00004000"/>
+        <dm_map base="0x190000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x85000"/>
+        <pm_map base="0x1A0000" size="0x00004000"/>
+        <dm_map base="0x1B0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="2">
+        <io_map base="0x86000"/>
+        <pm_map base="0x1C0000" size="0x00004000"/>
+        <dm_map base="0x1D0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3E8A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0x82000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0x0FFC"/>
+    </block>
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x81000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x0000f000" width="2"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x3FFA=0x101" reset="0x0FFC"/>
+    </block>
+  </target>
+  
+  <target id="SX6B" type="RiscDSPHard">
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0xf1000000" size="0x00004000"/>
+        <dm_map base="0xf1010000" size="0x0000f000" width="2"/>
+        <dram_map base="0x00000000" size="0xefffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x81000"/>
+        <pm_map base="0xf1020000" size="0x00004000"/>
+        <dm_map base="0xf1030000" size="0x0000f000" width="2"/>
+        <dram_map base="0x00000000" size="0xefffffff"/>
+      </engine>
+      <control hostint="0x3FDC=0x101;0x3DC9=0x101;0x3FFA=0x101" reset="0x0FFC"/>
+    </block>
+  </target>
+
+  <target id="SX7" type="RiscDSPHard">
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0xf1000000" size="0x00004000"/>
+        <dm_map base="0xf1010000" size="0x0000f000" width="2"/>
+        <dram_map base="0x00000000" size="0xefffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x81000"/>
+        <pm_map base="0xf1020000" size="0x00004000"/>
+        <dm_map base="0xf1030000" size="0x0000f000" width="2"/>
+        <dram_map base="0x00000000" size="0xefffffff"/>
+      </engine>
+      <control hostint="0x3FDC=0x101;0x3DC9=0x101;0x3FFA=0x101" reset="0x0FFC"/>
+    </block>
+  </target>
+
+  <!-- Added June 18, 2015 -->
+  
+  <target id="SMP8760" name="Riesling C" type="RiscDSPHard">
+    <block name="Audio">
+      <engine id="0">
+        <io_map base="0x84000"/>
+        <pm_map base="0x400000" size="0x00008000"/>
+        <dm_map base="0x440000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x85000"/>
+        <pm_map base="0x480000" size="0x00008000"/>
+        <dm_map base="0x4c0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="2">
+        <io_map base="0x86000"/>
+        <pm_map base="0x500000" size="0x00008000"/>
+        <dm_map base="0x540000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <engine id="3">
+        <io_map base="0x86000"/>
+        <pm_map base="0x580000" size="0x00008000"/>
+        <dm_map base="0x5c0000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0xA02B=0x101" reset="0x0FFC"/>
+    </block>
+
+    <block name="Demux">
+      <engine id="0">
+        <io_map base="0x82000"/>
+        <pm_map base="0x140000" size="0x00004000"/>
+        <dm_map base="0x150000" size="0x0000f000" width="1"/>
+        <dram_map base="0x10000000" size="0x7fffffff"/>
+      </engine>
+      <control hostint="0x2F0A=0x101" reset="0x0FFC"/>
+    </block>
+
+    <block name="Video">
+      <engine id="0">
+        <io_map base="0x80000"/>
+        <pm_map base="0x100000" size="0x00004000"/>
+        <dm_map base="0x110000" size="0x00003000" width="2"/>
+        <dram_map base="0x10000000" size="0xefffffff"/>
+      </engine>
+      <engine id="1">
+        <io_map base="0x81000"/>
+        <pm_map base="0x120000" size="0x00004000"/>
+        <dm_map base="0x130000" size="0x00003000" width="2"/>
+        <dram_map base="0x10000000" size="0xefffffff"/>
+      </engine>
+      <control hostint="0x3FDC=0x101;0x3DC9=0x101;0x3FFA=0x101" reset="0x0FFC"/>
+    </block>
+  </target>
+
+</em86xxTargetConfig>

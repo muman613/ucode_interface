@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libplatformdb", "libplatformdb.vcproj", "{110806EB-71AE-4C54-927E-645930C85360}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+		wxWidgets Debug|Win32 = wxWidgets Debug|Win32
+		wxWidgets Release|Win32 = wxWidgets Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{110806EB-71AE-4C54-927E-645930C85360}.Debug|Win32.ActiveCfg = Debug|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.Debug|Win32.Build.0 = Debug|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.Release|Win32.ActiveCfg = Release|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.Release|Win32.Build.0 = Release|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.wxWidgets Debug|Win32.ActiveCfg = wxWidgets Debug|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.wxWidgets Debug|Win32.Build.0 = wxWidgets Debug|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.wxWidgets Release|Win32.ActiveCfg = wxWidgets Release|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.wxWidgets Release|Win32.Build.0 = wxWidgets Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

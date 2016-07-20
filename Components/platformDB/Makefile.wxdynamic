@@ -1,0 +1,35 @@
+TARGET_TYPE=dynlib
+
+#	Get the current makefile to MAKEFILE
+where-am-i = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+MAKEFILE := $(call where-am-i)
+
+WX_CONFIG?=/opt/sigma/wx/3.1.1/bin/wx-config
+
+ifdef DEBUG
+BUILDTYPE=SharedwxDebug
+LIBNAME=libwxplatformdb_d
+else
+BUILDTYPE=SharedwxRelease
+LIBNAME=libwxplatformdb
+endif
+
+CPP_SOURCES=	PlatformBlock.cpp 		\
+				PlatformChip.cpp  		\
+				PlatformDatabase.cpp  	\
+				PlatformEngine.cpp  	\
+				xml_utils.cpp
+
+LIBXML2_CFLAGS=$(shell xml2-config --cflags)
+LIBXML2_LDFLAGS=$(shell xml2-config --libs)
+WXWIDGETS_CFLAGS=$(shell $(WX_CONFIG) --static=no --cflags)
+WXWIDGETS_LDFLAGS=$(shell $(WX_CONFIG) --static=no --libs)
+
+CFLAGS=$(LIBXML2_CFLAGS) $(WXWIDGETS_CFLAGS)
+LDFLAGS=$(LIBXML2_LDFLAGS) $(WXWIDGETS_LDFLAGS)
+
+LIB_DIR=../libs/Linux
+
+include ../../Build/buildsys.mk
+
+-include $(DEPS)

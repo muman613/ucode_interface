@@ -1,0 +1,30 @@
+TARGET_TYPE=dynlib
+
+#	Get the current makefile to MAKEFILE
+where-am-i = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+MAKEFILE := $(call where-am-i)
+
+ifdef DEBUG
+LIBNAME=libplatformdb_d
+else
+LIBNAME=libplatformdb
+endif
+
+CPP_SOURCES=	PlatformBlock.cpp 		\
+				PlatformChip.cpp  		\
+				PlatformDatabase.cpp  	\
+				PlatformEngine.cpp  	\
+				xml_utils.cpp
+
+LIBXML2_CFLAGS=$(shell xml2-config --cflags)
+LIBXML2_LDFLAGS=$(shell xml2-config --libs)
+
+CFLAGS=$(LIBXML2_CFLAGS)
+LDFLAGS=$(LIBXML2_LDFLAGS)
+
+
+LIB_DIR=../libs/Linux
+
+include ../../Build/buildsys.mk
+
+-include $(DEPS)

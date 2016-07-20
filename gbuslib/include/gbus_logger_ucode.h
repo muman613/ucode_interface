@@ -1,0 +1,71 @@
+/*****************************************
+ Copyright © 2001-2003  
+ Sigma Designs, Inc. All Rights Reserved
+ Proprietary and Confidential
+ *****************************************/
+/**
+  @file   gbus_logger_ucode.h
+  @brief  
+
+  long description
+
+  @author Emmanuel Michon
+  @date   2003-10-30
+*/
+
+#ifndef __GBUS_LOGGER_UCODE_H__
+#define __GBUS_LOGGER_UCODE_H__
+
+#define GBUS_LOGGER_LOSTCOUNT_LO 0xe844
+#define GBUS_LOGGER_LOSTCOUNT_HI 0x10f5
+#define GBUS_LOGGER_MPEGFIFO_LO  0xe848
+#define GBUS_LOGGER_MPEGFIFO_HI  0x10f5
+
+#define INVALID_LO 0xbeef
+#define INVALID_HI 0xdead
+
+#define GBUS_LOGGER_16_RD_LO 83
+
+#define GBUS_LOGGER_UCODE0_LO 86
+#define GBUS_LOGGER_UCODE1_LO 87
+#define GBUS_LOGGER_UCODE2_LO 88
+#define GBUS_LOGGER_UCODE3_LO 89
+#define GBUS_LOGGER_UCODE4_LO 90
+#define GBUS_LOGGER_UCODE5_LO 91
+#define GBUS_LOGGER_UCODE6_LO 92
+#define GBUS_LOGGER_UCODE7_LO 93
+#define GBUS_LOGGER_PTS_LO 94
+#define GBUS_LOGGER_I1P2B3_LO 95
+#define GBUS_LOGGER_OVL_LO 96
+#define GBUS_LOGGER_CONNECT_LO 97
+#define GBUS_LOGGER_PICBUF_LO 98
+#define GBUS_LOGGER_TIMERRESET_LO 99
+#define GBUS_LOGGER_TRAP3_LO 100
+#define GBUS_LOGGER_TRAP9_LO 101
+#define GBUS_LOGGER_DECODENEXT_LO 102
+#define GBUS_LOGGER_TOVIDEO_LO 103
+#define GBUS_LOGGER_ASFPTS_LO 104
+#define GBUS_LOGGER_FCNT_LO 105
+#define GBUS_LOGGER_DFIFOWR_LO 106
+#define GBUS_LOGGER_HDOFFSET_LO 107
+#define GBUS_LOGGER_ASF_STAGE_LO 108
+#define GBUS_LOGGER_PTYPE_LO 109
+#define GBUS_LOGGER_PQINDEX_LO 110
+#define GBUS_LOGGER_MBX_LO 111
+#define GBUS_LOGGER_MBY_LO 112
+#define GBUS_LOGGER_TRAP7_LO 113
+#define GBUS_LOGGER_GETHD4_CMD_LO 114
+#define GBUS_LOGGER_GETHD4_RES_LO 115
+#define GBUS_LOGGER_VIEW16_LO 116
+#define GBUS_LOGGER_PC_LO 117
+#define GBUS_LOGGER_HD4_CNT_LO 118
+#define GBUS_LOGGER_A1A0_LO 119
+#define GBUS_LOGGER_A3A2_LO 120
+#define GBUS_LOGGER_A5A4_LO 121
+#define GBUS_LOGGER_A7A6_LO 122
+#define GBUS_LOGGER_A9A8_LO 123
+#define GBUS_LOGGER_A11A10_LO 124
+#define GBUS_LOGGER_A13A12_LO 125
+#define GBUS_LOGGER_A15A14_LO 126
+
+#endif // __GBUS_LOGGER_UCODE_H__

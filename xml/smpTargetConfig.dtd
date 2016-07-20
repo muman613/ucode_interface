@@ -1,0 +1,34 @@
+<!ELEMENT block ( engine+, control ) >
+<!ATTLIST block name ( Audio | Demux | Video ) #REQUIRED >
+
+<!ELEMENT control EMPTY >
+<!ATTLIST control hostint CDATA #REQUIRED >
+<!ATTLIST control reset CDATA #REQUIRED >
+
+<!ELEMENT dm_map EMPTY >
+<!ATTLIST dm_map base CDATA #REQUIRED >
+<!ATTLIST dm_map size CDATA #REQUIRED >
+<!ATTLIST dm_map width CDATA #REQUIRED >
+
+<!ELEMENT dram_map EMPTY >
+<!ATTLIST dram_map base CDATA #REQUIRED >
+<!ATTLIST dram_map size CDATA #REQUIRED >
+
+<!ELEMENT em86xxTargetConfig ( target+ ) >
+<!ATTLIST em86xxTargetConfig version CDATA #REQUIRED >
+
+<!ELEMENT engine ( io_map, pm_map, dm_map, dram_map ) >
+<!ATTLIST engine id ( 0 | 1 | 2 | 3 ) #REQUIRED >
+
+<!ELEMENT io_map EMPTY >
+<!ATTLIST io_map base CDATA #REQUIRED >
+
+<!ELEMENT pm_map EMPTY >
+<!ATTLIST pm_map base CDATA #REQUIRED >
+<!ATTLIST pm_map size CDATA #REQUIRED >
+
+<!ELEMENT target ( block+ ) >
+<!ATTLIST target id CDATA #REQUIRED >
+<!ATTLIST target type NMTOKEN #FIXED "RiscDSPHard" >
+<!ATTLIST target name CDATA #IMPLIED >
+

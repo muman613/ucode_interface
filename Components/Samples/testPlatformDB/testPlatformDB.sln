@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testPlatformDB", "testPlatformDB.vcproj", "{925F305D-3D9E-4165-9BDF-36335AF1660D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{110806EB-71AE-4C54-927E-645930C85360} = {110806EB-71AE-4C54-927E-645930C85360}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libplatformdb", "..\..\Components\platformDB\libplatformdb.vcproj", "{110806EB-71AE-4C54-927E-645930C85360}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+		wxWidgets Debug|Win32 = wxWidgets Debug|Win32
+		wxWidgets Release|Win32 = wxWidgets Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{925F305D-3D9E-4165-9BDF-36335AF1660D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{925F305D-3D9E-4165-9BDF-36335AF1660D}.Debug|Win32.Build.0 = Debug|Win32
+		{925F305D-3D9E-4165-9BDF-36335AF1660D}.Release|Win32.ActiveCfg = Release|Win32
+		{925F305D-3D9E-4165-9BDF-36335AF1660D}.Release|Win32.Build.0 = Release|Win32
+		{925F305D-3D9E-4165-9BDF-36335AF1660D}.wxWidgets Debug|Win32.ActiveCfg = Debug|Win32
+		{925F305D-3D9E-4165-9BDF-36335AF1660D}.wxWidgets Debug|Win32.Build.0 = Debug|Win32
+		{925F305D-3D9E-4165-9BDF-36335AF1660D}.wxWidgets Release|Win32.ActiveCfg = Release|Win32
+		{925F305D-3D9E-4165-9BDF-36335AF1660D}.wxWidgets Release|Win32.Build.0 = Release|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.Debug|Win32.ActiveCfg = Debug|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.Debug|Win32.Build.0 = Debug|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.Release|Win32.ActiveCfg = Release|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.Release|Win32.Build.0 = Release|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.wxWidgets Debug|Win32.ActiveCfg = wxWidgets Debug|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.wxWidgets Debug|Win32.Build.0 = wxWidgets Debug|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.wxWidgets Release|Win32.ActiveCfg = wxWidgets Release|Win32
+		{110806EB-71AE-4C54-927E-645930C85360}.wxWidgets Release|Win32.Build.0 = wxWidgets Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
