@@ -10,9 +10,20 @@
 #include <unistd.h>
 #include "fileresolver.h"
 
+/* Handy macros used by module */
+
 #define RESET_STREAM(x)                                                         \
     (x).str("");                                                                \
     (x).clear();
+
+#define VERIFY_FILE_EXISTS( fileVar )                                           \
+    {                                                                           \
+        struct stat     st;                                                     \
+        if (stat( (fileVar).c_str(), &st ) != 0) {                              \
+            return false;                                                       \
+        } else if (S_ISDIR(st.st_mode))                                                 \
+            return false;                                                       \
+    }
 
 
 bool resolve_package(std::string sChipId, bool bDebug,
@@ -27,25 +38,28 @@ bool resolve_package(std::string sChipId, bool bDebug,
             sPrefix += "/";
     }
 
-    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"debug/") << (std::string)"video_microcode_SMP" << sChipId << ".bin";
+    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << ".bin";
     pack.sBinFile = os.str();
     RESET_STREAM(os);
 
-    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"debug/") << (std::string)"video_microcode_SMP" << sChipId << ".lst";
+    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << ".lst";
     pack.sListFile = os.str();
     RESET_STREAM(os);
 
-    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"debug/") << (std::string)"video_microcode_SMP" << sChipId << ".map";
+    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << ".map";
     pack.sMapFile = os.str();
     RESET_STREAM(os);
 
-    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"debug/") << (std::string)"video_microcode_SMP" << sChipId << "_labels.h";
+    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << "_labels.h";
     pack.sLabelFile = os.str();
     RESET_STREAM(os);
 
     return true;
 }
 
+/**
+ *  Dump the file pack values.
+ */
 
 void FILE_PACK::dump(FILE* oFP) {
     fprintf(oFP, "---------------------------------------------------------\n");
@@ -64,15 +78,6 @@ bool FILE_PACK::resolve_package(std::string sChipId, bool bDebug, std::string sP
 {
     return ::resolve_package(sChipId, bDebug, *this, sPrefix);
 }
-
-#define VERIFY_FILE_EXISTS( fileVar )                                           \
-    {                                                                           \
-        struct stat     st;                                                     \
-        if (stat( (fileVar).c_str(), &st ) != 0) {                              \
-            return false;                                                       \
-        } else if (S_ISDIR(st.st_mode))                                                 \
-            return false;                                                       \
-    }
 
 bool FILE_PACK::isvalid()
 {

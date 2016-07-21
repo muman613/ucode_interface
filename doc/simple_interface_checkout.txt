@@ -1,0 +1,24 @@
+Checkout instructions
+
+mkdir demo_interface
+cd demo_interface
+repo init -u ssh://jello.sigmadesigns.com/mrua/manifest.git
+repo sync
+git clone ssh://10.10.16.136/mnt/GoFlex/part1/home/muman/demo_interface/master/simple_interface
+
+BUILDING
+
+source build_system/build_configs/8910_dev_cs.env
+make
+cd simple_interface/src
+make
+
+PULLING CHANGES
+
+git pull origin
+
+PUSHING CHANGES
+
+git push origin
+
+

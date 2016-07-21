@@ -25,18 +25,23 @@ CPP_SOURCES=  	dbgimplementation.cpp						\
 
 #DBG_FLAGS=-g3 -D_DEBUG
 RMCFLAGS=-DRMCHIP_ID=RMCHIP_ID_SMP8758 -DRMCHIP_REVISION=1 -DRMFEATURE_VIDEO_INTERFACE_VERSION=2
-INCLUDE_FLAGS=-I . -I .. -I ../rmlibcw -I ../llad -I ../llad/network -I ../gbuslib
+INCLUDE_FLAGS=-I . -I .. -I ../rmlibcw -I ../llad -I ../llad/network -I ../gbuslib \
+			  -I ../Components
 
-DEFINES=$(RMCFLAGS) -include options.h -D_FILE_OFFSET_BITS=64
-#DEFINES=$(RMCFLAGS) -DENABLE_THREADS=1 
-#DEFINES=$(RMCFLAGS) -DENABLE_THREADS=1 -DENABLE_CURSES=1 -DENABLE_ENV_VARS=1 -DENABLE_PROFILING=1
-
-ifdef UCODE_DEBUG
-DEFINES+=-DUCODE_DEBUG=1
+ifdef DEBUG
+SYMMGR_LIB=../Components/libs/Linux/x86/libsymbolmgr_d.a
+else
+SYMMGR_LIB=../Components/libs/Linux/x86/libsymbolmgr.a
 endif
+			  
+DEFINES=$(RMCFLAGS) -include options.h -D_FILE_OFFSET_BITS=64
+
+#ifdef UCODE_DEBUG
+#DEFINES+=-DUCODE_DEBUG=1
+#endif
 
 CFLAGS=$(DEFINES) $(DBG_FLAGS) $(INCLUDE_FLAGS) -Wall
-LDFLAGS=-pthread -lpanelw -lncursesw
+LDFLAGS=-pthread -lpanelw -lncursesw $(SYMMGR_LIB)
 
 include ../Build/buildsys.mk
 

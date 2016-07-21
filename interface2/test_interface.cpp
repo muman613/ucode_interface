@@ -30,6 +30,7 @@
 #include "video_interface.h"
 #include "utils.h"
 #include "fileresolver.h"
+#include "symbolmgr/symbolmgr.h"
 #include "test_interface.h"
 
 #ifdef ENABLE_CURSES
@@ -104,6 +105,168 @@ static void print_usage(const char* sAppName) {
  *  Parse commandline options.
  */
 
+#if 1
+static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, char* argv[])
+{
+    int         opt;
+    RMstatus    result = RM_ERROR;
+    std::string sChipID, sChipMode;
+//    const char* opts = "Db:c:s:p:o:O:e:h";
+    const char* opts="Dc:m:s:p:o:O:h";
+    FILE_PACK   fPack;
+
+    while ((opt = getopt(argc, argv, opts)) != -1)
+    {
+        switch (opt)
+        {
+        case 'D':
+            pCtx->dump_y_uv = TRUE;
+            break;
+
+        case 'c':
+            sChipID = optarg;
+            break;
+
+        case 'm':
+            sChipMode = optarg;
+            break;
+//        case 'b':
+//            pCtx->file->sBinFilename = optarg;
+//            break;
+
+//        case 'c':
+//            if (pCtx->szBinFilename[1] != NULL)
+//                free((void *)pCtx->szBinFilename[1]);
+//            pCtx->sBinFilename[1] = optarg;
+//            break;
+
+        case 's':
+            pCtx->file->sStrFilename = optarg;
+            break;
+
+        case 'p':
+            if (parse_profile_option(pCtx, optarg) == RM_ERROR)
+                goto exitParse;
+            break;
+
+        case 'o':
+            pCtx->file->sYUVFilename = optarg;
+            break;
+
+        case 'O':
+            pCtx->file->sYUVPath = optarg;
+            break;
+
+//        case 'e':
+//            if (strcmp(optarg, "1") == 0) {
+//                pCtx->pmBaseAddress       = PMEM_BASE_mpeg_engine_1;
+//                pCtx->dmBaseAddress       = DMEM_BASE_mpeg_engine_1;
+//                pCtx->regBaseAddress      = REG_BASE_mpeg_engine_1;
+//            }
+//            break;
+
+        case 'h':
+        default:
+            print_usage( argv[0] );
+        }
+    }
+
+    /* Make sure chip and mode specified! */
+    if ((sChipID == "8758") ||
+        (sChipID == "8760"))
+    {
+        if ((sChipMode == "d") ||
+            (sChipMode == "r"))
+        {
+            /* Obtain the proper file paths... */
+            fPack.resolve_package( sChipID, (sChipMode == "d")?true:false, "..");
+            if (fPack.isvalid()) {
+                pCtx->file->sBinFilename = fPack.sBinFile;
+
+                if (!pCtx->symMgr->LoadSymbols(fPack.sLabelFile)) {
+                    fprintf(stderr, "ERROR: Unable to load labels file!\n");
+                    return RM_ERROR;
+                }
+#ifdef _DEBUG
+                fprintf(stderr, "loaded %zu symbols!\n", pCtx->symMgr->size());
+#endif // _DEBUG
+            } else {
+                fprintf(stderr, "ERROR: Unable to locate required files!\n");
+                return RM_ERROR;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "ERROR: Must specify debug or release -mr or -md\n");
+            return RM_ERROR;
+        }
+
+    } else {
+        fprintf(stderr, "ERROR: Chip ID (-c) not specified or invalid!\n");
+        return RM_ERROR;
+    }
+
+    /* verify that files exist */
+    if ((!pCtx->file->sBinFilename.empty()) && (!pCtx->file->sStrFilename.empty()))
+    {
+        if ((file_exists( pCtx->file->sBinFilename ) == RM_OK) &&
+            (file_exists( pCtx->file->sStrFilename ) == RM_OK))
+        {
+//            if (pCtx->szBinFilename[1] != 0) {
+//                if (file_exists(pCtx->szBinFilename[1]) == RM_OK) {
+//                result = RM_OK;
+//                }
+//            } else {
+                set_tile_dimensions( pCtx, sChipID );
+                result = RM_OK;
+//            }
+        }
+    } else {
+        fprintf(stderr, "ERROR: Must at least specify microcode (-b) and input stream (-s)!\n");
+    }
+
+
+    if (result == RM_OK) {
+        if ((!pCtx->file->sYUVFilename.empty()) && (!pCtx->file->sYUVPath.empty())) {
+            fprintf(stderr, "ERROR: Cannot specify -o & -O together!\n");
+            result = RM_ERROR;
+        } else if (!pCtx->file->sYUVPath.empty()) {
+            pCtx->file->sYUVFilename = generate_output_yuv( pCtx->file->sYUVPath,
+                                                           pCtx->file->sStrFilename);
+        }
+
+        /* if user specified output yuv file, open it for writing... */
+        if (!pCtx->file->sYUVFilename.empty())
+        {
+            pCtx->yuvfp = fopen( pCtx->file->sYUVFilename.c_str(), "w");
+
+            if (pCtx->yuvfp == 0)
+            {
+                fprintf(stderr, "WARNING: Unable to open output YUV file %s.\n"
+                        "Not saving decoded pictures...\n", pCtx->file->sYUVFilename.c_str());
+
+                /* free and zero the YUV filename */
+//                free((void*)pCtx->szYUVFilename);
+//                pCtx->szYUVFilename = 0L;
+            }
+        }
+
+        pCtx->serverStr = getenv("EM8XXX_SERVER");
+
+        if (pCtx->serverStr == 0L) {
+            fprintf(stderr, "EM8XXX_SERVER environment is not defined!\n");
+            result = RM_ERROR;
+        }
+
+    }
+
+exitParse:
+
+    return result;
+}
+
+#else
+
 static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, char* argv[])
 {
     int         opt;
@@ -119,8 +282,6 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
             break;
 
         case 'b':
-//            if (pCtx->szBinFilename != NULL)
-//                free((void *)pCtx->szBinFilename);
             pCtx->file->sBinFilename = optarg;
             break;
 
@@ -131,8 +292,6 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
 //            break;
 
         case 's':
-//            if (pCtx->szStrFilename != NULL)
-//                free((void *)pCtx->szStrFilename);
             pCtx->file->sStrFilename = optarg;
             break;
 
@@ -142,24 +301,20 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
             break;
 
         case 'o':
-//            if (pCtx->szYUVFilename != NULL)
-//                free((void *)pCtx->szYUVFilename);
             pCtx->file->sYUVFilename = optarg;
             break;
 
         case 'O':
-//            if (pCtx->szYUVPath != NULL)
-//                free((void*)pCtx->szYUVPath);
             pCtx->file->sYUVPath = optarg;
             break;
 
-        case 'e':
-            if (strcmp(optarg, "1") == 0) {
-                pCtx->pmBaseAddress       = PMEM_BASE_mpeg_engine_1;
-                pCtx->dmBaseAddress       = DMEM_BASE_mpeg_engine_1;
-                pCtx->regBaseAddress      = REG_BASE_mpeg_engine_1;
-            }
-            break;
+//        case 'e':
+//            if (strcmp(optarg, "1") == 0) {
+//                pCtx->pmBaseAddress       = PMEM_BASE_mpeg_engine_1;
+//                pCtx->dmBaseAddress       = DMEM_BASE_mpeg_engine_1;
+//                pCtx->regBaseAddress      = REG_BASE_mpeg_engine_1;
+//            }
+//            break;
 
         case 'h':
         default:
@@ -211,11 +366,22 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
             }
         }
 
+        pCtx->serverStr = getenv("EM8XXX_SERVER");
+
+        if (pCtx->serverStr == 0L) {
+            fprintf(stderr, "EM8XXX_SERVER environment is not defined!\n");
+            result = RM_ERROR;
+        }
+
     }
+
 exitParse:
 
     return result;
 }
+
+#endif
+
 
 /**
  *  Open llad/gbus interface.
@@ -223,16 +389,7 @@ exitParse:
 
 static RMstatus open_gbus(CONTEXT* pCtx, int chipNum)
 {
-    char	chipspec[32];
-#if 1
-	strcpy(chipspec, getenv("EM8XXX_SERVER"));
-#else
-
-    /* Open the llad & gbus libraries */
-    sprintf(chipspec, "%d", chipNum);
-#endif
-
-    if ((pCtx->pllad = llad_open(chipspec)) == 0)
+    if ((pCtx->pllad = llad_open((RMascii*)pCtx->serverStr)) == 0)
     {
         fprintf(stderr, "ERROR: llad_open failed!\n");
         return RM_ERROR;
@@ -270,7 +427,7 @@ static void close_gbus(CONTEXT* pCtx)
  * Free string parameter memory.
  */
 
-static void release_memory(CONTEXT* pCtx)
+static void release_context(CONTEXT* pCtx)
 {
 
     if (!pCtx->file->sYUVFilename.empty())
@@ -300,6 +457,11 @@ static void release_memory(CONTEXT* pCtx)
         pCtx->file = 0L;
     }
 
+    if (pCtx->symMgr != 0L) {
+        delete pCtx->symMgr;
+        pCtx->symMgr = 0L;
+    }
+
     return;
 }
 
@@ -312,11 +474,9 @@ static void release_memory(CONTEXT* pCtx)
  *  to the correct memory (pm/dm/dram).
  */
 
-//static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID) {
 static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
 {
     RMstatus nRes = RM_ERROR;
-//    const char*     szBinName = 0L;
     std::string     sBinName;
     unsigned char* 	pBinData = 0;
     size_t			binSize = 0;
@@ -324,7 +484,6 @@ static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
     FILE*			ifp = 0L;
     RMuint32        pmBase   = 0L,
                     dmBase   = 0L;
-//                    dramBase = 0L;
 
     using namespace ucode_utils;
 
@@ -376,7 +535,7 @@ static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
         /* open file */
         ifp = fopen(sBinName.c_str(), "r");
         if (ifp) {
-            fread(pBinData, 1, binSize, ifp);
+            size_t bytesread __attribute__((unused)) = fread(pBinData, 1, binSize, ifp);
 
             ucode_get_microcode_size(pBinData, binSize, &dram_low_offset, &dram_high_offset);
 
@@ -414,22 +573,23 @@ static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
  *  Stop the DSP (sends RESET & STOP)
  */
 
-static void do_stop_engine(CONTEXT* pContext, RMuint32 engineID) {
-    RMuint32    reset_control_reg;
+static void do_stop_engine(CONTEXT* pContext) {
+    RMuint32    reset_control_reg = 0L;
 
-    switch (engineID) {
-    case 0:
-        reset_control_reg = REG_BASE_mpeg_engine_0;
-        break;
-    case 1:
-        reset_control_reg = REG_BASE_mpeg_engine_1;
-        break;
-    default:
-        fprintf(stderr, "ERROR: Invalid engine specified!\n");
-        return;
-    }
+//    switch (engineID) {
+//    case 0:
+//        reset_control_reg = pContext->memBaseAddress; //REG_BASE_mpeg_engine_0;
+//        break;
+//    case 1:
+//        reset_control_reg = REG_BASE_mpeg_engine_1;
+//        break;
+//    default:
+//        fprintf(stderr, "ERROR: Invalid engine specified!\n");
+//        return;
+//    }
 
-    reset_control_reg += G2L_RESET_CONTROL;
+//    reset_control_reg += G2L_RESET_CONTROL;
+    reset_control_reg = pContext->memBaseAddress + pContext->reset_control;
 
 #ifndef ENABLE_CURSES
     printf("Stopping DSP engine %ld...\n", engineID);
@@ -451,23 +611,23 @@ static void do_stop_engine(CONTEXT* pContext, RMuint32 engineID) {
  *  Start the DSP (Send RUN)
  */
 
-static void do_start_engine(CONTEXT* pContext, RMuint32 engineID) {
-    RMuint32    reset_control_reg;
+static void do_start_engine(CONTEXT* pContext) {
+    RMuint32    reset_control_reg = 0L;
 
-    switch (engineID) {
-    case 0:
-        reset_control_reg = REG_BASE_mpeg_engine_0;
-        break;
-    case 1:
-        reset_control_reg = REG_BASE_mpeg_engine_1;
-        break;
-    default:
-        fprintf(stderr, "ERROR: Invalid engine specified!\n");
-        return;
-    }
-
-    reset_control_reg += G2L_RESET_CONTROL;
-
+//    switch (engineID) {
+//    case 0:
+//        reset_control_reg = REG_BASE_mpeg_engine_0;
+//        break;
+//    case 1:
+//        reset_control_reg = REG_BASE_mpeg_engine_1;
+//        break;
+//    default:
+//        fprintf(stderr, "ERROR: Invalid engine specified!\n");
+//        return;
+//    }
+//
+//    reset_control_reg += G2L_RESET_CONTROL;
+    reset_control_reg = pContext->memBaseAddress + pContext->reset_control;
 #ifndef ENABLE_CURSES
     printf("Starting DSP engine %ld...\n", engineID);
     fflush(stdout);
@@ -1605,6 +1765,8 @@ void init_context(CONTEXT* ctx) {
     memset(ctx, 0, sizeof(CONTEXT));
 
     ctx->file                = new APP_FILEPACK;
+    ctx->symMgr              = new UcodeSymbolMgr;
+    video_interface::set_symbol_resolver( ctx->symMgr );
 
     /* initialize default values */
     ctx->uiDRAMPtr           = DRAM_BASE;
@@ -1615,12 +1777,19 @@ void init_context(CONTEXT* ctx) {
     ctx->InbandFIFOCount	 = 512;
     ctx->NumOfPictures       = PICTURE_COUNT;
     ctx->decoderProfile      = VideoProfileMPEG2;        // default to MPEG2 stream
+#if 1
+    set_tile_dimensions( ctx, RMTILE_WIDTH_SHIFT, RMTILE_HEIGHT_SHIFT );
+//    set_tile_dimensions( ctx, 9, RMTILE_HEIGHT_SHIFT );
+#else
     ctx->tile_width_l2       = RMTILE_WIDTH_SHIFT;
     ctx->tile_height_l2      = RMTILE_HEIGHT_SHIFT;
     ctx->pvc_tw              = (1 << RMTILE_WIDTH_SHIFT);
     ctx->pvc_th              = (1 << RMTILE_HEIGHT_SHIFT);
     ctx->pvc_ts              = ctx->pvc_tw * ctx->pvc_th;
+#endif // 1
+
     ctx->soc_arch            = SOC_TANGO;
+    ctx->reset_control       = G2L_ANOTHER_RESET_CONTROL;
 
     /* Set default base addresses */
     ctx->memBaseAddress      = MEM_BASE_mpeg_engine_0;
@@ -1675,16 +1844,15 @@ int main(int argc, char *argv[])
     CONTEXT ctx;
     int chipnum = 0;
 
-//    memset(&ctx, 0, sizeof(CONTEXT));
-
     open_log_files("messages.txt", "errors.txt");
 
     init_context( &ctx );
 
     /* parse commandline arguments */
-    if (parse_options(&ctx, "test_interface", argc, argv) != RM_OK)
+    if (parse_options(&ctx, "interface2", argc, argv) != RM_OK)
     {
         fprintf(stderr, "ERROR: Incorrect parameters!\n");
+        release_context( &ctx );
         return -1;
     }
 
@@ -1714,7 +1882,7 @@ int main(int argc, char *argv[])
     }
 
     /* Stop the both video engines */
-    do_stop_engine(&ctx, 0);
+    do_stop_engine(&ctx);
 //    if (ctx.szBinFilename[1] != 0L) {
 //        do_stop_engine(&ctx, 1);
 //    }
@@ -1729,7 +1897,7 @@ int main(int argc, char *argv[])
 //    }
 
     /* Start the video engine */
-    do_start_engine(&ctx, 0);
+    do_start_engine(&ctx);
 
 //    if (ctx.szBinFilename[1] != 0L) {
 //        do_start_engine(&ctx, 1);
@@ -1759,7 +1927,7 @@ int main(int argc, char *argv[])
 
 clean_exit:
 
-    release_memory(&ctx);
+    release_context(&ctx);
     close_gbus(&ctx);
 
 #ifdef ENABLE_CURSES

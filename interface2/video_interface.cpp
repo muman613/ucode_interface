@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -11,8 +12,9 @@
 #include "llad/include/llad.h"
 #include "llad/include/gbus.h"
 #include "rmchip/rmchip_registers.h"
-#include "video_microcode_labels.h"
+//#include "video_microcode_labels.h"
 #include "video_interface.h"
+#include "symbolmgr/symbolmgr.h"
 
 // to enable or disable the debug messages of this source file, put 1 or 0 below
 
@@ -26,6 +28,20 @@
 namespace video_interface {
 #endif // __cplusplus
 
+static UcodeSymbolMgr* gMgr = 0L;
+
+void set_symbol_resolver(void* pMgr) {
+    gMgr = (UcodeSymbolMgr*)pMgr;
+}
+
+void* get_symbol_resolver() {
+    return (void*)gMgr;
+}
+
+static Uint32 resolve_symbol(std::string sSymbol) {
+    return (*gMgr)[sSymbol];
+}
+
 /* set the DRAM address where the video microcode is loaded */
 RMstatus video_set_ucode_dram_offset(
 	struct gbus *pGBus,
@@ -35,8 +51,8 @@ RMstatus video_set_ucode_dram_offset(
 
 	RMDBGLOG((LOCALDBG, "video_set_ucode_dram_offset = 0x%lx\n", start_address));
 
-	gbus_write_uint32(pGBus, MemBase + VDsp_CodeOffsetLo, start_address & 0xFFFF);
-	gbus_write_uint32(pGBus, MemBase + VDsp_CodeOffsetHi, start_address >> 16);
+	gbus_write_uint32(pGBus, MemBase + resolve_symbol("VDsp_CodeOffsetLo"), start_address & 0xFFFF);
+	gbus_write_uint32(pGBus, MemBase + resolve_symbol("VDsp_CodeOffsetHi"), start_address >> 16);
 
 	return RM_OK;
 }
@@ -49,7 +65,7 @@ RMstatus video_set_scheduler_memory(
 	RMuint32 size)
 {
 	/* size it is unused in microcode */
-	RMuint32 scheduler_data_address = MemBase + SchedulerDataStart;
+	RMuint32 scheduler_data_address = MemBase + resolve_symbol("SchedulerDataStart");
 
 	RMDBGLOG((LOCALDBG, "video_set_scheduler_memory() at 0x%lx: addr=0x%lx size=%ld (prev=0x%04lx%04lx)\n",
 		scheduler_data_address, start_address, size,
@@ -86,7 +102,7 @@ RMstatus video_get_scheduler_memory(
 	RMuint32 *psize)
 {
 	RMuint32 schedStart;
-	RMuint32 scheduler_data_address = MemBase + SchedulerDataStart;
+	RMuint32 scheduler_data_address = MemBase + resolve_symbol("SchedulerDataStart");
 
 	RMDBGLOG((LOCALDBG, "video_get_scheduler_memory(0x%lx, 0x%lx)\n", pGBus, MemBase));
 
@@ -160,12 +176,13 @@ RMstatus video_set_vtdb_pointer(
 	RMuint32 addr;
 	RMuint32 decoderHead = 0;
 	struct task_entry* pEntry = 0;
+	RMuint32 scheduler_data_address = MemBase + resolve_symbol("SchedulerDataStart");
 
 	if (index >= MAX_TASK_COUNT)
 		return RM_ERROR;
 
-	decoderHead = gbus_read_uint32(pGBus, MemBase + SchedulerDataStart);
-	decoderHead |= (gbus_read_uint32(pGBus, MemBase + SchedulerDataStart + 4) << 16);
+	decoderHead = gbus_read_uint32(pGBus, scheduler_data_address);
+	decoderHead |= (gbus_read_uint32(pGBus, scheduler_data_address + 4) << 16);
 
 	RMDBGLOG((LOCALDBG, "SchedulerDataStart = 0x%lx\n", decoderHead));
 

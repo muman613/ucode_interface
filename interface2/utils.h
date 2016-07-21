@@ -4,6 +4,8 @@
 #include <time.h>
 #include <string>
 
+class CONTEXT;
+
 RMstatus file_exists(const char* szFilename);
 RMstatus file_exists(std::string sFilename);
 
@@ -24,6 +26,10 @@ double get_ts_seconds(struct timespec spec);
 
 char* generate_output_yuv(const char* szPath, const char* szInputName);
 std::string generate_output_yuv(std::string szPath, std::string szInputName);
+
+
+void set_tile_dimensions(CONTEXT* ctx, RMuint32 tsw, RMuint32 tsh);
+bool set_tile_dimensions(CONTEXT* ctx, std::string sChipId);
 
 #endif
 

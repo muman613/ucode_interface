@@ -192,7 +192,7 @@ void draw_input_panel(UI_CONTEXT* pCtx)
     DRAW_INPUT_FIELD_STR ( "Input Bitstream",      pCtx->szPlayFile, pCtx, y );
     DRAW_INPUT_FIELD_STR ( "Codec Profile",        pCtx->codec, pCtx, y );
     DRAW_INPUT_FIELD_STR ( "Video Microcode #0",   pCtx->szBinFile[0], pCtx, y );
-    DRAW_INPUT_FIELD_STR ( "Video Microcode #1",   pCtx->szBinFile[1], pCtx, y );
+//    DRAW_INPUT_FIELD_STR ( "Video Microcode #1",   pCtx->szBinFile[1], pCtx, y );
     DRAW_INPUT_FIELD_HEX ( "Video Task Database",  pCtx->uivtdb, pCtx, y );
     DRAW_INPUT_FIELD_HEX ( "Video Task Interface", pCtx->uivtif, pCtx, y );
     DRAW_INPUT_FIELD_HEX ( "Bts FIFO Container",   pCtx->BtsFifo.uiFifoCont, pCtx, y );
@@ -257,13 +257,13 @@ int update_user_interface(UI_CONTEXT* pCtx)
         msg = "Application Initializing...";
         break;
     case APP_LOADING_MICROCODE_0:
-//        snprintf(buffer, 256, "> Loading microcode #1 [%s] <", (pCtx->szBinFile[0] != 0)?basename((char *)pCtx->szBinFile[0]):"N/A");
+        snprintf(buffer, 256, "> Loading microcode #1 [%s] <", (pCtx->szBinFile[0] != 0)?basename((char *)pCtx->szBinFile[0]):"N/A");
         msg = buffer;
         break;
-    case APP_LOADING_MICROCODE_1:
-//        snprintf(buffer, 256, "> Loading microcode #2 [%s] <", (pCtx->szBinFile[1] != 0)?basename((char *)pCtx->szBinFile[1]):"N/A");
-        msg = buffer;
-        break;
+//    case APP_LOADING_MICROCODE_1:
+////        snprintf(buffer, 256, "> Loading microcode #2 [%s] <", (pCtx->szBinFile[1] != 0)?basename((char *)pCtx->szBinFile[1]):"N/A");
+//        msg = buffer;
+//        break;
     case APP_SENDING_UNINIT:
         msg = "Sending Uninit command!";
         break;
@@ -277,7 +277,7 @@ int update_user_interface(UI_CONTEXT* pCtx)
         msg = "Sending Stop command!";
         break;
     case APP_PLAYING:
-//        snprintf(buffer, 256, "> Playing stream %s <", (pCtx->szPlayFile != 0)?basename((char *)pCtx->szPlayFile):"N/A");
+        snprintf(buffer, 256, "> Playing stream %s <", (pCtx->szPlayFile != 0)?basename((char *)pCtx->szPlayFile):"N/A");
         msg = buffer;
         break;
     default:

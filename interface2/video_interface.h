@@ -683,9 +683,15 @@ RMstatus video_set_context_buffer(
 	RMuint32 size);
 #endif
 
+//class UcodeSymbolMgr;
+
+void set_symbol_resolver(void* pMgr);
+void* get_symbol_resolver();
+
 #ifdef __cplusplus
 }
-#endif // __VIDEO_INTERFACE_H__
-
 #endif
+
+
+#endif // __VIDEO_INTERFACE_H__
 

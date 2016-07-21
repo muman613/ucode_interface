@@ -6,6 +6,7 @@
 #define __TEST_INTERFACE_H__
 
 #include <string>
+#include <signal.h>
 
 #ifdef ENABLE_THREADS
     #include <pthread.h>
@@ -13,8 +14,8 @@
 
 #define DRAM_BASE       0xa8000000 // hardcoded value in a free Dram zone
 
-#undef  G2L_RESET_CONTROL
-#define G2L_RESET_CONTROL		0xffc
+//#undef  G2L_RESET_CONTROL
+//#define G2L_RESET_CONTROL		0xffc
 
 //#ifndef REG_BASE_mpeg_engine_0
 //// hardware addresses for mpeg engine
@@ -32,6 +33,7 @@
 #define BUFFERSIZE              65536
 
 struct _uiContext;
+class UcodeSymbolMgr;
 
 /**
  *  DSP register values.
@@ -57,7 +59,7 @@ typedef enum _appState {
     APP_STATE_UNKNOWN,
     APP_INITIALIZING,
     APP_LOADING_MICROCODE_0,
-    APP_LOADING_MICROCODE_1,
+//  APP_LOADING_MICROCODE_1,
     APP_SENDING_UNINIT,
     APP_SENDING_INIT,
     APP_SENDING_PLAY,
@@ -80,62 +82,63 @@ typedef struct filePack {
 class CONTEXT {
 public:
     /* User supplied options */
-    APP_FILEPACK*   file;
+    APP_FILEPACK*       file;
+    UcodeSymbolMgr*     symMgr;
 
-    RMuint32    decoderProfile;             ///< Decoder profile (default mpeg2)
+    RMuint32            reset_control;
+    const char*         serverStr;
+    RMuint32            decoderProfile;             ///< Decoder profile (default mpeg2)
 
-    RMuint32    memBaseAddress;
-    RMuint32    pmBaseAddress;
-    RMuint32    dmBaseAddress;
-    RMuint32    regBaseAddress;
-    RMuint32    dramBaseAddress;
+    RMuint32            memBaseAddress;
+    RMuint32            pmBaseAddress;
+    RMuint32            dmBaseAddress;
+    RMuint32            regBaseAddress;
+    RMuint32            dramBaseAddress;
 
-	RMuint32	uiDRAMPtr;
-	RMuint32	DecoderDataSize;
-	RMuint32	DecoderContextSize;
-	RMuint32	BitstreamFIFOSize;
-	RMuint32	PtsFIFOCount;
-	RMuint32	InbandFIFOCount;
-	RMuint32	NumOfPictures;
-	RMuint32	UserDataSize;
-	RMuint32	ExtraPictureBufferCount;
-	RMuint32	user_inband_cmd_fifo;
-	RMuint32	inband_params_address;
-	RMuint32	event_table_pointer;
+	RMuint32	        uiDRAMPtr;
+	RMuint32	        DecoderDataSize;
+	RMuint32	        DecoderContextSize;
+	RMuint32	        BitstreamFIFOSize;
+	RMuint32	        PtsFIFOCount;
+	RMuint32	        InbandFIFOCount;
+	RMuint32	        NumOfPictures;
+	RMuint32	        UserDataSize;
+	RMuint32	        ExtraPictureBufferCount;
+	RMuint32	        user_inband_cmd_fifo;
+	RMuint32	        inband_params_address;
+	RMuint32	        event_table_pointer;
 
-	RMuint32	pvtdb;                      ///< Address of video task database.
-	RMuint32	pvti;                       ///< Address of video task interface.
+	RMuint32	        pvtdb;                      ///< Address of video task database.
+	RMuint32	        pvti;                       ///< Address of video task interface.
 
     /* FIFO addresses */
-	RMuint32	data_fifo;
-	RMuint32	bts_fifo;
-	RMuint32	display_fifo;
-	RMuint32	user_data_fifo;
+	RMuint32	        data_fifo;
+	RMuint32	        bts_fifo;
+	RMuint32	        display_fifo;
+	RMuint32	        user_data_fifo;
 
-    RMuint32    pvc_tw;                     ///< Tile Width
-    RMuint32    pvc_th;                     ///< Tile Height
-    RMuint32    pvc_ts;                     ///< Tile Size
+    RMuint32            pvc_tw;                     ///< Tile Width
+    RMuint32            pvc_th;                     ///< Tile Height
+    RMuint32            pvc_ts;                     ///< Tile Size
 
-    RMuint32    binSize;
-    RMuint32    dram_lo;
-    RMuint32    dram_hi;
+    RMuint32            binSize;
+    RMuint32            dram_lo;
+    RMuint32            dram_hi;
 
-	struct llad*	pllad;
-	struct gbus*	pgbus;
+	struct llad*	    pllad;
+	struct gbus*	    pgbus;
 
-    RMuint8*    pChroma;
-    RMuint8*    pLuma;
+    RMuint8*            pChroma;
+    RMuint8*            pLuma;
 
-	FILE*       yuvfp;                      ///< Output yuv file handle.
+	FILE*               yuvfp;                      ///< Output yuv file handle.
 
-	SOC_ARCH    soc_arch;                   ///< System architecture used in detile algo
-	RMuint32    tile_width_l2;              ///< Tile width used by detile algo
-	RMuint32    tile_height_l2;             ///< Tile height used by detile algo
-	RMuint32    storage_format;
-    RMuint32    luma_nb_comp_per_sample;    ///< Number of components per sample of luma
-    RMuint32    chroma_nb_comp_per_sample;  ///< Number of components per sample of chroma
-
-//  APP_STATE   application_state;
+	SOC_ARCH            soc_arch;                   ///< System architecture used in detile algo
+	RMuint32            tile_width_l2;              ///< Tile width used by detile algo
+	RMuint32            tile_height_l2;             ///< Tile height used by detile algo
+	RMuint32            storage_format;
+    RMuint32            luma_nb_comp_per_sample;    ///< Number of components per sample of luma
+    RMuint32            chroma_nb_comp_per_sample;  ///< Number of components per sample of chroma
 
 #ifdef  ENABLE_THREADS
     pthread_t               fifoFillThread;             ///< Thread used to send stream data to input fifo...
@@ -149,13 +152,11 @@ public:
 #endif // ENABLE_THREADS
 
 #ifdef  ENABLE_CURSES
-//    void*                   pUIContext;
-    struct _uiContext*      pUIContext;
+    struct _uiContext*  pUIContext;
 #endif // ENABLE_CURSES
 
-    int                     dump_y_uv;
+    int                 dump_y_uv;
 };
-//} CONTEXT;
 
 
 #define COMMAND_TIMEOUT         0xffffffff

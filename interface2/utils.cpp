@@ -11,6 +11,7 @@
 #include <libgen.h>
 #include <iostream>
 #include <sstream>
+#include <stdarg.h>
 //#include <stropts.h>
 #include <assert.h>
 #include <sys/ioctl.h>
@@ -21,6 +22,7 @@
 #include "llad/include/gbus.h"
 //#include "emhwlib/src/emhwlib_internal.h"
 //#include "ucode_api/include/ucode_interface.h"
+#include "test_interface.h"
 #include "video_interface.h"
 #include "utils.h"
 
@@ -253,3 +255,56 @@ std::string generate_output_yuv(std::string sPath, std::string sInputName) {
 
     return sYUVFile;
 }
+
+void set_tile_dimensions(CONTEXT* ctx, RMuint32 tsw, RMuint32 tsh)
+{
+    ctx->tile_width_l2       = tsw;
+    ctx->tile_height_l2      = tsh;
+    ctx->pvc_tw              = (1 << tsw);
+    ctx->pvc_th              = (1 << tsh);
+    ctx->pvc_ts              = ctx->pvc_tw * ctx->pvc_th;
+
+    return;
+}
+
+typedef struct {
+    std::string sID;
+    RMuint32    tileW;
+    RMuint32    tileH;
+} tileDef;
+
+static tileDef  chipTileSizes[] = {
+    { "8758", 8, 5, },
+    { "8760", 9, 5, },
+};
+
+bool set_tile_dimensions(CONTEXT* ctx, std::string sChipId)
+{
+    for (size_t i = 0 ; i < sizeof(chipTileSizes)/sizeof(tileDef) ; i++) {
+        if (sChipId == chipTileSizes[i].sID) {
+            set_tile_dimensions( ctx, chipTileSizes[i].tileW, chipTileSizes[i].tileH);
+            return true;
+        }
+    }
+
+    set_tile_dimensions( ctx, 8, 5 );
+
+    return false;
+}
+
+#ifdef _DEBUG
+
+/* This debug stub is used for static libraries which use muman style debug */
+extern FILE* NORMALMSG;
+
+void debug(char const* sFmt, ...) {
+    va_list list;
+
+    va_start(list, sFmt);
+    vfprintf( NORMALMSG, sFmt, list );
+    va_end(list);
+
+    return;
+}
+
+#endif // _DEBUG
