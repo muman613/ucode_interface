@@ -86,9 +86,9 @@ int init_user_interface(UI_CONTEXT* pCtx)
 	getmaxyx(stdscr, (pCtx->screeny), (pCtx->screenx));
 	pCtx->maxlines = pCtx->screeny - 2;
 
-	SET_RECT( pCtx->status_rect, 0, 0,  pCtx->screenx, 5  );
-	SET_RECT( pCtx->input_rect,  0, 6,  pCtx->screenx, 14 );
-	SET_RECT( pCtx->output_rect, 0, 21, pCtx->screenx, 14 );
+	SET_RECT( pCtx->status_rect, 0, 0,  pCtx->screenx, 6  );
+	SET_RECT( pCtx->input_rect,  0, 7,  pCtx->screenx, 14 );
+	SET_RECT( pCtx->output_rect, 0, 22, pCtx->screenx, 14 );
 
     /* Initialize status panel */
 	pCtx->status_window = newwin( pCtx->status_rect.h, pCtx->status_rect.w, pCtx->status_rect.y, pCtx->status_rect.x );
@@ -252,6 +252,12 @@ int update_user_interface(UI_CONTEXT* pCtx)
 
     pthread_mutex_lock( &pCtx->context_mutex );
 
+    super_box( pCtx->status_window, "Application Status", 2);
+
+    snprintf(buffer, DRAW_BUFFER_SIZE, "Connected to %s @ %s",
+             pCtx->szChip, pCtx->szConn);
+    center_string(pCtx, pCtx->status_window, 2, 2, buffer);
+
     switch (pCtx->state) {
     case APP_INITIALIZING:
         msg = "Application Initializing...";
@@ -285,12 +291,13 @@ int update_user_interface(UI_CONTEXT* pCtx)
         break;
     }
 
-    super_box( pCtx->status_window, "Application Status", 2);
 
     /* Update status panel... */
-    center_string(pCtx, pCtx->status_window, 2, 2, msg);
+    center_string(pCtx, pCtx->status_window, 2, 3, msg);
 
     if (pCtx->state == APP_PLAYING) {
+        std::string sMsg;
+
         if (panel_hidden(pCtx->input_panel))
             show_panel( pCtx->input_panel );
         if (panel_hidden(pCtx->output_panel))
@@ -300,17 +307,17 @@ int update_user_interface(UI_CONTEXT* pCtx)
         draw_output_panel( pCtx );
 
         if ((pCtx->flags & FLAG_QUIT_IN_PROGRESS) == 0) {
-            std::string sMsg;
 
             if ((pCtx->flags & FLAG_SAVING_YUV) != 0) {
                 sMsg = "Hit 'v' to view / Hit 'q' to quit";
             } else {
                 sMsg = "Hit 'q' to quit";
             }
-            center_string( pCtx, stdscr, 1, pCtx->screeny-1, sMsg.c_str());
         } else {
-            center_string( pCtx, stdscr, 1, pCtx->screeny-1, "Quitting application");
+            sMsg = "Quitting application";
         }
+
+        center_string( pCtx, stdscr, 1, pCtx->screeny-1, sMsg.c_str());
     } else {
         hide_panel( pCtx->input_panel );
         hide_panel( pCtx->output_panel );

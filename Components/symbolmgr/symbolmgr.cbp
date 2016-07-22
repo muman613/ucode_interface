@@ -5,6 +5,11 @@
 		<Option title="symbolmgr" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
+		<Option show_notes="0">
+			<notes>
+				<![CDATA[Library used to extract values from labels header file.]]>
+			</notes>
+		</Option>
 		<Build>
 			<Target title="Debug">
 				<Option output="../libs/Linux/symbolmgr_d" prefix_auto="1" extension_auto="1" />

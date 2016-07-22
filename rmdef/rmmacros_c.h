@@ -5,7 +5,7 @@
  *****************************************/
 /**
   @file   rmmacros_c.h
-  @brief  
+  @brief
 
   Macros / inline functions in general C syntax (no gcc extensions).
 
@@ -21,8 +21,8 @@
 #define STR(x) __STR(x)
 #endif
 
-#define __KEEP_END(str, len)		(str + sizeof(str) - (sizeof(str) <= len ? sizeof(str) : len))
-#define RM_CODE_STAMP(size)			__KEEP_END(__FILE__":"STR(__LINE__), size)
+//#define __KEEP_END(str, len)		(str + sizeof(str) - (sizeof(str) <= len ? sizeof(str) : len))
+//#define RM_CODE_STAMP(size)			__KEEP_END(__FILE__":"STR(__LINE__), size)
 
 #ifdef __ASSEMBLY__
 
@@ -60,10 +60,10 @@
 static inline RMuint32 RMcountBits_c(RMuint32 x)
 {
 	RMuint32 i;
-	
-	for (i = 0; x; i++) 
+
+	for (i = 0; x; i++)
 		x &= x - 1;  // remove least significant set bit
-	
+
 	return i;
 }
 #undef RMcountBits
@@ -122,7 +122,7 @@ do __asm__ __volatile__(							\
 /*
   returns the number of the highest bit set
   in other words, the base 2 logarithm of an unsigned 32bit integer
-  
+
   log2 0xffffffff = 31
   log2 0x1003 = 12
   log2 0x1000 = 12
@@ -134,12 +134,12 @@ do __asm__ __volatile__(							\
 static inline RMint32 RMlog2_c(RMuint32 a)
 {
 	RMint32 rv = -1;
-	
+
 	while (a) {
 		rv++;
 		a >>= 1;
 	}
-	
+
 	return rv;
 }
 #undef RMlog2
@@ -147,7 +147,7 @@ static inline RMint32 RMlog2_c(RMuint32 a)
 
 /*
   returns the number of the lowest bit set
-  
+
   0: -1
   1: 0
   4: 2
@@ -170,7 +170,7 @@ static inline RMint32 RMlbs_c(RMuint32 a)
   0x1000: TRUE
   0x1003: FALSE
  */
-static inline RMbool RMisPot_c(RMuint32 a) 
+static inline RMbool RMisPot_c(RMuint32 a)
 {
 	return (!(a & (a - 1)) && a);  // check if non-zero after removing least significant set bit
 }
@@ -178,13 +178,13 @@ static inline RMbool RMisPot_c(RMuint32 a)
 #define RMisPot RMisPot_c
 
 static inline RMuint32 RMswapBytesUint32_c(RMuint32 a)
-{									
-	RMuint32 tmp=a;				
-	
-	tmp = (((tmp >> 8) & 0x00ff00ff) | ((tmp & 0x00ff00ff) << 8)); 
-	tmp = ((tmp >> 16) | (tmp << 16));	
-	
-	return tmp;							
+{
+	RMuint32 tmp=a;
+
+	tmp = (((tmp >> 8) & 0x00ff00ff) | ((tmp & 0x00ff00ff) << 8));
+	tmp = ((tmp >> 16) | (tmp << 16));
+
+	return tmp;
 }
 #undef RMswapBytesUint32
 #define RMswapBytesUint32 RMswapBytesUint32_c
@@ -262,8 +262,8 @@ static inline RMuint64 RMleBufToUint64(const RMuint8 *buf)
 /**
    Transforms a 32 bits integer into 4 bytes in big endian order
 
-   @param val 
-   @param buf   
+   @param val
+   @param buf
 */
 static inline void RMuint32ToBeBuf(RMuint32 val, RMuint8 *buf)
 {
@@ -276,8 +276,8 @@ static inline void RMuint32ToBeBuf(RMuint32 val, RMuint8 *buf)
 /**
    Transforms a 32 bits integer int o 4 bytes in little endian order
 
-   @param val 
-   @param buf   
+   @param val
+   @param buf
 */
 static inline void RMuint32ToLeBuf(RMuint32 val, RMuint8 *buf)
 {
@@ -290,8 +290,8 @@ static inline void RMuint32ToLeBuf(RMuint32 val, RMuint8 *buf)
 /**
    Transforms a 64 bits integer int to 8 bytes in little endian order
 
-   @param val 
-   @param buf   
+   @param val
+   @param buf
 */
 static inline void RMuint64ToLeBuf(RMuint64 val, RMuint8 *buf)
 {
@@ -309,8 +309,8 @@ static inline void RMuint64ToLeBuf(RMuint64 val, RMuint8 *buf)
 /**
    Transforms array of 16 bits integer into an RMuint64
 
-   @param array 
-   @param val   
+   @param array
+   @param val
 */
 static inline void RMuint16ArrayToRMuint64(RMuint16 * array, RMuint64 *val)
 {
@@ -323,8 +323,8 @@ static inline void RMuint16ArrayToRMuint64(RMuint16 * array, RMuint64 *val)
 /**
    Transforms a 64 bits integer int to 8 bytes in big endian order
 
-   @param val 
-   @param buf   
+   @param val
+   @param buf
 */
 static inline void RMuint64ToBeBuf(RMuint64 val, RMuint8 *buf)
 {
@@ -376,7 +376,7 @@ static inline RMuint32 RMleBufToUint24(const RMuint8 *buf)
 
 /**
    Transform a 24 bits integer (stored in a RMuint32) into 3 bytes in big endian order
-   
+
    @param val
    @param buf
 */
@@ -390,8 +390,8 @@ static inline void RMuint24ToBeBuf(RMuint32 val, RMuint8 *buf)
 /**
    Transforms a 24 bits integer into 2 bytes in little endian order
 
-   @param val 
-   @param buf   
+   @param val
+   @param buf
 */
 static inline void RMuint24ToLeBuf(RMuint32 val, RMuint8 *buf)
 {
@@ -423,8 +423,8 @@ static inline RMuint16 RMleBufToUint16(RMuint8 *buf)
 /**
    Transforms a 16 bits integer into 2 bytes in big endian order
 
-   @param val 
-   @param buf   
+   @param val
+   @param buf
 */
 static inline void RMuint16ToBeBuf(RMuint16 val, RMuint8 *buf)
 {
@@ -435,8 +435,8 @@ static inline void RMuint16ToBeBuf(RMuint16 val, RMuint8 *buf)
 /**
    Transforms a 16 bits integer into 2 bytes in little endian order
 
-   @param val 
-   @param buf   
+   @param val
+   @param buf
 */
 static inline void RMuint16ToLeBuf(RMuint16 val, RMuint8 *buf)
 {
@@ -478,7 +478,7 @@ static inline RMint32 RMcomparememory(const void *ptr1, const void *ptr2, RMuint
 // rounded integer division a * b / c
 #define RM64mult32divrnd32(a,b,c) ( ((RMuint64)(a) * (RMuint32)(b) + ((RMuint32)(c) >> 1)) / (RMuint32)(c) )
 
-/* 
+/*
 
    Example
    RMALIGNTO(0x12345600,2) = 0x12345600 (prev 32bit word align)
@@ -490,7 +490,7 @@ static inline RMint32 RMcomparememory(const void *ptr1, const void *ptr2, RMuint
 #define RMALIGNTO(x,nbits) ((((RMuint32)(x))>>(nbits))<<(nbits))
 #define RMALIGNTOVar RMALIGNTO
 
-/* 
+/*
    process x as a 32bit integer, align it to next 2^nbits byte boundary.
 
    Example

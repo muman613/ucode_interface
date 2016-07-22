@@ -307,6 +307,7 @@ bool set_tile_dimensions(CONTEXT* ctx, std::string sChipId)
 // arg5 -c
 // arg6 1
 
+#ifdef ENABLE_CURSES
 void launch_viewer(CONTEXT* pCtx)
 {
     const char*         argv[8] = { FRAMEINSPECTOR_EXE,
@@ -315,27 +316,37 @@ void launch_viewer(CONTEXT* pCtx)
                                     "-s",
                                     0,
                                     "-c",
-                                    "1",
+                                    0,
                                     NULL };
     char                szFilename[1024];
     char                szDimensions[32];
+    char                szFrame[8];
     pid_t               pid;
 
+    if (pCtx->viewPid != 0) {
+        kill(pCtx->viewPid, SIGKILL);
+        pCtx->viewPid = 0;
+    }
+
     if (pCtx->picture_count > 0) {
-        snprintf(szFilename, 1024, "%s", pCtx->file->sYUVFilename.c_str());
+        snprintf(szFilename, 1024, "%s", pCtx->file.sYUVFilename.c_str());
         snprintf(szDimensions, 32, "%ldx%ld", pCtx->picture_w, pCtx->picture_h);
+        snprintf(szFrame, 8, "%ld", pCtx->picture_count - 1);
 
         argv[2] = szFilename;
         argv[4] = szDimensions;
+        argv[6] = szFrame;
 
         if (posix_spawn(&pid, FRAMEINSPECTOR_EXE, NULL, NULL,
-                        (char* const*)argv, environ) != 0)
+                        (char* const*)argv, environ) == 0)
         {
+            pCtx->viewPid = pid;
+        } else {
             fprintf(stderr, "ERROR: Unable to spawn (%s)\n", strerror(errno));
         }
     }
 }
-
+#endif // ENABLE_CURSES
 #ifdef _DEBUG
 
 /* This debug stub is used for static libraries which use muman style debug */

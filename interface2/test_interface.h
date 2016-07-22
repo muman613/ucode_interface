@@ -7,10 +7,13 @@
 
 #include <string>
 #include <signal.h>
+#include <memory>
 
 #ifdef ENABLE_THREADS
     #include <pthread.h>
 #endif // ENABLE_THREADS
+
+#include "symbolmgr/symbolmgr.h"
 
 #define DRAM_BASE       0xa8000000 // hardcoded value in a free Dram zone
 
@@ -32,8 +35,8 @@
 
 #define BUFFERSIZE              65536
 
-struct _uiContext;
-class UcodeSymbolMgr;
+class UI_CONTEXT;
+//class UcodeSymbolMgr;
 
 /**
  *  DSP register values.
@@ -82,11 +85,11 @@ typedef struct filePack {
 class CONTEXT {
 public:
     /* User supplied options */
-    APP_FILEPACK*       file;
-    UcodeSymbolMgr*     symMgr;
+    APP_FILEPACK        file;
+    UcodeSymbolMgr      symMgr;
 
-    RMuint32            reset_control;
-    const char*         serverStr;
+    std::string         sChip;
+    std::string         serverStr;
     RMuint32            decoderProfile;             ///< Decoder profile (default mpeg2)
 
     RMuint32            memBaseAddress;
@@ -95,6 +98,7 @@ public:
     RMuint32            regBaseAddress;
     RMuint32            dramBaseAddress;
 
+    RMuint32            reset_control;
 	RMuint32	        uiDRAMPtr;
 	RMuint32	        DecoderDataSize;
 	RMuint32	        DecoderContextSize;
@@ -156,12 +160,14 @@ public:
 #endif // ENABLE_THREADS
 
 #ifdef  ENABLE_CURSES
-    struct _uiContext*  pUIContext;
+    UI_CONTEXT*         pUIContext;
+    pid_t               viewPid;
 #endif // ENABLE_CURSES
 
     int                 dump_y_uv;
 };
 
+typedef std::shared_ptr<CONTEXT>    CONTEXT_PTR;
 
 #define COMMAND_TIMEOUT         0xffffffff
 

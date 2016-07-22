@@ -74,18 +74,21 @@ typedef enum _flags {
  *	User Interface context.
  */
 
-typedef struct _uiContext {
+class UI_CONTEXT {
+public:
     int             screenx;
     int             screeny;
     int             maxlines;
     uint32_t        counter;
     APP_STATE       state;
-    volatile int   flags;
+    volatile int    flags;
     const char*     codec;
 
     const char*     szPlayFile;
     const char*     szBinFile[2];
     const char*     szCapFile;
+    const char*     szConn;
+    const char*     szChip;
 
     uint32_t        uivtdb;             ///< Task Database ptr
     uint32_t        uivtif;             ///< Task Interface ptr
@@ -116,20 +119,19 @@ typedef struct _uiContext {
     PANEL*          output_panel;
 
     pthread_mutex_t context_mutex;
-} UI_CONTEXT;
-
-struct rect {
-	int x, y;
-	int w, h;
 };
 
 int init_user_interface(UI_CONTEXT* pCtx);
 int uninit_user_interface(UI_CONTEXT* pCtx);
-
 int update_user_interface(UI_CONTEXT* pCtx);
 
+/* Multithreaded locking functions */
 void lock_context(UI_CONTEXT* pCtx);
 void unlock_context(UI_CONTEXT* pCtx);
+
+/**
+ *  Flag macros
+ */
 
 #define SET_FLAG(ctx, value)                                                     \
     ((UI_CONTEXT*)(ctx)->pUIContext)->flags |= (value)

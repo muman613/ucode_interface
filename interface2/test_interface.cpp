@@ -72,7 +72,7 @@ using namespace video_interface;
  *  Parse profile option (which decoder to open).
  */
 
-static RMstatus parse_profile_option(CONTEXT* ctx, const char* profile)
+static RMstatus parse_profile_option(CONTEXT_PTR ctx, const char* profile)
 {
     RMuint32 codec_id;
 
@@ -105,13 +105,11 @@ static void print_usage(const char* sAppName) {
  *  Parse commandline options.
  */
 
-#if 1
-static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, char* argv[])
+static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc, char* argv[])
 {
     int         opt;
     RMstatus    result = RM_ERROR;
     std::string sChipID, sChipMode;
-//    const char* opts = "Db:c:s:p:o:O:e:h";
     const char* opts="Dc:m:s:p:o:O:h";
     FILE_PACK   fPack;
 
@@ -130,18 +128,9 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
         case 'm':
             sChipMode = optarg;
             break;
-//        case 'b':
-//            pCtx->file->sBinFilename = optarg;
-//            break;
-
-//        case 'c':
-//            if (pCtx->szBinFilename[1] != NULL)
-//                free((void *)pCtx->szBinFilename[1]);
-//            pCtx->sBinFilename[1] = optarg;
-//            break;
 
         case 's':
-            pCtx->file->sStrFilename = optarg;
+            pCtx->file.sStrFilename = optarg;
             break;
 
         case 'p':
@@ -150,11 +139,11 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
             break;
 
         case 'o':
-            pCtx->file->sYUVFilename = optarg;
+            pCtx->file.sYUVFilename = optarg;
             break;
 
         case 'O':
-            pCtx->file->sYUVPath = optarg;
+            pCtx->file.sYUVPath = optarg;
             break;
 
 //        case 'e':
@@ -181,14 +170,14 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
             /* Obtain the proper file paths... */
             fPack.resolve_package( sChipID, (sChipMode == "d")?true:false, "..");
             if (fPack.isvalid()) {
-                pCtx->file->sBinFilename = fPack.sBinFile;
+                pCtx->file.sBinFilename = fPack.sBinFile;
 
-                if (!pCtx->symMgr->LoadSymbols(fPack.sLabelFile)) {
+                if (!pCtx->symMgr.LoadSymbols(fPack.sLabelFile)) {
                     fprintf(stderr, "ERROR: Unable to load labels file!\n");
                     return RM_ERROR;
                 }
 #ifdef _DEBUG
-                fprintf(stderr, "loaded %zu symbols!\n", pCtx->symMgr->size());
+                fprintf(stderr, "loaded %zu symbols!\n", pCtx->symMgr.size());
 #endif // _DEBUG
             } else {
                 fprintf(stderr, "ERROR: Unable to locate required files!\n");
@@ -207,17 +196,17 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
     }
 
     /* verify that files exist */
-    if ((!pCtx->file->sBinFilename.empty()) && (!pCtx->file->sStrFilename.empty()))
+    if ((!pCtx->file.sBinFilename.empty()) && (!pCtx->file.sStrFilename.empty()))
     {
-        if ((file_exists( pCtx->file->sBinFilename ) == RM_OK) &&
-            (file_exists( pCtx->file->sStrFilename ) == RM_OK))
+        if ((file_exists( pCtx->file.sBinFilename ) == RM_OK) &&
+            (file_exists( pCtx->file.sStrFilename ) == RM_OK))
         {
 //            if (pCtx->szBinFilename[1] != 0) {
 //                if (file_exists(pCtx->szBinFilename[1]) == RM_OK) {
 //                result = RM_OK;
 //                }
 //            } else {
-                set_tile_dimensions( pCtx, sChipID );
+                set_tile_dimensions( pCtx.get(), sChipID );
                 result = RM_OK;
 //            }
         }
@@ -227,36 +216,46 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
 
 
     if (result == RM_OK) {
-        if ((!pCtx->file->sYUVFilename.empty()) && (!pCtx->file->sYUVPath.empty())) {
+        if ((!pCtx->file.sYUVFilename.empty()) && (!pCtx->file.sYUVPath.empty())) {
             fprintf(stderr, "ERROR: Cannot specify -o & -O together!\n");
             result = RM_ERROR;
-        } else if (!pCtx->file->sYUVPath.empty()) {
-            pCtx->file->sYUVFilename = generate_output_yuv( pCtx->file->sYUVPath,
-                                                           pCtx->file->sStrFilename);
+        } else if (!pCtx->file.sYUVPath.empty()) {
+            pCtx->file.sYUVFilename = generate_output_yuv( pCtx->file.sYUVPath,
+                                                           pCtx->file.sStrFilename);
         }
 
         /* if user specified output yuv file, open it for writing... */
-        if (!pCtx->file->sYUVFilename.empty())
+        if (!pCtx->file.sYUVFilename.empty())
         {
-            pCtx->yuvfp = fopen( pCtx->file->sYUVFilename.c_str(), "w");
+            pCtx->yuvfp = fopen( pCtx->file.sYUVFilename.c_str(), "w");
 
             if (pCtx->yuvfp == 0) {
                 fprintf(stderr, "WARNING: Unable to open output YUV file %s.\n"
-                        "Not saving decoded pictures...\n", pCtx->file->sYUVFilename.c_str());
+                        "Not saving decoded pictures...\n", pCtx->file.sYUVFilename.c_str());
 
                 /* free and zero the YUV filename */
 //                free((void*)pCtx->szYUVFilename);
 //                pCtx->szYUVFilename = 0L;
             } else {
+#ifdef ENABLE_CURSES
                 SET_FLAG(pCtx, FLAG_SAVING_YUV);
+#endif // ENABLE_CURSES
             }
         }
 
+        pCtx->sChip     = sChipID;
+#ifdef ENABLE_CURSES
+        pCtx->pUIContext->szChip = pCtx->sChip.c_str(); //getenv("EM8XXX_SERVER");
+#endif // ENABLE_CURSES
         pCtx->serverStr = getenv("EM8XXX_SERVER");
 
-        if (pCtx->serverStr == 0L) {
+        if (pCtx->serverStr.empty()) {
             fprintf(stderr, "EM8XXX_SERVER environment is not defined!\n");
             result = RM_ERROR;
+        } else {
+#ifdef ENABLE_CURSES
+            pCtx->pUIContext->szConn = pCtx->serverStr.c_str(); //getenv("EM8XXX_SERVER");
+#endif // ENABLE_CURSES
         }
 
     }
@@ -266,131 +265,15 @@ exitParse:
     return result;
 }
 
-#else
-
-static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, char* argv[])
-{
-    int         opt;
-    RMstatus    result = RM_ERROR;
-    const char* opts = "Db:c:s:p:o:O:e:h";
-
-    while ((opt = getopt(argc, argv, opts)) != -1)
-    {
-        switch (opt)
-        {
-        case 'D':
-            pCtx->dump_y_uv = TRUE;
-            break;
-
-        case 'b':
-            pCtx->file->sBinFilename = optarg;
-            break;
-
-//        case 'c':
-//            if (pCtx->szBinFilename[1] != NULL)
-//                free((void *)pCtx->szBinFilename[1]);
-//            pCtx->sBinFilename[1] = optarg;
-//            break;
-
-        case 's':
-            pCtx->file->sStrFilename = optarg;
-            break;
-
-        case 'p':
-            if (parse_profile_option(pCtx, optarg) == RM_ERROR)
-                goto exitParse;
-            break;
-
-        case 'o':
-            pCtx->file->sYUVFilename = optarg;
-            break;
-
-        case 'O':
-            pCtx->file->sYUVPath = optarg;
-            break;
-
-//        case 'e':
-//            if (strcmp(optarg, "1") == 0) {
-//                pCtx->pmBaseAddress       = PMEM_BASE_mpeg_engine_1;
-//                pCtx->dmBaseAddress       = DMEM_BASE_mpeg_engine_1;
-//                pCtx->regBaseAddress      = REG_BASE_mpeg_engine_1;
-//            }
-//            break;
-
-        case 'h':
-        default:
-            print_usage( argv[0] );
-        }
-    }
-
-    /* verify that files exist */
-    if ((!pCtx->file->sBinFilename.empty()) && (!pCtx->file->sStrFilename.empty()))
-    {
-        if ((file_exists( pCtx->file->sBinFilename ) == RM_OK) &&
-            (file_exists( pCtx->file->sStrFilename ) == RM_OK))
-        {
-//            if (pCtx->szBinFilename[1] != 0) {
-//                if (file_exists(pCtx->szBinFilename[1]) == RM_OK) {
-//                result = RM_OK;
-//                }
-//            } else {
-                result = RM_OK;
-//            }
-        }
-    } else {
-        fprintf(stderr, "ERROR: Must at least specify microcode (-b) and input stream (-s)!\n");
-    }
-
-
-    if (result == RM_OK) {
-        if ((!pCtx->file->sYUVFilename.empty()) && (!pCtx->file->sYUVPath.empty())) {
-            fprintf(stderr, "ERROR: Cannot specify -o & -O together!\n");
-            result = RM_ERROR;
-        } else if (!pCtx->file->sYUVPath.empty()) {
-            pCtx->file->sYUVFilename = generate_output_yuv( pCtx->file->sYUVPath,
-                                                           pCtx->file->sStrFilename);
-        }
-
-        /* if user specified output yuv file, open it for writing... */
-        if (!pCtx->file->sYUVFilename.empty())
-        {
-            pCtx->yuvfp = fopen( pCtx->file->sYUVFilename.c_str(), "w");
-
-            if (pCtx->yuvfp == 0)
-            {
-                fprintf(stderr, "WARNING: Unable to open output YUV file %s.\n"
-                        "Not saving decoded pictures...\n", pCtx->file->sYUVFilename.c_str());
-
-                /* free and zero the YUV filename */
-//                free((void*)pCtx->szYUVFilename);
-//                pCtx->szYUVFilename = 0L;
-            }
-        }
-
-        pCtx->serverStr = getenv("EM8XXX_SERVER");
-
-        if (pCtx->serverStr == 0L) {
-            fprintf(stderr, "EM8XXX_SERVER environment is not defined!\n");
-            result = RM_ERROR;
-        }
-
-    }
-
-exitParse:
-
-    return result;
-}
-
-#endif
 
 
 /**
  *  Open llad/gbus interface.
  */
 
-static RMstatus open_gbus(CONTEXT* pCtx, int chipNum)
+static RMstatus open_gbus(CONTEXT_PTR pCtx /* , int chipNum */)
 {
-    if ((pCtx->pllad = llad_open((RMascii*)pCtx->serverStr)) == 0)
+    if ((pCtx->pllad = llad_open((RMascii*)pCtx->serverStr.c_str())) == 0)
     {
         fprintf(stderr, "ERROR: llad_open failed!\n");
         return RM_ERROR;
@@ -409,7 +292,7 @@ static RMstatus open_gbus(CONTEXT* pCtx, int chipNum)
  *  Close llad/gbus interface.
  */
 
-static void close_gbus(CONTEXT* pCtx)
+static void close_gbus(CONTEXT_PTR pCtx)
 {
     if (pCtx->pgbus)
     {
@@ -428,18 +311,16 @@ static void close_gbus(CONTEXT* pCtx)
  * Free string parameter memory.
  */
 
-static void release_context(CONTEXT* pCtx)
+static void release_context(CONTEXT_PTR pCtx)
 {
 
-    if (!pCtx->file->sYUVFilename.empty())
+    if (!pCtx->file.sYUVFilename.empty())
     {
         if (pCtx->yuvfp != 0)
         {
             fclose(pCtx->yuvfp);
             pCtx->yuvfp = 0L;
         }
-//        free((void*)pCtx->szYUVFilename);
-//        pCtx->szYUVFilename = 0L;
 
         if (pCtx->pLuma) {
             free((void*)pCtx->pLuma);
@@ -452,23 +333,17 @@ static void release_context(CONTEXT* pCtx)
         }
     }
 
-//#ifdef ENABLE_CURSES
-//    if (pCtx->pUIContext != 0L) {
-//        free(pCtx->pUIContext);
-//        pCtx->pUIContext=0L;
+#ifdef ENABLE_CURSES
+    if (pCtx->pUIContext != 0L) {
+        delete pCtx->pUIContext;
+        pCtx->pUIContext=0L;
+    }
+#endif // ENABLE_CURSES
+
+//    if (pCtx.symMgr != 0L) {
+//        delete pCtx.symMgr;
+//        pCtx.symMgr = 0L;
 //    }
-//#endif // ENABLE_CURSES
-
-    /* Delete file pack */
-    if (pCtx->file != 0L) {
-        delete pCtx->file;
-        pCtx->file = 0L;
-    }
-
-    if (pCtx->symMgr != 0L) {
-        delete pCtx->symMgr;
-        pCtx->symMgr = 0L;
-    }
 
     return;
 }
@@ -482,7 +357,7 @@ static void release_context(CONTEXT* pCtx)
  *  to the correct memory (pm/dm/dram).
  */
 
-static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
+static RMstatus load_video_ucode(CONTEXT_PTR pCtx /*, RMuint32 engineID */)
 {
     RMstatus nRes = RM_ERROR;
     std::string     sBinName;
@@ -499,13 +374,13 @@ static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
     APP_STATE       appState = APP_LOADING_MICROCODE_0;
 #endif // ENABLE_CURSES
 
-    switch (engineID) {
-    case 0:
+//    switch (engineID) {
+//    case 0:
         pmBase      = PMEM_BASE_mpeg_engine_0;
         dmBase      = DMEM_BASE_mpeg_engine_0;
 //        dramBase    = DRAM_BASE;
-        sBinName   = pCtx->file->sBinFilename;
-        break;
+        sBinName   = pCtx->file.sBinFilename;
+//        break;
 //    case 1:
 //        pmBase      = PMEM_BASE_mpeg_engine_1;
 //        dmBase      = DMEM_BASE_mpeg_engine_1;
@@ -515,10 +390,10 @@ static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
 //        appState    = APP_LOADING_MICROCODE_1;
 //#endif // ENABLE_CURSES
 //        break;
-    default:
-        fprintf(stderr, "ERROR: Invalid engine specified!\n");
-        return RM_ERROR;
-    }
+//    default:
+//        fprintf(stderr, "ERROR: Invalid engine specified!\n");
+//        return RM_ERROR;
+//    }
 
 #ifdef ENABLE_CURSES
     ((UI_CONTEXT *)pCtx->pUIContext)->state = appState;
@@ -536,7 +411,7 @@ static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
 
 #ifndef ENABLE_CURSES
         printf("Loading microcode '%s' (%d bytes) on engine %ld...\n",
-               szBinName, binSize, engineID);
+               sBinName.c_str(), binSize, (RMuint32)0);
         fflush(stdout);
 #endif // ENABLE_CURSES
 
@@ -581,26 +456,14 @@ static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
  *  Stop the DSP (sends RESET & STOP)
  */
 
-static void do_stop_engine(CONTEXT* pContext) {
+static void do_stop_engine(CONTEXT_PTR pContext) {
     RMuint32    reset_control_reg = 0L;
 
-//    switch (engineID) {
-//    case 0:
-//        reset_control_reg = pContext->memBaseAddress; //REG_BASE_mpeg_engine_0;
-//        break;
-//    case 1:
-//        reset_control_reg = REG_BASE_mpeg_engine_1;
-//        break;
-//    default:
-//        fprintf(stderr, "ERROR: Invalid engine specified!\n");
-//        return;
-//    }
-
-//    reset_control_reg += G2L_RESET_CONTROL;
+    assert(pContext != 0L);
     reset_control_reg = pContext->memBaseAddress + pContext->reset_control;
 
 #ifndef ENABLE_CURSES
-    printf("Stopping DSP engine %ld...\n", engineID);
+    printf("Stopping DSP engine %ld...\n", (RMuint32)0);
     fflush(stdout);
 #endif // ENABLE_CURSES
 
@@ -619,25 +482,14 @@ static void do_stop_engine(CONTEXT* pContext) {
  *  Start the DSP (Send RUN)
  */
 
-static void do_start_engine(CONTEXT* pContext) {
+static void do_start_engine(CONTEXT_PTR pContext) {
     RMuint32    reset_control_reg = 0L;
 
-//    switch (engineID) {
-//    case 0:
-//        reset_control_reg = REG_BASE_mpeg_engine_0;
-//        break;
-//    case 1:
-//        reset_control_reg = REG_BASE_mpeg_engine_1;
-//        break;
-//    default:
-//        fprintf(stderr, "ERROR: Invalid engine specified!\n");
-//        return;
-//    }
-//
-//    reset_control_reg += G2L_RESET_CONTROL;
+    assert(pContext != 0L);
     reset_control_reg = pContext->memBaseAddress + pContext->reset_control;
+
 #ifndef ENABLE_CURSES
-    printf("Starting DSP engine %ld...\n", engineID);
+    printf("Starting DSP engine %ld...\n", (RMuint32)0);
     fflush(stdout);
 #endif // ENABLE_CURSES
 
@@ -652,7 +504,7 @@ static void do_start_engine(CONTEXT* pContext) {
  *
  */
 
-static RMstatus init_video_engine (CONTEXT* pContext)
+static RMstatus init_video_engine (CONTEXT_PTR pContext)
 {
     RMuint32 memBase = pContext->memBaseAddress;
     RMuint32 Address, Size;
@@ -676,7 +528,7 @@ static RMstatus init_video_engine (CONTEXT* pContext)
  */
 
 
-static RMstatus open_video_decoder (CONTEXT* pContext)
+static RMstatus open_video_decoder(CONTEXT_PTR pContext)
 {
     RMuint32		unprotected_ptr = 0;
     RMuint32		i;
@@ -830,7 +682,7 @@ over:
  *  return error RM_PENDING.
  */
 
-static RMstatus send_video_command(CONTEXT* ctx, enum VideoCommand cmd, enum VideoStatus stat)
+static RMstatus send_video_command(CONTEXT_PTR ctx, enum VideoCommand cmd, enum VideoStatus stat)
 {
     RMstatus            result = RM_ERROR;
     enum VideoStatus    VideoDecoderStatus;
@@ -896,7 +748,7 @@ static RMstatus send_video_command(CONTEXT* ctx, enum VideoCommand cmd, enum Vid
  *  Sends uninit command, sets the profile, and sends the init command.
  */
 
-static RMstatus set_video_codec(CONTEXT* ctx)
+static RMstatus set_video_codec(CONTEXT_PTR ctx)
 {
     send_video_command( ctx, VideoCommandUninit,  VideoStatusUninit );
 
@@ -1152,10 +1004,10 @@ static RMstatus process_picture(CONTEXT* ctx, RMuint32 picture_address)
 
     result          = RM_OK;
 
-    /* Save width & height */
-    ctx->picture_w = luma_position_in_buffer.width;
-    ctx->picture_h = luma_position_in_buffer.height;
-    ctx->picture_count = frame_count;
+//    /* Save width & height */
+//    ctx->picture_w = luma_position_in_buffer.width;
+//    ctx->picture_h = luma_position_in_buffer.height;
+//    ctx->picture_count = frame_count;
 
 #ifdef ENABLE_CURSES
     lock_context( ctx->pUIContext );
@@ -1244,6 +1096,12 @@ static RMstatus process_picture(CONTEXT* ctx, RMuint32 picture_address)
         result = RM_OK;
     }
 
+    /* Save width & height */
+    ctx->picture_w = luma_position_in_buffer.width;
+    ctx->picture_h = luma_position_in_buffer.height;
+    ctx->picture_count = frame_count;
+
+
     return result;
 }
 
@@ -1268,7 +1126,7 @@ static void* fifoFillThread(void* arg) {
 #endif // ENABLE_CURSES
 
     /* Open the input stream */
-    if ((ifp = fopen(ctx->file->sStrFilename.c_str(), "r")) != 0) {
+    if ((ifp = fopen(ctx->file.sStrFilename.c_str(), "r")) != 0) {
 //      printf("%s: %s\n", __FUNCTION__, ctx->szStrFilename);
 
         while (!feof(ifp)) {
@@ -1431,20 +1289,20 @@ static void* fifoEmptyThread(void* arg)
  *  Launch the FIFO fill and FIFO empty threads.
  */
 
-static int launch_threads(CONTEXT* pCtx)
+static int launch_threads(CONTEXT_PTR pCtx)
 {
 #ifndef ENABLE_CURSES
     printf("Launching FIFO fill thread...\n");
 #endif // ENABLE_CURSES
 
-    if (pthread_create(&pCtx->fifoFillThread, NULL, fifoFillThread, pCtx) != 0) {
+    if (pthread_create(&pCtx->fifoFillThread, NULL, fifoFillThread, pCtx.get()) != 0) {
         fprintf(stderr, "ERROR: Unable to start FIFO fill thread!\n");
         return 0;
     } else {
 #ifndef ENABLE_CURSES
         printf("Launching FIFO empty thread...\n");
 #endif // ENABLE_CURSES
-        if (pthread_create(&pCtx->fifoEmptyThread, NULL, fifoEmptyThread, pCtx) != 0) {
+        if (pthread_create(&pCtx->fifoEmptyThread, NULL, fifoEmptyThread, pCtx.get()) != 0) {
             fprintf(stderr, "ERROR: Unable to start FIFO empty thread!\n");
             return 0;
         }
@@ -1464,9 +1322,9 @@ static int launch_threads(CONTEXT* pCtx)
     /* Update user interface elements */
     SET_DISPLAY_CONTEXT(pCtx, startTime, time(NULL));
     SET_DISPLAY_CONTEXT(pCtx, state, APP_PLAYING);
-    SET_DISPLAY_CONTEXT(pCtx, szPlayFile, pCtx->file->sStrFilename.c_str());
-    SET_DISPLAY_CONTEXT(pCtx, szCapFile, pCtx->file->sYUVFilename.c_str());
-    SET_DISPLAY_CONTEXT(pCtx, szBinFile[0], pCtx->file->sBinFilename.c_str());
+    SET_DISPLAY_CONTEXT(pCtx, szPlayFile, pCtx->file.sStrFilename.c_str());
+    SET_DISPLAY_CONTEXT(pCtx, szCapFile, pCtx->file.sYUVFilename.c_str());
+    SET_DISPLAY_CONTEXT(pCtx, szBinFile[0], pCtx->file.sBinFilename.c_str());
 //    SET_DISPLAY_CONTEXT(pCtx, szBinFile[1], pCtx->szBinFilename[1]);
     SET_DISPLAY_CONTEXT(pCtx, uivtdb, pCtx->pvtdb);
     SET_DISPLAY_CONTEXT(pCtx, uivtif, pCtx->pvti);
@@ -1489,7 +1347,7 @@ static int launch_threads(CONTEXT* pCtx)
             }
 
             if ((toupper(ch) == 'V') && (pCtx->yuvfp != 0)) {
-                launch_viewer(pCtx);
+                launch_viewer(pCtx.get());
             }
         }
 
@@ -1675,7 +1533,7 @@ exit:
 }
 #endif // ENABLE_THREADS
 
-static RMstatus close_video_decoder(CONTEXT* ctx)
+static RMstatus close_video_decoder(CONTEXT_PTR ctx)
 {
     send_video_command(ctx, VideoCommandStop, VideoStatusStop);
 
@@ -1704,12 +1562,12 @@ static void display_context_info(CONTEXT* ctx)
 //    DISPLAY_CTX_PTR( uiDRAMPtr );
 
     printf("%-40s : 0x%08lX\n", "DRAM_BASE" , (RMuint32)DRAM_BASE);
-    DISPLAY_CTX_STR( szStrFilename, "Input stream");
-    DISPLAY_CTX_STR( szBinFilename, "Microcode Binary #0");
+    DISPLAY_CTX_STR( file.sStrFilename.c_str(), "Input stream");
+    DISPLAY_CTX_STR( file.sBinFilename.c_str(), "Microcode Binary #0");
 //    if (ctx->szBinFilename[1] != 0L)
 //        DISPLAY_CTX_STR( szBinFilename[1], "Microcode Binary #1");
-    if (ctx->szYUVFilename != 0L)
-        DISPLAY_CTX_STR( szYUVFilename, "Capture File")
+    if (!ctx->file.sYUVFilename.empty())
+        DISPLAY_CTX_STR( file.sYUVFilename.c_str(), "Capture File")
     DISPLAY_CTX_VAR( DecoderDataSize );
     DISPLAY_CTX_VAR( DecoderContextSize );
     DISPLAY_CTX_VAR( UserDataSize );
@@ -1778,12 +1636,9 @@ void update_environment_vars(CONTEXT* pCtx)
  *  Initialize application context structure...
  */
 
-void init_context(CONTEXT* ctx) {
-    memset(ctx, 0, sizeof(CONTEXT));
-
-    ctx->file                = new APP_FILEPACK;
-    ctx->symMgr              = new UcodeSymbolMgr;
-    video_interface::set_symbol_resolver( ctx->symMgr );
+void init_context(CONTEXT_PTR ctx) {
+//    ctx.symMgr              = new UcodeSymbolMgr;
+    video_interface::set_symbol_resolver( &ctx->symMgr );
 
     /* initialize default values */
     ctx->uiDRAMPtr           = DRAM_BASE;
@@ -1794,16 +1649,8 @@ void init_context(CONTEXT* ctx) {
     ctx->InbandFIFOCount	 = 512;
     ctx->NumOfPictures       = PICTURE_COUNT;
     ctx->decoderProfile      = VideoProfileMPEG2;        // default to MPEG2 stream
-#if 1
-    set_tile_dimensions( ctx, RMTILE_WIDTH_SHIFT, RMTILE_HEIGHT_SHIFT );
-//    set_tile_dimensions( ctx, 9, RMTILE_HEIGHT_SHIFT );
-#else
-    ctx->tile_width_l2       = RMTILE_WIDTH_SHIFT;
-    ctx->tile_height_l2      = RMTILE_HEIGHT_SHIFT;
-    ctx->pvc_tw              = (1 << RMTILE_WIDTH_SHIFT);
-    ctx->pvc_th              = (1 << RMTILE_HEIGHT_SHIFT);
-    ctx->pvc_ts              = ctx->pvc_tw * ctx->pvc_th;
-#endif // 1
+
+    set_tile_dimensions( ctx.get(), RMTILE_WIDTH_SHIFT, RMTILE_HEIGHT_SHIFT );
 
     ctx->soc_arch            = SOC_TANGO;
     ctx->reset_control       = G2L_ANOTHER_RESET_CONTROL;
@@ -1837,13 +1684,14 @@ void init_context(CONTEXT* ctx) {
 
 #ifdef ENABLE_CURSES
     /* Allocate User Interface context */
-    ctx->pUIContext = (UI_CONTEXT*)malloc(sizeof(UI_CONTEXT));
+//    ctx->pUIContext = (UI_CONTEXT*)malloc(sizeof(UI_CONTEXT));
+    ctx->pUIContext = new UI_CONTEXT;
     assert(ctx->pUIContext != 0L);
     memset(ctx->pUIContext, 0, sizeof(UI_CONTEXT));
 #endif // ENABLE_CURSES
 
 #ifdef  ENABLE_ENV_VARS
-    update_environment_vars( ctx );
+    update_environment_vars( ctx.get() );
 #endif // ENABLE_ENV_VARS
 
     return;
@@ -1855,33 +1703,22 @@ void init_context(CONTEXT* ctx) {
 
 int main(int argc, char *argv[])
 {
-#if 0
-    FILE_PACK       pack;
-
-    if (pack.resolve_package("8760", false, "..")) {
-        if (pack.isvalid())
-            pack.dump(stdout);
-        else
-            printf("Files not found!\n");
-    }
-#else
-    CONTEXT ctx;
-    int chipnum = 0;
+    CONTEXT_PTR     shared_context = std::make_shared<CONTEXT>();
 
     open_log_files("messages.txt", "errors.txt");
 
-    init_context( &ctx );
+    init_context( shared_context );
 
     /* parse commandline arguments */
-    if (parse_options(&ctx, "interface2", argc, argv) != RM_OK)
+    if (parse_options(shared_context, "interface2", argc, argv) != RM_OK)
     {
         fprintf(stderr, "ERROR: Incorrect parameters!\n");
-        release_context( &ctx );
+        release_context( shared_context );
         return -1;
     }
 
 #ifdef ENABLE_CURSES
-    init_user_interface(ctx.pUIContext);
+    init_user_interface(shared_context->pUIContext);
 #else
     set_terminal_mode();
     on_exit( cleanup, 0L);
@@ -1889,82 +1726,58 @@ int main(int argc, char *argv[])
 
 #ifdef ENABLE_CURSES
 
-    ((UI_CONTEXT*)ctx.pUIContext)->state = APP_INITIALIZING;
-    update_user_interface(ctx.pUIContext);
+    shared_context->pUIContext->state = APP_INITIALIZING;
+    update_user_interface(shared_context->pUIContext);
 
 #endif // ENABLE_CURSES
 
-    if (open_gbus(&ctx, chipnum) == RM_ERROR)
+    if (open_gbus(shared_context /*, chipnum */) == RM_ERROR)
     {
         fprintf(stderr, "ERROR: Unable to obtain gbus pointer!\n");
         return -1;
     }
 
     /* Stop the both video engines */
-    do_stop_engine(&ctx);
-//    if (ctx.szBinFilename[1] != 0L) {
-//        do_stop_engine(&ctx, 1);
-//    }
+    do_stop_engine(shared_context);
 
-    if (load_video_ucode(&ctx, 0) != RM_OK)
+    if (load_video_ucode(shared_context) != RM_OK)
         goto clean_exit;
 
-    /* If second microcode specified load it on engine #1 */
-//    if (ctx.szBinFilename[1] != 0L) {
-//        if (load_video_ucode(&ctx, 1) != RM_OK)
-//            goto clean_exit;
-//    }
-
     /* Start the video engine */
-    do_start_engine(&ctx);
-
-//    if (ctx.szBinFilename[1] != 0L) {
-//        do_start_engine(&ctx, 1);
-//    }
-
-    init_video_engine(&ctx);
-
-    open_video_decoder(&ctx);
+    do_start_engine(shared_context);
+    init_video_engine(shared_context);
+    open_video_decoder(shared_context);
 
 #ifndef ENABLE_CURSES
-    display_context_info(&ctx);
+    display_context_info(shared_context.get());
 #endif // ENABLE_CURSES
 
-    set_video_codec(&ctx);
+    set_video_codec(shared_context);
 
     /* Send play command */
-    send_video_command(&ctx, VideoCommandPlayFwd, VideoStatusPlayFwd);
+    send_video_command(shared_context, VideoCommandPlayFwd, VideoStatusPlayFwd);
 
 #ifdef ENABLE_THREADS
     /* handle threaded code */
-    launch_threads(&ctx);
+    launch_threads(shared_context);
 #else
-    send_data(&ctx);
+    send_data(shared_context.get());
 #endif // ENABLE_THREADS
 
-    close_video_decoder(&ctx);
+    close_video_decoder(shared_context);
 
 clean_exit:
-
-    release_context(&ctx);
-    close_gbus(&ctx);
-
 #ifdef ENABLE_CURSES
-    uninit_user_interface(ctx.pUIContext);
+    uninit_user_interface(shared_context->pUIContext);
 #endif // ENABLE_CURSES
 
-#ifdef ENABLE_CURSES
-    if (ctx.pUIContext != 0L) {
-        free(ctx.pUIContext);
-        ctx.pUIContext=0L;
-    }
-#endif // ENABLE_CURSES
+    close_gbus(shared_context);
+    release_context(shared_context);
 
     close_log_files();
 
-#endif // 1
+//    delete ctx;
 
     return 0;
-
 }
 

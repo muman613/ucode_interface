@@ -35,12 +35,7 @@ SYMMGR_LIB=../Components/libs/Linux/x86/libsymbolmgr.a
 endif
 			  
 DEFINES=$(RMCFLAGS) -include options.h -D_FILE_OFFSET_BITS=64
-
-#ifdef UCODE_DEBUG
-#DEFINES+=-DUCODE_DEBUG=1
-#endif
-
-CFLAGS=$(DEFINES) $(DBG_FLAGS) $(INCLUDE_FLAGS) -Wall
+CFLAGS =-std=c++11 $(DEFINES) $(DBG_FLAGS) $(INCLUDE_FLAGS) -Wall
 LDFLAGS=-pthread -lpanelw -lncursesw $(SYMMGR_LIB)
 
 include ../Build/buildsys.mk

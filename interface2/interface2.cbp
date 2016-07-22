@@ -35,12 +35,14 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-std=c++11" />
 			<Add option="-m32" />
 			<Add option="-fexceptions" />
 			<Add option="-include options.h" />
 			<Add option="-DRMCHIP_ID=RMCHIP_ID_SMP8758" />
 			<Add option="-DRMCHIP_REVISION=1" />
 			<Add option="-DRMFEATURE_VIDEO_INTERFACE_VERSION=2" />
+			<Add option="-DENABLE_CURSES=1" />
 			<Add directory=".." />
 			<Add directory="../gbuslib" />
 			<Add directory="../llad" />
@@ -79,7 +81,6 @@
 		<Unit filename="utils.h" />
 		<Unit filename="video_interface.cpp" />
 		<Unit filename="video_interface.h" />
-		<Unit filename="video_microcode_labels.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />
