@@ -298,16 +298,29 @@ int update_user_interface(UI_CONTEXT* pCtx)
 
         draw_input_panel( pCtx );
         draw_output_panel( pCtx );
+
+        if ((pCtx->flags & FLAG_QUIT_IN_PROGRESS) == 0) {
+            std::string sMsg;
+
+            if ((pCtx->flags & FLAG_SAVING_YUV) != 0) {
+                sMsg = "Hit 'v' to view / Hit 'q' to quit";
+            } else {
+                sMsg = "Hit 'q' to quit";
+            }
+            center_string( pCtx, stdscr, 1, pCtx->screeny-1, sMsg.c_str());
+        } else {
+            center_string( pCtx, stdscr, 1, pCtx->screeny-1, "Quitting application");
+        }
     } else {
         hide_panel( pCtx->input_panel );
         hide_panel( pCtx->output_panel );
     }
 
-    if ((pCtx->flags & FLAG_QUIT_IN_PROGRESS) == 0) {
-        center_string( pCtx, stdscr, 1, pCtx->screeny-1, "Hit 'q' to quit");
-    } else {
-        center_string( pCtx, stdscr, 1, pCtx->screeny-1, "Quitting application");
-    }
+//    if ((pCtx->flags & FLAG_QUIT_IN_PROGRESS) == 0) {
+//        center_string( pCtx, stdscr, 1, pCtx->screeny-1, "Hit 'q' to quit");
+//    } else {
+//        center_string( pCtx, stdscr, 1, pCtx->screeny-1, "Quitting application");
+//    }
 
     update_panels();
     doupdate();

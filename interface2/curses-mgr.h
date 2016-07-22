@@ -66,7 +66,8 @@ typedef struct picBufSpec {
 typedef enum _flags {
     FLAG_FILLTHREAD_RUNNING  = (1L << 0),
     FLAG_EMPTYTHREAD_RUNNING = (1L << 1),
-    FLAG_QUIT_IN_PROGRESS    = (1L << 2),
+    FLAG_SAVING_YUV          = (1L << 2),
+    FLAG_QUIT_IN_PROGRESS    = (1L << 3),
 } FLAGS;
 
 /**

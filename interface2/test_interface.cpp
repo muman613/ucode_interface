@@ -240,14 +240,15 @@ static RMstatus parse_options(CONTEXT* pCtx, const char* szAppName, int argc, ch
         {
             pCtx->yuvfp = fopen( pCtx->file->sYUVFilename.c_str(), "w");
 
-            if (pCtx->yuvfp == 0)
-            {
+            if (pCtx->yuvfp == 0) {
                 fprintf(stderr, "WARNING: Unable to open output YUV file %s.\n"
                         "Not saving decoded pictures...\n", pCtx->file->sYUVFilename.c_str());
 
                 /* free and zero the YUV filename */
 //                free((void*)pCtx->szYUVFilename);
 //                pCtx->szYUVFilename = 0L;
+            } else {
+                SET_FLAG(pCtx, FLAG_SAVING_YUV);
             }
         }
 
@@ -450,6 +451,13 @@ static void release_context(CONTEXT* pCtx)
             pCtx->pChroma = 0L;
         }
     }
+
+//#ifdef ENABLE_CURSES
+//    if (pCtx->pUIContext != 0L) {
+//        free(pCtx->pUIContext);
+//        pCtx->pUIContext=0L;
+//    }
+//#endif // ENABLE_CURSES
 
     /* Delete file pack */
     if (pCtx->file != 0L) {
@@ -1144,6 +1152,11 @@ static RMstatus process_picture(CONTEXT* ctx, RMuint32 picture_address)
 
     result          = RM_OK;
 
+    /* Save width & height */
+    ctx->picture_w = luma_position_in_buffer.width;
+    ctx->picture_h = luma_position_in_buffer.height;
+    ctx->picture_count = frame_count;
+
 #ifdef ENABLE_CURSES
     lock_context( ctx->pUIContext );
 
@@ -1473,6 +1486,10 @@ static int launch_threads(CONTEXT* pCtx)
                 pCtx->terminateThreads = TRUE;
                 SET_FLAG(pCtx, FLAG_QUIT_IN_PROGRESS);
                 break;
+            }
+
+            if ((toupper(ch) == 'V') && (pCtx->yuvfp != 0)) {
+                launch_viewer(pCtx);
             }
         }
 
@@ -1818,6 +1835,13 @@ void init_context(CONTEXT* ctx) {
     pthread_mutex_init(&ctx->displayMutex, NULL);
 #endif // ENABLE_THREADS
 
+#ifdef ENABLE_CURSES
+    /* Allocate User Interface context */
+    ctx->pUIContext = (UI_CONTEXT*)malloc(sizeof(UI_CONTEXT));
+    assert(ctx->pUIContext != 0L);
+    memset(ctx->pUIContext, 0, sizeof(UI_CONTEXT));
+#endif // ENABLE_CURSES
+
 #ifdef  ENABLE_ENV_VARS
     update_environment_vars( ctx );
 #endif // ENABLE_ENV_VARS
@@ -1857,11 +1881,6 @@ int main(int argc, char *argv[])
     }
 
 #ifdef ENABLE_CURSES
-    /* Allocate User Interface context */
-    ctx.pUIContext = (UI_CONTEXT*)malloc(sizeof(UI_CONTEXT));
-    assert(ctx.pUIContext != 0L);
-    memset(ctx.pUIContext, 0, sizeof(UI_CONTEXT));
-
     init_user_interface(ctx.pUIContext);
 #else
     set_terminal_mode();
@@ -1933,6 +1952,14 @@ clean_exit:
 #ifdef ENABLE_CURSES
     uninit_user_interface(ctx.pUIContext);
 #endif // ENABLE_CURSES
+
+#ifdef ENABLE_CURSES
+    if (ctx.pUIContext != 0L) {
+        free(ctx.pUIContext);
+        ctx.pUIContext=0L;
+    }
+#endif // ENABLE_CURSES
+
     close_log_files();
 
 #endif // 1

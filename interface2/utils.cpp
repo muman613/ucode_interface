@@ -12,7 +12,8 @@
 #include <iostream>
 #include <sstream>
 #include <stdarg.h>
-//#include <stropts.h>
+#include <spawn.h>
+#include <errno.h>
 #include <assert.h>
 #include <sys/ioctl.h>
 
@@ -25,6 +26,8 @@
 #include "test_interface.h"
 #include "video_interface.h"
 #include "utils.h"
+
+#define FRAMEINSPECTOR_EXE      "/usr/local/bin/frameInspector"
 
 RMstatus file_exists(std::string sFilename) {
     return file_exists(sFilename.c_str());
@@ -290,6 +293,47 @@ bool set_tile_dimensions(CONTEXT* ctx, std::string sChipId)
     set_tile_dimensions( ctx, 8, 5 );
 
     return false;
+}
+
+/**
+ *  Run the frameInspector to view the capture file.
+ */
+
+// arg0 /usr/local/bin/frameInspector
+// arg1 -f
+// arg2 filename
+// arg3 -s
+// arg4 WxH
+// arg5 -c
+// arg6 1
+
+void launch_viewer(CONTEXT* pCtx)
+{
+    const char*         argv[8] = { FRAMEINSPECTOR_EXE,
+                                    "-f",
+                                    0,
+                                    "-s",
+                                    0,
+                                    "-c",
+                                    "1",
+                                    NULL };
+    char                szFilename[1024];
+    char                szDimensions[32];
+    pid_t               pid;
+
+    if (pCtx->picture_count > 0) {
+        snprintf(szFilename, 1024, "%s", pCtx->file->sYUVFilename.c_str());
+        snprintf(szDimensions, 32, "%ldx%ld", pCtx->picture_w, pCtx->picture_h);
+
+        argv[2] = szFilename;
+        argv[4] = szDimensions;
+
+        if (posix_spawn(&pid, FRAMEINSPECTOR_EXE, NULL, NULL,
+                        (char* const*)argv, environ) != 0)
+        {
+            fprintf(stderr, "ERROR: Unable to spawn (%s)\n", strerror(errno));
+        }
+    }
 }
 
 #ifdef _DEBUG

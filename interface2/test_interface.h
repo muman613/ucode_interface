@@ -140,6 +140,10 @@ public:
     RMuint32            luma_nb_comp_per_sample;    ///< Number of components per sample of luma
     RMuint32            chroma_nb_comp_per_sample;  ///< Number of components per sample of chroma
 
+    RMuint32            picture_w;
+    RMuint32            picture_h;
+    RMuint32            picture_count;
+
 #ifdef  ENABLE_THREADS
     pthread_t               fifoFillThread;             ///< Thread used to send stream data to input fifo...
     pthread_t               fifoEmptyThread;            ///< Thread used to extract pictures from display fifo...

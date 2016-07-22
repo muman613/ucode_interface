@@ -31,5 +31,7 @@ std::string generate_output_yuv(std::string szPath, std::string szInputName);
 void set_tile_dimensions(CONTEXT* ctx, RMuint32 tsw, RMuint32 tsh);
 bool set_tile_dimensions(CONTEXT* ctx, std::string sChipId);
 
+void launch_viewer(CONTEXT* pCtx);
+
 #endif
 
