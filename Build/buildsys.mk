@@ -132,7 +132,7 @@ $(DEP_DIR)/%.d:%.cpp
 	
 clean:
 	@echo "Removing all objects, binaries, and dependancies..."
-	@rm -rf $(OBJS) $(TARGET) $(DEP_DIR)
+	@rm -rf $(OBJS) $(TARGET) $(DEP_DIR) $(ADD_CLEAN_FILES)
 
 	
 objdir: .PHONY
