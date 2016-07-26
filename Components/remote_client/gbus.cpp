@@ -33,7 +33,7 @@ gbus::gbus()
  *
  */
 
-gbus::gbus(llad* llad)
+gbus::gbus(LLAD_PTR llad)
 :   valid(false),
     pLlad(0),
     sd(0)
@@ -63,7 +63,7 @@ bool gbus::is_valid()
  *
  */
 
-bool gbus::open(llad* llad)
+bool gbus::open(LLAD_PTR llad)
 {
 	RMuint16 port = 0;
 

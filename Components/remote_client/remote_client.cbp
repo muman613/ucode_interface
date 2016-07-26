@@ -70,6 +70,7 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-std=c++11" />
 			<Add directory="../.." />
 		</Compiler>
 		<Unit filename="gbus.cpp" />

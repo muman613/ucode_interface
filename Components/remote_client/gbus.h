@@ -2,6 +2,8 @@
 #define __GBUS_H__
 
 #include <string>
+
+#define ALLOW_OS_CODE
 #include "rmdef/rmdef.h"
 
 /** Forward declarations */
@@ -9,18 +11,18 @@ class llad;
 struct sock;
 
 /**
- *
+ *  Gbus class encapsulates the gbus interface.
  */
 
 class gbus {
 public:
     gbus();
-    gbus(llad* pLlad);
+    gbus(LLAD_PTR pLlad);
     virtual ~gbus();
 
     bool            is_valid();
 
-    bool            open(llad* pLlad);
+    bool            open(LLAD_PTR pLlad);
     void            close();
 
     RMuint8         gbus_read_uint8(RMuint32 byte_address);
@@ -41,10 +43,21 @@ public:
 
 protected:
     bool            valid;
-    llad*           pLlad;
+    LLAD_PTR        pLlad;
     sock*           sd;
     pthread_mutex_t gbus_lock;
 };
+
+/**
+ *
+ */
+
+#if (__cplusplus >= 201103L)
+typedef std::shared_ptr<gbus>   GBUS_PTR;
+#else
+typedef gbus*                   GBUS_PTR;
+#endif
+
 
 #endif // __GBUS_H__
 

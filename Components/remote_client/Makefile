@@ -18,7 +18,7 @@ CPP_SOURCES=	llad.cpp sock.cpp gbus.cpp
 
 INCLUDES=-I../..
 
-CFLAGS=$(INCLUDES)
+CFLAGS=$(INCLUDES) -std=c++11
 LDFLAGS=$(LIBXML2_LDFLAGS)
 
 LIB_DIR=../libs/Linux/$(ARCH)

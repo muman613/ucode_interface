@@ -2,7 +2,13 @@
 #define __LLAD_H__
 
 #include <string>
+
+#define ALLOW_OS_CODE
 #include "rmdef/rmdef.h"
+
+#if (__cplusplus >= 201103L)
+    #include <memory>
+#endif
 
 /** Forward declarations */
 class gbus;
@@ -43,5 +49,10 @@ protected:
     RMuint32        device;
 };
 
+#if (__cplusplus >= 201103L)
+typedef std::shared_ptr<llad>   LLAD_PTR;
+#else
+typedef llad*                   LLAD_PTR;
+#endif
 
 #endif // __LLAD_H__
