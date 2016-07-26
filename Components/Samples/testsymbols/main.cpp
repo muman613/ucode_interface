@@ -16,7 +16,7 @@ int main(int argc, const char* argv[])
     int opt;
     UcodeSymbolMgr  mgr;
 
-    printf("Welcome!\n");
+    printf("testsymbols v1.0\n");
 
     while ((opt = getopt(argc, (char * const *)argv, "l:b:s:")) != -1) {
         switch (opt) {
