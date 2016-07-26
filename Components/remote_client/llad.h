@@ -3,9 +3,14 @@
 
 #include <string>
 #include "rmdef/rmdef.h"
-#include "sock.h"
 
+/** Forward declarations */
 class gbus;
+struct sock;
+
+/**
+ *  Class encapsulates the llad structure.
+ */
 
 class llad {
 public:
@@ -13,25 +18,28 @@ public:
 	llad(const std::string& host);
 	virtual ~llad();
 
-    bool        open();
-    bool        open(const std::string& host);
+    bool            is_valid();
 
-    void        close();
+    bool            open();
+    bool            open(const std::string& host);
 
-    void        get_config(RMascii* config_name, RMuint32 config_size);
-    RMuint32    get_open_count();
+    void            close();
 
-    RMuint32    lock();
-    void        unlock();
+    void            get_config(RMascii* config_name, RMuint32 config_size);
+    RMuint32        get_open_count();
+
+    RMuint32        lock();
+    void            unlock();
 
 //    RMuint32    wait_interrupt(RMuint32 mast, RMuint32* timeout_microsecond);
 //    RMstatus    wait_channels(RMuint32* channel_array, RMuint32 channel_count, RMuint32 timeout);
 
 protected:
-    friend class gbus;
+    friend class    gbus;
 
+    bool            valid;
     std::string     hostname;
-    struct sock*    sd;
+    sock*           sd;
     RMuint32        device;
 };
 

@@ -123,7 +123,7 @@ struct sock *sock_connect(RMuint16 port, RMascii *netaddress)
 
 	addr = atoaddr(netaddress);
 	if (addr == NULL) {
-		fprintf(stderr,"make_connection:  Invalid network address.\n");
+//		fprintf(stderr,"make_connection:  Invalid network address.\n");
 		return NULL;
 	}
 

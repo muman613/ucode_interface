@@ -5,10 +5,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <inttypes.h>
-#include "llad.h"
 #include "sock.h"
-#include "llad_protocol.h"
+#include "llad.h"
 #include "gbus.h"
+#include "rmdef/rmmacros_c.h"
+#include "llad_protocol.h"
 
 #if 0
 #define LOCALDBG     ENABLE
@@ -47,6 +48,15 @@ gbus::gbus(llad* llad)
 gbus::~gbus()
 {
     // dtor
+}
+
+/**
+ *
+ */
+
+bool gbus::is_valid()
+{
+    return valid;
 }
 
 /**
