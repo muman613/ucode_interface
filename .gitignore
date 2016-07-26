@@ -1,0 +1,12 @@
+*.o
+*.d
+*~
+*.bak
+*#
+nohup.out
+*.depend
+errors.txt
+messages.txt
+cscope.out
+*.layout
+
