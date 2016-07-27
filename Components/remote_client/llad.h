@@ -12,7 +12,9 @@
 
 /** Forward declarations */
 class gbus;
-struct sock;
+namespace rc_sockets {
+    struct sock;
+}
 
 /**
  *  Class encapsulates the llad structure.
@@ -45,7 +47,7 @@ protected:
 
     bool            valid;
     std::string     hostname;
-    sock*           sd;
+    rc_sockets::sock*           sd;
     RMuint32        device;
 };
 

@@ -8,7 +8,10 @@
 
 /** Forward declarations */
 class llad;
-struct sock;
+
+namespace rc_sockets {
+    struct sock;
+}
 
 /**
  *  Gbus class encapsulates the gbus interface.
@@ -44,7 +47,7 @@ public:
 protected:
     bool            valid;
     LLAD_PTR        pLlad;
-    sock*           sd;
+    rc_sockets::sock*           sd;
     pthread_mutex_t gbus_lock;
 };
 

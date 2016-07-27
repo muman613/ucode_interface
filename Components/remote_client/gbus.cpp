@@ -17,6 +17,8 @@
 #define LOCALDBG     DISABLE
 #endif // 0
 
+using namespace rc_sockets;
+
 /**
  *
  */

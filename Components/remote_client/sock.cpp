@@ -31,6 +31,9 @@
 	#define fprintf(...)
 #endif
 
+#ifdef __cplusplus
+namespace rc_sockets {
+#endif // __cplusplus
 
 struct sock {
 	int sfd;
@@ -353,3 +356,8 @@ RMuint32 _sock_write(int sock_fd, char* buf, RMuint32 len)
 	return write(sock_fd, buf, len);
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+

@@ -12,6 +12,8 @@
 #include "llad.h"
 #include "llad_protocol.h"
 
+using namespace rc_sockets;
+
 /**
  *
  */

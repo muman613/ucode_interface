@@ -18,7 +18,7 @@
 #include "rmdef/rmdef.h"
 
 /* Sometime compiled as C++ in the <cvs_asic>tango/emulation/ */
-RM_EXTERN_C_BLOCKSTART
+namespace rc_sockets {
 
 struct sock;
 
@@ -130,7 +130,6 @@ RMint32 sock_write_2_uint32(struct sock *h, RMuint32 val1, RMuint32 val2);
 */
 RMint32 sock_write_3_uint32(struct sock *h, RMuint32 val1, RMuint32 val2, RMuint32 val3);
 
-RM_EXTERN_C_BLOCKEND
-
+}
 #endif // __SOCK_H__
 
