@@ -60,8 +60,10 @@ ifeq ($(MAKECMDGOALS),clean)
 # doing clean, so dont make deps.
 DEPS=
 else
-DEPS=$(CPP_SOURCES:%.cpp=$(DEP_DIR)/%.d)
-DEPS+=$(C_SOURCES:%.c=$(DEP_DIR)/%.d)
+CPP_SOURCES_TRIM=$(notdir $(CPP_SOURCES))
+DEPS=$(CPP_SOURCES_TRIM:%.cpp=$(DEP_DIR)/%.d)
+C_SOURCES_TRIM=$(notdir $(C_SOURCES))
+DEPS+=$(notdir $(C_SOURCES_TRIM:%.c=$(DEP_DIR)/%.d))
 endif
 
 ################################################################################
@@ -118,18 +120,21 @@ $(TARGET): objdir libdir $(OBJS)
 	@$(CXX) -shared $(OBJS) -o $(TARGET) -s $(LDFLAGS)
 endif
 
+################################################################################
+#	dependancy generation
+################################################################################
 $(DEP_DIR)/%.d:%.c
 	@install -d $(DEP_DIR)
 	@echo "Generating dependencies for $*...."
 	@echo -n "$(DEP_DIR)/$*.d $(OBJ_DIR)/" > $(DEP_DIR)/$*.d
-	@$(CXX) -MM $(CFLAGS) $*.c >> $(DEP_DIR)/$*.d
+	@$(CXX) -MM $(CFLAGS) $< >> $(DEP_DIR)/$*.d
 
 $(DEP_DIR)/%.d:%.cpp
 	@install -d $(DEP_DIR)
-	@echo "Generating dependencies for $*...."
+	@echo "Generating dependencies for $<...."
 	@echo -n "$(DEP_DIR)/$*.d $(OBJ_DIR)/" > $(DEP_DIR)/$*.d
-	@$(CXX) -MM $(CFLAGS) $*.cpp >> $(DEP_DIR)/$*.d
-	
+	@$(CXX) -MM $(CFLAGS) $< >> $(DEP_DIR)/$*.d
+
 clean:
 	@echo "Removing all objects, binaries, and dependancies..."
 	@rm -rf $(OBJS) $(TARGET) $(DEP_DIR) $(ADD_CLEAN_FILES)
