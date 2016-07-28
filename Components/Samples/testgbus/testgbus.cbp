@@ -45,7 +45,7 @@
 		<Linker>
 			<Add option="-m32" />
 		</Linker>
-		<Unit filename="dbgimplementation.cpp">
+		<Unit filename="../common/dbgimplementation.cpp">
 			<Option target="Debug" />
 		</Unit>
 		<Unit filename="main.cpp" />
