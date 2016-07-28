@@ -45,6 +45,23 @@ PlatformBlock PlatformChip::operator[](size_t index) {
 #endif
 }
 
+PlatformBlock PlatformChip::operator[](std::string blockID) {
+#if (defined(__WXGTK__) || defined(__WXMSW__))
+//    return m_blocks.Item(index);
+#pragma message "PlatformChip::operator[](std::string blockID) not implemented!"
+#else
+    for (size_t i = 0 ; i < m_blocks.size() ; i++) {
+        if (m_blocks[i].get_block_name() == blockID) {
+            return m_blocks[i];
+        }
+    }
+
+    PlatformBlock nullBlock;
+    return nullBlock;
+#endif
+}
+
+
 void PlatformChip::Dump(FILE* fOut)
 {
 #if (defined(__WXGTK__) || defined(__WXMSW__))

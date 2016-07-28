@@ -469,11 +469,21 @@ bool PlatformDatabase::HandleEngineNode(PlatformBlock* pBlock, XML_NODE& eNode) 
 
 bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
     bool            bResult = false;
+    STRING          sDbFullpath;
     XML_DOC_PTR     pXmlDoc = 0L;
     XML_NODE_PTR    pRoot = 0L;
     XMLNODE_VECTOR  targetNodeArray;
 
-    pXmlDoc = xmlParseFile( sDbFilename.c_str() );
+    if (!sInstallPath.empty()) {
+        sDbFullpath = sInstallPath;
+        if (sDbFullpath[sDbFilename.size() - 1] != '/')
+            sDbFullpath += "/";
+        sDbFullpath +=  sDbFilename;
+    } else {
+        sDbFullpath = sDbFilename;
+    }
+
+    pXmlDoc = xmlParseFile( sDbFullpath.c_str() );
 
     if (pXmlDoc != 0L) {
         pRoot = xmlDocGetRootElement( pXmlDoc );
