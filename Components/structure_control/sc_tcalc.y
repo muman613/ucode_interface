@@ -21,7 +21,7 @@ extern "C" {
 
 void yyerror(const char *str)
 {
-	fprintf(stderr,"Parser: %s\n",str);
+//	fprintf(stderr,"Parser: %s\n",str);
     return;
 }
 

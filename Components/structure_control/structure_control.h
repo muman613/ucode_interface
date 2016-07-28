@@ -20,7 +20,7 @@ class structure_database;
 
 /** structure control debug output options */
 #define _ENABLE_HTML_OUTPUT         1
-#define _ENABLE_DUMP                1
+//#define _ENABLE_DUMP                1
 
 /** Maximum length of a source line */
 #define MAX_CMD     1024
