@@ -73,6 +73,7 @@ void FILE_PACK::dump(FILE* oFP) {
     fprintf(oFP, "ListFile  = %s\n", sListFile.c_str());
     fprintf(oFP, "LabelFile = %s\n", sLabelFile.c_str());
     fprintf(oFP, "MapFile   = %s\n", sMapFile.c_str());
+    fprintf(oFP, "Interface = %s\n", sInterfaceFile.c_str());
     fprintf(oFP, "---------------------------------------------------------\n");
 
     return;
@@ -91,4 +92,13 @@ bool FILE_PACK::isvalid()
     VERIFY_FILE_EXISTS( sMapFile );
 
     return true;
+}
+
+void FILE_PACK::clear()
+{
+    sBinFile.clear();
+    sListFile.clear();
+    sLabelFile.clear();
+    sMapFile.clear();
+    sInterfaceFile.clear();
 }

@@ -6,6 +6,7 @@
 class FILE_PACK {
 public:
     void            dump(FILE* oFP);
+    void            clear();
 
     std::string     sBinFile;
     std::string     sLabelFile;
