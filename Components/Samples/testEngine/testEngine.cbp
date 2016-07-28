@@ -47,9 +47,11 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-std=c++11" />
 			<Add option="-fexceptions" />
 			<Add option="`xml2-config --cflags`" />
 			<Add directory="../../" />
+			<Add directory="../../.." />
 		</Compiler>
 		<Unit filename="main.cpp" />
 		<Unit filename="targetEngine.cpp" />
