@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-#	Build all combinations of library
+#	Build all combinations of target
 #
 #	* x86_64 Debug
 #	* x86_64 Release
@@ -9,14 +9,18 @@
 #
 ################################################################################
 
-ARCH=x86_64 make clean
-ARCH=x86_64 DEBUG=1 make clean
-ARCH=x86 make clean
-ARCH=x86 DEBUG=1 make clean
+ARCH_ARRAY=( 'ARCH=x86_64' 'ARCH=x86' )
+DBG_ARRAY=( 'NDEBUG=1' 'DEBUG=1')
 
-ARCH=x86_64 make
-ARCH=x86_64 DEBUG=1 make
-ARCH=x86 make
-ARCH=x86 DEBUG=1 make
+if [ -t 1 ]; then
+	clear
+fi
+
+for dbg in ${DBG_ARRAY[@]}; do
+	for arch in ${ARCH_ARRAY[@]}; do
+		make $arch $dbg clean
+		make $arch $dbg
+	done
+done
 
 

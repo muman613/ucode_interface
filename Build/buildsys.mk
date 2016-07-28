@@ -24,7 +24,7 @@ ifeq ($(TARGET_TYPE), dynlib)
 else
 	BUILDTYPE?=Debug
 endif
-	CFLAGS+= -D_DEBUG=1 -g3
+	CFLAGS+= -D_DEBUG=1 -g3 -Wall
 else
 ifeq ($(TARGET_TYPE), dynlib)
 	BUILDTYPE?=SharedRelease
@@ -87,11 +87,11 @@ LDFLAGS+=$(EXTERN_LIBS) $(LIBS)
 #	Default rules
 $(OBJ_DIR)/%.o : %.cpp $(MAKEFILE)
 	@echo "Compiling $*.cpp"
-	@$(CXX) -c -o $@ $(CFLAGS) $<
+	@$(CXX) 2>&1 -c -o $@ $(CFLAGS) $<
 
 $(OBJ_DIR)/%.o : %.c $(MAKEFILE)
 	@echo "Compiling $*.c"
-	@$(CC) -c -o $@ $(CFLAGS) $<
+	@$(CC) 2>&1 -c -o $@ $(CFLAGS) $<
 	
 ################################################################################
 #	executable target
@@ -99,7 +99,7 @@ $(OBJ_DIR)/%.o : %.c $(MAKEFILE)
 ifeq ($(TARGET_TYPE), exe)
 $(TARGET): objdir exedir $(OBJS) $(EXTERN_LIBS)
 	@echo "Linking $(TARGET)"
-	@$(CXX) -o $(TARGET) $(OBJS) $(LDFLAGS)
+	@$(CXX) 2>&1 -o $(TARGET) $(OBJS) $(LDFLAGS)
 endif
 
 ################################################################################
@@ -108,7 +108,7 @@ endif
 ifeq ($(TARGET_TYPE), statlib)
 $(TARGET): objdir libdir $(OBJS)
 	@echo "Generating static library $(TARGET)"
-	@$(AR) -r -s $(TARGET) $(OBJS)
+	@$(AR) 2>&1 -r -s $(TARGET) $(OBJS)
 endif
 
 ################################################################################
@@ -117,7 +117,7 @@ endif
 ifeq ($(TARGET_TYPE), dynlib)
 $(TARGET): objdir libdir $(OBJS)
 	@echo "Generating shared library $(TARGET)"
-	@$(CXX) -shared $(OBJS) -o $(TARGET) -s $(LDFLAGS)
+	@$(CXX) 2>&1 -shared $(OBJS) -o $(TARGET) -s $(LDFLAGS)
 endif
 
 ################################################################################
