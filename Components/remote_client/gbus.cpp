@@ -50,6 +50,7 @@ gbus::gbus(LLAD_PTR llad)
 gbus::~gbus()
 {
     // dtor
+    close();
 }
 
 /**
@@ -61,6 +62,11 @@ bool gbus::is_valid()
     return valid;
 }
 
+const LLAD_PTR  gbus::get_llad()
+{
+    return pLlad;
+}
+
 /**
  *
  */
@@ -68,6 +74,11 @@ bool gbus::is_valid()
 bool gbus::open(LLAD_PTR llad)
 {
 	RMuint16 port = 0;
+
+#ifdef  _DEBUG
+    fprintf(stderr, "%s(%p)\n", __PRETTY_FUNCTION__, llad.get());
+#endif // _DEBUG
+
 
     pLlad = llad;
 
@@ -96,10 +107,15 @@ bool gbus::open(LLAD_PTR llad)
 
 void gbus::close()
 {
+#ifdef  _DEBUG
+    fprintf(stderr, "%s()\n", __PRETTY_FUNCTION__);
+#endif // _DEBUG
+
     if (valid == true) {
 		sock_close(sd);
 		sd = 0L;
 		pthread_mutex_destroy(&gbus_lock);
+		pLlad.reset();
         valid = false;
     }
 
@@ -121,7 +137,7 @@ RMuint8 gbus::gbus_read_uint8(RMuint32 byte_address)
 	if (sock_read_uint32(sd, &val) < 4)
 		RMPanic(RM_ERROR);
 
-	RMDBGLOG((LOCALDBG, "%s(0x%lx) = 0x%x\n", __FUNCTION__, byte_address, val));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx) = 0x%x\n", __PRETTY_FUNCTION__, byte_address, val));
 
 	pthread_mutex_unlock(&gbus_lock);
 	return (RMuint8) val;
@@ -142,7 +158,7 @@ RMuint16 gbus::gbus_read_uint16(RMuint32 byte_address)
 	if (sock_read_uint32(sd, &val) < 4)
 		RMPanic(RM_ERROR);
 
-	RMDBGLOG((LOCALDBG, "%s(0x%lx) = 0x%x\n", __FUNCTION__, byte_address, val));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx) = 0x%x\n", __PRETTY_FUNCTION__, byte_address, val));
 
 	pthread_mutex_unlock(&gbus_lock);
 	return (RMuint16) val;
@@ -162,7 +178,7 @@ RMuint32 gbus::gbus_read_uint32(RMuint32 byte_address)
 	if (sock_read_uint32(sd, &val) < 4)
 		RMPanic(RM_ERROR);
 
-	RMDBGLOG((LOCALDBG, "%s(0x%lx) = 0x%x\n", __FUNCTION__, byte_address, val));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx) = 0x%x\n", __PRETTY_FUNCTION__, byte_address, val));
 
 	pthread_mutex_unlock(&gbus_lock);
 	return (RMuint32) val;
@@ -175,7 +191,7 @@ RMuint32 gbus::gbus_read_uint32(RMuint32 byte_address)
 void gbus::gbus_write_uint8(RMuint32 byte_address, RMuint8 data)
 {
     pthread_mutex_lock(&gbus_lock);
-	RMDBGLOG((LOCALDBG, "%s(0x%lx, %u=0x%x)\n", __FUNCTION__, byte_address, data, data));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx, %u=0x%x)\n", __PRETTY_FUNCTION__, byte_address, data, data));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_UINT8, byte_address, data);
 
@@ -189,7 +205,7 @@ void gbus::gbus_write_uint8(RMuint32 byte_address, RMuint8 data)
 void gbus::gbus_write_uint16(RMuint32 byte_address, RMuint16 data)
 {
     pthread_mutex_lock(&gbus_lock);
-	RMDBGLOG((LOCALDBG, "%s(0x%lx, %u=0x%x)\n", __FUNCTION__, byte_address, data, data));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx, %u=0x%x)\n", __PRETTY_FUNCTION__, byte_address, data, data));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_UINT16, byte_address, data);
 
@@ -203,7 +219,7 @@ void gbus::gbus_write_uint16(RMuint32 byte_address, RMuint16 data)
 void gbus::gbus_write_uint32(RMuint32 byte_address, RMuint32 data)
 {
 	pthread_mutex_lock(&gbus_lock);
-	RMDBGLOG((LOCALDBG, "%s(0x%lx, %lu=0x%lx)\n", __FUNCTION__, byte_address, data, data));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx, %lu=0x%lx)\n", __PRETTY_FUNCTION__, byte_address, data, data));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_UINT32, byte_address, data);
 
@@ -217,7 +233,7 @@ void gbus::gbus_write_uint32(RMuint32 byte_address, RMuint32 data)
 void gbus::gbus_read_data8(RMuint32 byte_address, RMuint8 *data, RMuint32 count)
 {
 	pthread_mutex_lock(&gbus_lock);
-	RMDBGLOG((LOCALDBG, "%s(0x%lx)\n", __FUNCTION__, byte_address));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx)\n", __PRETTY_FUNCTION__, byte_address));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_READ_DATA8, byte_address, count);
 	if (sock_read_buf(sd, (RMuint8 *) data, count * sizeof(RMuint8)) < (RMint32) (count * sizeof(RMuint8)))
@@ -235,7 +251,7 @@ void gbus::gbus_read_data16(RMuint32 byte_address, RMuint16 *data, RMuint32 coun
 	RMuint32 i;
 	pthread_mutex_lock(&gbus_lock);
 
-	RMDBGLOG((LOCALDBG, "%s(0x%lx, %p, %lu)\n", __FUNCTION__, byte_address, data, count));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx, %p, %lu)\n", __PRETTY_FUNCTION__, byte_address, data, count));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_READ_DATA16, byte_address, count);
 	if (sock_read_buf(sd, (RMuint8 *)data, count * sizeof(RMuint16)) < (RMint32) (count * sizeof(RMuint16)))
@@ -259,7 +275,7 @@ void gbus::gbus_read_data32(RMuint32 byte_address, RMuint32 *data, RMuint32 coun
 
 	pthread_mutex_lock(&gbus_lock);
 
-	RMDBGLOG((LOCALDBG, "%s(0x%lx, %p, %lu)\n", __FUNCTION__, byte_address, data, count));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx, %p, %lu)\n", __PRETTY_FUNCTION__, byte_address, data, count));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_READ_DATA32, byte_address, count);
 
@@ -292,7 +308,7 @@ void gbus::gbus_read_data32(RMuint32 byte_address, RMuint32 *data, RMuint32 coun
 void gbus::gbus_write_data8(RMuint32 byte_address, RMuint8 *data, RMuint32 count)
 {
 	pthread_mutex_lock(&gbus_lock);
-	RMDBGLOG((LOCALDBG, "%s(0x%lx, %p, %lu)\n", __FUNCTION__, byte_address, data, count));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx, %p, %lu)\n", __PRETTY_FUNCTION__, byte_address, data, count));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_DATA8, byte_address, count);
 	if (sock_write_buf(sd, (RMuint8 *)data, count * sizeof(RMuint8)) < (RMint32) (count * sizeof(RMuint8)))
@@ -312,7 +328,7 @@ void gbus::gbus_write_data16(RMuint32 byte_address, RMuint16 *data, RMuint32 cou
 
 	pthread_mutex_lock(&gbus_lock);
 
-	RMDBGLOG((LOCALDBG, "%s(0x%lx, %p, %lu)\n", __FUNCTION__, byte_address, data, count));
+	RMDBGLOG((LOCALDBG, "%s(0x%lx, %p, %lu)\n", __PRETTY_FUNCTION__, byte_address, data, count));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_DATA16, byte_address, count);
 
@@ -339,7 +355,7 @@ void gbus::gbus_write_data32(RMuint32 byte_address, RMuint32 *data, RMuint32 cou
 
 	pthread_mutex_lock(&gbus_lock);
 
-	RMDBGLOG((LOCALDBG, "%s(%0x%lx, %p, %lu)\n", __FUNCTION__, byte_address, data, count));
+	RMDBGLOG((LOCALDBG, "%s(%0x%lx, %p, %lu)\n", __PRETTY_FUNCTION__, byte_address, data, count));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_DATA32, byte_address, count);
 

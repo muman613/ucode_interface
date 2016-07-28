@@ -44,11 +44,13 @@ public:
     void            gbus_write_data16(RMuint32 byte_address, RMuint16 *data, RMuint32 count);
     void            gbus_write_data32(RMuint32 byte_address, RMuint32 *data, RMuint32 count);
 
+    const LLAD_PTR  get_llad();
+
 protected:
-    bool            valid;
-    LLAD_PTR        pLlad;
-    rc_sockets::sock*           sd;
-    pthread_mutex_t gbus_lock;
+    bool                valid;
+    LLAD_PTR            pLlad;
+    rc_sockets::sock*   sd;
+    pthread_mutex_t     gbus_lock;
 };
 
 /**

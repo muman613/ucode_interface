@@ -78,7 +78,7 @@ bool llad::open(const std::string& host)
 	RMuint32    uid = 0;
 
 #ifdef  _DEBUG
-    fprintf(stderr, "%s(%s)\n", __FUNCTION__, host.c_str());
+    fprintf(stderr, "%s(%s)\n", __PRETTY_FUNCTION__, host.c_str());
 #endif // _DEBUG
 
     if (!host.empty()) {
@@ -139,13 +139,30 @@ bool llad::open(const std::string& host)
 void llad::close()
 {
 #ifdef  _DEBUG
-    fprintf(stderr, "%s()\n", __FUNCTION__);
+    fprintf(stderr, "%s()\n", __PRETTY_FUNCTION__);
 #endif // _DEBUG
 
     if (sd != NULL) {
         sock_close( sd );
         sd = 0L;
     }
+}
+
+/**
+ *
+ */
+
+bool llad::get_host_device(std::string& sHost, RMuint32& nDevice)
+{
+    bool bRes = false;
+
+    if (valid == true) {
+        sHost   = hostname;
+        nDevice = device;
+        bRes = true;
+    }
+
+    return bRes;
 }
 
 /**

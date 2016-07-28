@@ -42,13 +42,15 @@ public:
 //    RMuint32    wait_interrupt(RMuint32 mast, RMuint32* timeout_microsecond);
 //    RMstatus    wait_channels(RMuint32* channel_array, RMuint32 channel_count, RMuint32 timeout);
 
+    bool            get_host_device(std::string& sHost, RMuint32& nDevice);
+
 protected:
     friend class    gbus;
 
-    bool            valid;
-    std::string     hostname;
-    rc_sockets::sock*           sd;
-    RMuint32        device;
+    bool                valid;
+    std::string         hostname;
+    RMuint32            device;
+    rc_sockets::sock*   sd;
 };
 
 #if (__cplusplus >= 201103L)
