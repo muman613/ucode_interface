@@ -16,6 +16,27 @@ void debug(const char* sFmt, ...) {
 }
 #endif // _DEBUG
 
+
+void display_target_info(TARGET_ENGINE_PTR pEng)
+{
+    std::string sHostSpec;
+    std::string sChipID, sBlockID;
+    uint32_t    nEngineID;
+
+    if (pEng->is_valid()) {
+        pEng->get_info( sChipID, sBlockID, nEngineID);
+        std::cout << "Chip   : " << sChipID << std::endl;
+        std::cout << "Block  : " << sBlockID << std::endl;
+        std::cout << "Engine : " << nEngineID << std::endl;
+
+        if (pEng->is_connected()) {
+            pEng->get_connection_info(sHostSpec);
+            std::cout << "Remote : " << sHostSpec << std::endl;
+        }
+    }
+}
+
+
 /**
  *  Main entry point
  */
@@ -36,6 +57,8 @@ int main(int argc, char * argv[])
 
         if (pTarget->connect()) {
             std::cout << "Target is connected!" << std::endl;
+
+            display_target_info( pTarget );
         }
 
         pTarget.reset();

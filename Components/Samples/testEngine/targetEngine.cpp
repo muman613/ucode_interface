@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sstream>      // std::ostringstream
 
 #include "platformDB/PlatformDatabase.h"
 #include "fileresolver/fileresolver.h"
@@ -127,6 +128,10 @@ void targetEngine::close()
     m_bValid = false;
 }
 
+/**
+ *  Find all relevant files.
+ */
+
 bool targetEngine::resolve_files()
 {
     bool bRes = false;
@@ -161,6 +166,10 @@ bool targetEngine::connect()
     return bRes;
 }
 
+/**
+ *  Connect to the device specified in the sHostSpec string.
+ */
+
 bool targetEngine::connect(std::string sHostSpec)
 {
     bool            bRes = false;
@@ -190,7 +199,7 @@ bool targetEngine::connect(GBUS_PTR pGbus)
 
     if (pGbus && pGbus->is_valid()) {
         m_pGbus = pGbus;
-        bRes = true;
+        bRes    = true;
     }
 
     return bRes;
@@ -223,4 +232,42 @@ void targetEngine::close_gbus()
         m_pGbus.reset();
         m_bConnected = false;
     }
+}
+
+bool targetEngine::get_info(std::string& sChipID, std::string& sBlockID, uint32_t& nEngineID)
+{
+    std::lock_guard<std::mutex> guard(m_mutex);
+    bool                        bRes = false;
+
+    if (m_bValid) {
+        sChipID   = m_sChipID;
+        sBlockID  = m_sBlockID;
+        nEngineID = m_nEngineIndex;
+
+        bRes      = true;
+    }
+
+    return bRes;
+}
+
+bool targetEngine::get_connection_info(std::string& sHostSpec)
+{
+    std::lock_guard<std::mutex> guard(m_mutex);
+    bool                        bRes = false;
+    std::ostringstream          os;
+    std::string                 sHost;
+    RMuint32                    nDevice;
+
+    if (m_bConnected) {
+        LLAD_PTR llad = m_pGbus->get_llad();
+
+        if (llad) {
+            llad->get_host_device(sHost, nDevice);
+            os << sHost << ":" << nDevice;
+            sHostSpec = os.str();
+            bRes = true;
+        }
+    }
+
+    return bRes;
 }

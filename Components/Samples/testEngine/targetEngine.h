@@ -45,6 +45,9 @@ public:
 
     void                disconnect();
 
+    bool                get_info(std::string& sChipID, std::string& sBlockID, uint32_t& engine);
+    bool                get_connection_info(std::string& sHostSpec);
+
 protected:
 
     bool                resolve_files();
