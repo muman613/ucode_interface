@@ -21,6 +21,7 @@
 					<Add option="../../libs/Linux/x86_64/libfileresolver_d.a" />
 					<Add option="../../libs/Linux/x86_64/libsymbolmgr_d.a" />
 					<Add option="../../libs/Linux/x86_64/libstructcontrol_d.a" />
+					<Add option="../../libs/Linux/x86_64/libremote_d.a" />
 					<Add option="`xml2-config --libs`" />
 					<Add option="`pkg-config --libs tre`" />
 				</Linker>
@@ -40,6 +41,7 @@
 					<Add option="../../libs/Linux/x86_64/libplatformdb.a" />
 					<Add option="../../libs/Linux/x86_64/libsymbolmgr.a" />
 					<Add option="../../libs/Linux/x86_64/libstructcontrol.a" />
+					<Add option="../../libs/Linux/x86_64/libremote.a" />
 					<Add option="`xml2-config --libs`" />
 					<Add option="`pkg-config --libs tre`" />
 				</Linker>
@@ -53,9 +55,16 @@
 			<Add directory="../../" />
 			<Add directory="../../.." />
 		</Compiler>
+		<Unit filename="../common/dbgimplementation.cpp">
+			<Option target="Debug" />
+		</Unit>
 		<Unit filename="main.cpp" />
 		<Unit filename="targetEngine.cpp" />
 		<Unit filename="targetEngine.h" />
+		<Unit filename="ucode_utils.cpp" />
+		<Unit filename="ucode_utils.h" />
+		<Unit filename="video_utils.cpp" />
+		<Unit filename="video_utils.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />

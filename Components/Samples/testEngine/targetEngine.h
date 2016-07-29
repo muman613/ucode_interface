@@ -12,11 +12,20 @@
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"
 
+class controlInterface {
+public:
+    virtual GBUS_PTR            get_gbusptr()  = 0;
+    virtual structure_database* get_structdb() = 0;
+    virtual UcodeSymbolMgr*     get_symmgr()   = 0;
+    virtual PlatformEngine*     get_engine()   = 0;
+    virtual std::mutex*         get_mutex()    = 0;
+};
+
 /**
  *
  */
 
-class targetEngine {
+class targetEngine : public controlInterface {
 public:
 
     enum ucodeType {
@@ -56,7 +65,16 @@ public:
 
     bool                start();
     bool                stop();
-    bool                reset();
+
+    /* Control Interface functions */
+
+    GBUS_PTR            get_gbusptr();
+    structure_database* get_structdb();
+    UcodeSymbolMgr*     get_symmgr();
+    PlatformEngine*     get_engine();
+    std::mutex*         get_mutex();
+
+    void                try_video_interface();
 
 protected:
 
@@ -81,14 +99,16 @@ protected:
     GBUS_PTR            m_pGbus;
 
     RMuint32            m_dramBase;
+    RMuint32            m_uiDRAMPtr;
     RMuint32            m_binSize;
     RMuint32            m_dram_lo;
     RMuint32            m_dram_hi;
 
+    RMuint32            m_resetOff;
+
 private:
 
     void                close_gbus();
-
 };
 
 #if (__cplusplus >= 201103L)
@@ -100,5 +120,10 @@ typedef targetEngine*                   TARGET_ENGINE_PTR;
 #define UCODE_PREFIX "../../../"
 
 #define DRAM_BASE       0xa8000000 // hardcoded value in a free Dram zone
+
+
+#define DSP_RUN                 0x00
+#define DSP_STOP                0x01
+#define DSP_RESET               0x03
 
 #endif // __TARGET_ENGINE_H__

@@ -59,6 +59,10 @@ int main(int argc, char * argv[])
             std::cout << "Target is connected!" << std::endl;
 
             display_target_info( pTarget );
+
+            if (pTarget->load_ucode()) {
+                std::cout << "Microcode loaded!" << std::endl;
+            }
         }
 
         pTarget.reset();

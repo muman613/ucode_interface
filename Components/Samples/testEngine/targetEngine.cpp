@@ -11,6 +11,7 @@
 #include "fileresolver/fileresolver.h"
 #include "symbolmgr/symbolmgr.h"
 #include "ucode_utils.h"
+#include "video_utils.h"
 #include "targetEngine.h"
 
 #ifdef _DEBUG
@@ -22,6 +23,8 @@
 #define PLATFORM_DATABASE_FILE      "tango_platform_config.xml"
 #define PDB_FILE_PATH               "../../../xml/"
 
+#define CONTROL_IF      dynamic_cast<controlInterface*>(this)
+
 using namespace std;
 
 /**
@@ -31,7 +34,8 @@ using namespace std;
 targetEngine::targetEngine(string sChipID, string sBlockID, uint32_t nEngineIndex, ucodeType type)
 :   m_bValid(false),
     m_bConnected(false),
-    m_dramBase(DRAM_BASE)
+    m_dramBase(DRAM_BASE),
+    m_uiDRAMPtr(DRAM_BASE)
 {
     // ctor
     open(sChipID, sBlockID, nEngineIndex, type);
@@ -97,6 +101,7 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
 #ifdef _DEBUG
                     fprintf(stderr, "Block found!\n");
 #endif // _DEBUG
+                    m_resetOff = block.get_resetReg();
 
                     m_engine = block[m_nEngineIndex];
 
@@ -333,11 +338,15 @@ bool targetEngine::load_ucode(std::string sUcodeFilename)
         binSize = statBuf.st_size;
 
         if ((ifp = fopen(sUcodeFilename.c_str(), "r")) != nullptr) {
-            size_t bytesread __attribute__((unused)) = fread(pBinData, 1, binSize, ifp);
-            assert(bytesread == binSize);
+            size_t bytesread __attribute__((unused));
+//          assert(bytesread == binSize);
 
             pBinData = new unsigned char[binSize];
             assert(pBinData != nullptr);
+
+            bytesread  = fread(pBinData, 1, binSize, ifp);
+
+            stop();
 
             ucode_utils::ucode_get_microcode_size(pBinData, binSize,
                                                   &dram_low_offset,
@@ -349,15 +358,102 @@ bool targetEngine::load_ucode(std::string sUcodeFilename)
                                               m_dramBase, 2,
                                               pBinData, binSize);
 
-//            video_set_ucode_dram_offset(m_pGbus, pmBase,
-//                                        pCtx->dramBaseAddress);
+            video_utils::video_set_ucode_dram_offset(CONTROL_IF,
+                                                     m_engine.get_pmBase(),
+                                                     m_dramBase);
+
+            start();
 
             m_binSize = binSize;
             m_dram_hi = dram_high_offset;
             m_dram_lo = dram_low_offset;
+
+            m_uiDRAMPtr += dram_high_offset;
 
             delete [] pBinData;
         }
     }
     return bRes;
 }
+
+/**
+ *
+ */
+
+GBUS_PTR            targetEngine::get_gbusptr()
+{
+    return m_pGbus;
+}
+
+/**
+ *
+ */
+
+structure_database* targetEngine::get_structdb()
+{
+    return &m_structDB;
+}
+
+/**
+ *
+ */
+
+UcodeSymbolMgr*     targetEngine::get_symmgr()
+{
+    return &m_symMgr;
+}
+
+/**
+ *
+ */
+
+PlatformEngine*     targetEngine::get_engine()
+{
+    return &m_engine;
+}
+
+/**
+ *
+ */
+
+std::mutex*         targetEngine::get_mutex()
+{
+    return &m_mutex;
+}
+
+/**
+ *  Start the Engine running.
+ */
+
+bool targetEngine::start()
+{
+    RMuint32 reset_control_reg = m_engine.get_ioBase() + m_resetOff;
+
+    RMDBGLOG((LOCALDBG, "%s() control=0x%08X\n", __PRETTY_FUNCTION__,
+              reset_control_reg));
+
+    m_pGbus->gbus_write_uint32( reset_control_reg, DSP_RUN );
+    //while (((m_pGbus->gbus_read_uint32(reset_control_reg) & 0x0000ff00) >> 8)!= DSP_RUN);
+
+    return true;
+}
+
+/**
+ *  Reset and Stop the engine
+ */
+
+bool targetEngine::stop()
+{
+    RMuint32 reset_control_reg = m_engine.get_ioBase() + m_resetOff;
+
+    RMDBGLOG((LOCALDBG, "%s() control=0x%08X\n", __PRETTY_FUNCTION__,
+              reset_control_reg));
+
+    m_pGbus->gbus_write_uint32( reset_control_reg, DSP_RESET );
+    m_pGbus->gbus_write_uint32( reset_control_reg, DSP_STOP );
+
+    //while (((m_pGbus->gbus_read_uint32(reset_control_reg) & 0x0000ff00) >> 8)!= DSP_STOP);
+
+    return true;
+}
+
