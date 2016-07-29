@@ -17,15 +17,9 @@ namespace ucode_utils {
         GBUS_PTR pGBus,
         RMuint32 PMem_Base,  // GBus byte address of RISC's PMem block
         RMuint32 DMem_Base,  // GBus byte address of RISC's DMem block
-    #ifdef WITH_UCODE_BOOTLOADER
-        RMuint32 *DRAM_Base, // GBus byte address of DRAM segment for this microcode
-        RMuint32 DMem_Width, // DMem width (in bit or byte)
-        RMuint32 ucode_data, // GBus byte address of the microcode's .bin file in DRAM
-    #else
         RMuint32 DRAM_Base,  // GBus byte address of DRAM memory range for this microcode
         RMuint32 DMem_Width, // DMem width (in bit or byte)
         RMuint8 *ucode_data, // the data of the microcode's .bin file
-    #endif // WITH_UCODE_BOOTLOADER
         RMuint32 ucode_size);// size of data in bytes
 }
 

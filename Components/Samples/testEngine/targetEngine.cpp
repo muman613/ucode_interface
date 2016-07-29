@@ -2,11 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sstream>      // std::ostringstream
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "platformDB/PlatformDatabase.h"
 #include "fileresolver/fileresolver.h"
 #include "symbolmgr/symbolmgr.h"
+#include "ucode_utils.h"
 #include "targetEngine.h"
+
+#ifdef _DEBUG
+    #define LOCALDBG ENABLE
+#else
+    #define LOCALDBG DISABLE
+#endif // _DEBUG
 
 #define PLATFORM_DATABASE_FILE      "tango_platform_config.xml"
 #define PDB_FILE_PATH               "../../../xml/"
@@ -19,7 +30,8 @@ using namespace std;
 
 targetEngine::targetEngine(string sChipID, string sBlockID, uint32_t nEngineIndex, ucodeType type)
 :   m_bValid(false),
-    m_bConnected(false)
+    m_bConnected(false),
+    m_dramBase(DRAM_BASE)
 {
     // ctor
     open(sChipID, sBlockID, nEngineIndex, type);
@@ -53,6 +65,10 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
     std::lock_guard<std::mutex> guard(m_mutex);
     PlatformDatabase            platDB;
     bool                        bRes = false;
+
+    RMDBGLOG((LOCALDBG, "%s(%s, %s, %d, %s)", __PRETTY_FUNCTION__,
+              sChipID.c_str(), sBlockID.c_str(), nEngineIndex,
+              (eType == UCODE_DEBUG)?"Debug":"Release"));
 
     m_sChipID   = sChipID;
     m_sBlockID  = sBlockID;
@@ -117,6 +133,8 @@ void targetEngine::close()
 {
     std::lock_guard<std::mutex> guard(m_mutex);
 
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
     m_filePack.clear();
     m_symMgr.Clear();
 
@@ -158,6 +176,7 @@ bool targetEngine::connect()
     bool        bRes        = false;
     const char* szEnvVar    = nullptr;
 
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
     if ((szEnvVar = getenv("EM8XXX_SERVER")) != nullptr) {
         bRes = connect(szEnvVar);
@@ -177,14 +196,15 @@ bool targetEngine::connect(std::string sHostSpec)
 
     std::lock_guard<std::mutex> guard(m_mutex);
 
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, sHostSpec.c_str()));
+
     pLlad = std::make_shared<llad>(sHostSpec);
     if (pLlad && pLlad->is_valid()) {
         m_pGbus = std::make_shared<gbus>(pLlad);
 
         if (m_pGbus && m_pGbus->is_valid()) {
-#ifdef _DEBUG
-            fprintf(stderr, "Connected to %s\n", sHostSpec.c_str());
-#endif // _DEBUG
+            RMDBGLOG((LOCALDBG, "Connected to %s\n", sHostSpec.c_str()));
+
             m_bConnected = true;
             bRes = true;
         }
@@ -208,6 +228,8 @@ bool targetEngine::connect(GBUS_PTR pGbus)
 void targetEngine::disconnect()
 {
     std::lock_guard<std::mutex> guard(m_mutex);
+
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
     close_gbus();
 }
@@ -234,6 +256,10 @@ void targetEngine::close_gbus()
     }
 }
 
+/**
+ *
+ */
+
 bool targetEngine::get_info(std::string& sChipID, std::string& sBlockID, uint32_t& nEngineID)
 {
     std::lock_guard<std::mutex> guard(m_mutex);
@@ -249,6 +275,10 @@ bool targetEngine::get_info(std::string& sChipID, std::string& sBlockID, uint32_
 
     return bRes;
 }
+
+/**
+ *
+ */
 
 bool targetEngine::get_connection_info(std::string& sHostSpec)
 {
@@ -269,5 +299,65 @@ bool targetEngine::get_connection_info(std::string& sHostSpec)
         }
     }
 
+    return bRes;
+}
+
+/**
+ *
+ */
+
+bool targetEngine::load_ucode()
+{
+    return load_ucode( m_filePack.sBinFile );
+}
+
+/**
+ *
+ */
+
+bool targetEngine::load_ucode(std::string sUcodeFilename)
+{
+    std::lock_guard<std::mutex> guard(m_mutex);
+    bool                        bRes = false;
+    struct stat                 statBuf;
+    size_t                      binSize = 0;
+    unsigned char* 	            pBinData = nullptr;
+
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, sUcodeFilename.c_str()));
+
+    if (stat( sUcodeFilename.c_str(), &statBuf) == 0) {
+        FILE*       ifp = nullptr;
+        RMuint32    dram_low_offset = 0,
+                    dram_high_offset = 0;
+
+        binSize = statBuf.st_size;
+
+        if ((ifp = fopen(sUcodeFilename.c_str(), "r")) != nullptr) {
+            size_t bytesread __attribute__((unused)) = fread(pBinData, 1, binSize, ifp);
+            assert(bytesread == binSize);
+
+            pBinData = new unsigned char[binSize];
+            assert(pBinData != nullptr);
+
+            ucode_utils::ucode_get_microcode_size(pBinData, binSize,
+                                                  &dram_low_offset,
+                                                  &dram_high_offset);
+
+            ucode_utils::ucode_load_microcode(m_pGbus,
+                                              m_engine.get_pmBase(),
+                                              m_engine.get_dmBase(),
+                                              m_dramBase, 2,
+                                              pBinData, binSize);
+
+//            video_set_ucode_dram_offset(m_pGbus, pmBase,
+//                                        pCtx->dramBaseAddress);
+
+            m_binSize = binSize;
+            m_dram_hi = dram_high_offset;
+            m_dram_lo = dram_low_offset;
+
+            delete [] pBinData;
+        }
+    }
     return bRes;
 }

@@ -48,6 +48,16 @@ public:
     bool                get_info(std::string& sChipID, std::string& sBlockID, uint32_t& engine);
     bool                get_connection_info(std::string& sHostSpec);
 
+    /* Ucode functions */
+    bool                load_ucode();
+    bool                load_ucode(std::string sUcodeFilename);
+
+    /* Engine control functions */
+
+    bool                start();
+    bool                stop();
+    bool                reset();
+
 protected:
 
     bool                resolve_files();
@@ -70,6 +80,11 @@ protected:
     structure_database  m_structDB;
     GBUS_PTR            m_pGbus;
 
+    RMuint32            m_dramBase;
+    RMuint32            m_binSize;
+    RMuint32            m_dram_lo;
+    RMuint32            m_dram_hi;
+
 private:
 
     void                close_gbus();
@@ -83,5 +98,7 @@ typedef targetEngine*                   TARGET_ENGINE_PTR;
 #endif
 
 #define UCODE_PREFIX "../../../"
+
+#define DRAM_BASE       0xa8000000 // hardcoded value in a free Dram zone
 
 #endif // __TARGET_ENGINE_H__
