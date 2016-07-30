@@ -74,7 +74,7 @@ public:
     PlatformEngine*     get_engine();
     std::mutex*         get_mutex();
 
-    void                try_video_interface();
+    void                test_function();
 
 protected:
 

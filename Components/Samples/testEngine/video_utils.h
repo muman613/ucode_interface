@@ -14,6 +14,12 @@ RMstatus video_set_ucode_dram_offset(
 	RMuint32 MemBase,
 	RMuint32 start_address);
 
+RMstatus video_get_scheduler_memory(
+	controlInterface* pIF,
+	RMuint32 MemBase,
+	RMuint32 *pstart_address,
+	RMuint32 *psize);
+
 }
 
 #endif // __VIDEO_UTILS_H__

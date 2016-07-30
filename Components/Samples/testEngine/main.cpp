@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "targetEngine.h"
+#include "targetStandardInterface.h"
 
 #ifdef _DEBUG
 void debug(const char* sFmt, ...) {
@@ -61,8 +62,17 @@ int main(int argc, char * argv[])
             display_target_info( pTarget );
 
             if (pTarget->load_ucode()) {
+
                 std::cout << "Microcode loaded!" << std::endl;
+
+                TARGET_STD_IF pStdIF;
+
+                pStdIF = std::make_shared<targetStandardInterface>(pTarget);
+
+                pStdIF->test_function();
             }
+
+//            pTarget->test_function();
         }
 
         pTarget.reset();

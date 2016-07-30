@@ -28,10 +28,42 @@ RMstatus video_set_ucode_dram_offset(
 
 	RMDBGLOG((LOCALDBG, "video_set_ucode_dram_offset = 0x%lx\n", start_address));
 
-	pGbus->gbus_write_uint32(MemBase + RESOLVE_SYMBOL("VDsp_CodeOffsetLo"), start_address & 0xFFFF);
-	pGbus->gbus_write_uint32(MemBase + RESOLVE_SYMBOL("VDsp_CodeOffsetHi"), start_address >> 16);
+	pGbus->gbus_write_uint32(MemBase + RESOLVE_SYMBOL("VDsp_CodeOffsetLo"),
+                             start_address & 0xFFFF);
+	pGbus->gbus_write_uint32(MemBase + RESOLVE_SYMBOL("VDsp_CodeOffsetHi"),
+                             start_address >> 16);
 
 	return RM_OK;
 }
 
+RMstatus video_get_scheduler_memory(
+	controlInterface* pIF,
+	RMuint32 MemBase,
+	RMuint32 *pstart_address,
+	RMuint32 *psize)
+{
+    GBUS_PTR        pGBus = pIF->get_gbusptr();
+    UcodeSymbolMgr* pSymMgr = pIF->get_symmgr();
+	RMuint32        schedStart;
+	RMuint32        scheduler_data_address = MemBase + RESOLVE_SYMBOL("SchedulerDataStart");
+    const structure_definition* pDef = nullptr;
+
+	RMDBGLOG((LOCALDBG, "video_get_scheduler_memory(0x%p, 0x%lx)\n", pGBus.get(), MemBase));
+
+	schedStart = (pGBus->gbus_read_uint32(scheduler_data_address) & 0xFFFF);
+	schedStart |= (pGBus->gbus_read_uint32(scheduler_data_address + 4) << 16);
+
+	*pstart_address = schedStart;
+//	*psize = sizeof(struct scheduler_data);
+
+    pDef = pIF->get_structdb()->get_structure("scheduler_data");
+    if (pDef != nullptr) {
+        *psize = pDef->size();
+    }
+
+	RMDBGLOG((LOCALDBG, "video_get_scheduler_memory: addr=0x%lx size=%ld bytes\n",
+		*pstart_address, *psize));
+
+	return RM_OK;
+}
 }

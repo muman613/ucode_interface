@@ -1,7 +1,6 @@
 #ifndef __UCODE_UTILS_H__
 #define __UCODE_UTILS_H__
 
-#define ALLOW_OS_CODE
 #include "rmdef/rmdef.h"
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"

@@ -371,6 +371,8 @@ bool targetEngine::load_ucode(std::string sUcodeFilename)
             m_uiDRAMPtr += dram_high_offset;
 
             delete [] pBinData;
+
+            bRes = true;
         }
     }
     return bRes;
@@ -457,3 +459,10 @@ bool targetEngine::stop()
     return true;
 }
 
+
+void targetEngine::test_function()
+{
+    RMuint32 start, size;
+
+    video_utils::video_get_scheduler_memory(CONTROL_IF, m_engine.get_pmBase(), &start, &size);
+}

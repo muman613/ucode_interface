@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+
+#define ALLOW_OS_CODE
 #include "ucode_utils.h"
 
 #ifdef _DEBUG
@@ -72,7 +74,7 @@ RMstatus ucode_load_microcode(
 	while (p < ucode_size) {
 		body_size = ucode_read_uint32(ucode_data + p); p += 4;
 		type_descriptor = ucode_read_uint32(ucode_data + p); p += 4;
-		RMDBGLOG((LOCALDBG, "  Chunk type 0x%08lX, size %ld - 8\n", type_descriptor, body_size));
+		//RMDBGLOG((LOCALDBG, "  Chunk type 0x%08lX, size %ld - 8\n", type_descriptor, body_size));
 		switch (type_descriptor) {
 		case 0x1:  // Write PMEM (32 bit wide), address is offset   by PMEM base
 			start_address = ucode_read_uint32(ucode_data + p); p += 4;

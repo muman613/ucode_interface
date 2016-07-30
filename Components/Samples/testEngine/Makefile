@@ -15,7 +15,8 @@ ARCH?=$(shell arch)
 TARGET_TYPE=exe
 TARGET_EXE=testEngine
 
-CPP_SOURCES=main.cpp targetEngine.cpp ucode_utils.cpp video_utils.cpp
+CPP_SOURCES=main.cpp targetEngine.cpp ucode_utils.cpp video_utils.cpp			\
+            targetInterfaceBase.cpp targetStandardInterface.cpp
 
 ifdef DEBUG
 PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb_d.a
