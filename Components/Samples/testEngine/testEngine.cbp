@@ -61,6 +61,10 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="targetEngine.cpp" />
 		<Unit filename="targetEngine.h" />
+		<Unit filename="targetInterfaceBase.cpp" />
+		<Unit filename="targetInterfaceBase.h" />
+		<Unit filename="targetStandardInterface.cpp" />
+		<Unit filename="targetStandardInterface.h" />
 		<Unit filename="ucode_utils.cpp" />
 		<Unit filename="ucode_utils.h" />
 		<Unit filename="video_utils.cpp" />
