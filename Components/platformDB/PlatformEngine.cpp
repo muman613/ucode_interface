@@ -70,38 +70,38 @@ wxUint32 PlatformEngine::get_ioBase() {
     return m_ioBase;
 }
 
-wxUint32 PlatformEngine::get_pmBase() {
+wxUint32 PlatformEngine::get_pmBase() const {
     return m_pmBase;
 }
 
-wxUint32 PlatformEngine::get_pmSize() {
+wxUint32 PlatformEngine::get_pmSize() const {
     return m_pmSize;
 }
 
-wxUint32 PlatformEngine::get_pmWidth() {
+wxUint32 PlatformEngine::get_pmWidth() const {
 	return m_pmWidth;
 }
 
-wxUint32 PlatformEngine::get_dmBase() {
+wxUint32 PlatformEngine::get_dmBase() const {
     return m_dmBase;
 }
 
-wxUint32 PlatformEngine::get_dmSize() {
+wxUint32 PlatformEngine::get_dmSize() const {
     return m_dmSize;
 }
 
-wxUint32 PlatformEngine::get_dmWidth() {
+wxUint32 PlatformEngine::get_dmWidth() const {
     return m_dmWidth;
 }
 
-wxUint32 PlatformEngine::get_dramBase() {
+wxUint32 PlatformEngine::get_dramBase() const {
     return m_dramBase;
 }
 
-wxUint32 PlatformEngine::get_dramSize() {
+wxUint32 PlatformEngine::get_dramSize() const {
     return m_dramSize;
 }
 
-wxUint32 PlatformEngine::get_dramWidth() {
+wxUint32 PlatformEngine::get_dramWidth() const {
 	return m_dramWidth;
 }

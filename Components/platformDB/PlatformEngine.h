@@ -28,17 +28,17 @@ class DLLSPEC PlatformEngine {
         int			get_engine_num();
         wxUint32	get_ioBase();
 
-        wxUint32	get_pmBase();
-        wxUint32	get_pmSize();
-		wxUint32	get_pmWidth();
-		
-        wxUint32	get_dmBase();
-        wxUint32	get_dmSize();
-		wxUint32	get_dmWidth();
+        wxUint32	get_pmBase() const;
+        wxUint32	get_pmSize() const;
+		wxUint32	get_pmWidth() const;
 
-        wxUint32	get_dramBase();
-        wxUint32	get_dramSize();
-		wxUint32	get_dramWidth();
+        wxUint32	get_dmBase() const;
+        wxUint32	get_dmSize() const;
+		wxUint32	get_dmWidth() const;
+
+        wxUint32	get_dramBase() const;
+        wxUint32	get_dramSize() const;
+		wxUint32	get_dramWidth() const;
 
         void		Dump(FILE* ofp);
 
