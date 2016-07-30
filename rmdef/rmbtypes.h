@@ -1,5 +1,5 @@
 /*****************************************
- Copyright © 2001-2003  
+ Copyright ï¿½ 2001-2003  
  Sigma Designs, Inc. All Rights Reserved
  Proprietary and Confidential
  *****************************************/
@@ -19,6 +19,8 @@
 
 #ifndef __RMBTYPES_H__
 #define __RMBTYPES_H__
+
+#include <stdint.h>
 
 RM_EXTERN_C_BLOCKSTART
 
@@ -50,51 +52,58 @@ typedef unsigned char RMbool;
 #endif // TRUE
 
 /** 8 bits long unsigned integer */
-typedef unsigned char RMuint8;
+//typedef unsigned char RMuint8;
+typedef uint8_t RMuint8;
 /** Maximum value for an 8 bit unsigned integer. */
 #define MaxRMuint8 ((RMuint8) 255)
 /** Minimum value for an 8 bit unsigned integer. */
 #define MinRMuint8 ((RMuint8) 0)
 
 /** 8 bits long integer */
-typedef signed char RMint8;
+//typedef signed char RMint8;
+typedef int8_t RMint8;
 /** Maximum value for an 8 bit signed integer. */
 #define MaxRMint8 ((RMint8) 127)
 /** Minimum value for an 8 bit signed integer. */
 #define MinRMint8 ((RMint8) -128)
 
 /** 16 bits long unsigned integer */
-typedef unsigned short RMuint16;
+//typedef unsigned short RMuint16;
+typedef uint16_t RMuint16;
 /** Maximum value for a 16 bit unsigned integer. */
 #define MaxRMuint16 ((RMuint16)65535)
 /** Minimum value for a 16 bit unsigned integer. */
 #define MinRMuint16 ((RMuint16)0)
 
 /** 16 bits long integer */
-typedef          short RMint16;
+//typedef          short RMint16;
+typedef int16_t RMint16;
 /** Maximum value for a 16 bit signed integer. */
 #define MaxRMint16 ((RMint16)32767)
 /** Minimum value for a 16 bit signed integer. */
 #define MinRMint16 ((RMint16)-32768)
 
-#if (defined __SIZEOF_LONG__ && __SIZEOF_LONG__==8) || (defined __LP64__ && __LP64__==1) 
-/*
-  partial support of 64bit compilers (bug#8634)
+typedef uint32_t RMuint32;
+typedef int32_t RMint32;
 
-  __SIZEOF_LONG__ is not consistently defined between gcc versions.
-
-  Use gcc -dM -E - < /dev/null 
-  to troubleshoot.
-
-  still, having sizeof(long)==8 does not necessarily
-  imply sizeof(int)==4 but that's enforced in check_rmdef().
-*/
-typedef unsigned int RMuint32;
-typedef          int RMint32;
-#else
-typedef unsigned long RMuint32;
-typedef          long RMint32;
-#endif
+// #if (defined __SIZEOF_LONG__ && __SIZEOF_LONG__==8) || (defined __LP64__ && __LP64__==1) 
+// /*
+  // partial support of 64bit compilers (bug#8634)
+// 
+  // __SIZEOF_LONG__ is not consistently defined between gcc versions.
+// 
+  // Use gcc -dM -E - < /dev/null 
+  // to troubleshoot.
+// 
+  // still, having sizeof(long)==8 does not necessarily
+  // imply sizeof(int)==4 but that's enforced in check_rmdef().
+// */
+// typedef unsigned int RMuint32;
+// typedef          int RMint32;
+// #else
+// typedef unsigned long RMuint32;
+// typedef          long RMint32;
+// #endif
 
 /** floating point number */
 typedef double RMreal;
