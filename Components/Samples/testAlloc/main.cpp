@@ -11,6 +11,10 @@ using namespace std;
 
 int main()
 {
+#ifdef _DEBUG
+    open_log_files("messages.txt", "errors.txt");
+#endif // _DEBUG
+
     PlatformEngine engine(0, 0x80000,
                           0x100000, 0x2000, 4,
                           0x110000, 0x2000, 2,
@@ -22,9 +26,30 @@ int main()
 
     printf("Address %08x\n", address);
 
-    address = allocator.alloc(targetAllocator::ALLOC_DRAM, 3);
+    address = allocator.alloc(targetAllocator::ALLOC_DRAM, 5);
 
     printf("Address %08x\n", address);
+
+    address = allocator.alloc(targetAllocator::ALLOC_DRAM, 2);
+
+    printf("Address %08x\n", address);
+
+    TARGET_ALLOC_PTR     alloc2;
+
+    alloc2 = std::make_shared<targetAllocator>();
+
+    if (alloc2) {
+        alloc2->reset( engine );
+
+        address = alloc2->alloc(targetAllocator::ALLOC_DRAM, 3);
+        printf("Address %08x\n", address);
+
+        address = alloc2->alloc(targetAllocator::ALLOC_DRAM, 5);
+        printf("Address %08x\n", address);
+
+        address = alloc2->alloc(targetAllocator::ALLOC_DRAM, 2);
+        printf("Address %08x\n", address);
+    }
 
     return 0;
 }

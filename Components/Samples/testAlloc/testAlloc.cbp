@@ -45,6 +45,9 @@
 		<Linker>
 			<Add option="-m32" />
 		</Linker>
+		<Unit filename="../common/dbgimplementation.cpp">
+			<Option target="Debug" />
+		</Unit>
 		<Unit filename="main.cpp" />
 		<Unit filename="targetAllocator.cpp" />
 		<Unit filename="targetAllocator.h" />
