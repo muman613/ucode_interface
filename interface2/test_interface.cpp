@@ -509,6 +509,8 @@ static RMstatus init_video_engine (CONTEXT_PTR pContext)
     RMuint32 memBase = pContext->memBaseAddress;
     RMuint32 Address, Size;
 
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
     video_get_scheduler_memory(pContext->pgbus, memBase, &Address, &Size);
 
     if ((Address == 0) && Size) {
@@ -1076,8 +1078,8 @@ static RMstatus process_picture(CONTEXT* ctx, RMuint32 picture_address)
 
             RMDBGLOG((LOCALDBG, "Saving frame %ld .Y & .UV to /tmp/\n", frame_count));
 
-            snprintf(sYFname, 128, "/tmp/frame%03ld-tiled.Y", frame_count);
-            snprintf(sUVFname, 128, "/tmp/frame%03ld-tiled.UV", frame_count);
+            snprintf(sYFname, 128, "/tmp/frame%03ld-tiled.Y", (long int)frame_count);
+            snprintf(sUVFname, 128, "/tmp/frame%03ld-tiled.UV", (long int)frame_count);
 
             yFP = fopen(sYFname, "wb");
             uvFP = fopen(sUVFname, "wb");

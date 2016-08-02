@@ -11,6 +11,7 @@ public:
     std::string     sLabelFile;
     std::string     sMapFile;
     std::string     sListFile;
+    std::string     sInterfaceFile;
 
     bool            resolve_package(std::string sChildID,
                                     bool bDebug,

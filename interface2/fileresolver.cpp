@@ -54,6 +54,10 @@ bool resolve_package(std::string sChipId, bool bDebug,
     pack.sLabelFile = os.str();
     RESET_STREAM(os);
 
+    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)"/video_interface.hh";
+    pack.sInterfaceFile = os.str();
+    RESET_STREAM(os);
+
     return true;
 }
 
