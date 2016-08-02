@@ -40,6 +40,10 @@ class DLLSPEC PlatformEngine {
         wxUint32	get_dramSize() const;
 		wxUint32	get_dramWidth() const;
 
+		void        set_pmBase(wxUint32 address);
+		void        set_dmBase(wxUint32 address);
+		void        set_dramBase(wxUint32 address);
+
         void		Dump(FILE* ofp);
 
     protected:

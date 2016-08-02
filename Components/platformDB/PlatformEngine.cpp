@@ -105,3 +105,18 @@ wxUint32 PlatformEngine::get_dramSize() const {
 wxUint32 PlatformEngine::get_dramWidth() const {
 	return m_dramWidth;
 }
+
+void PlatformEngine::set_pmBase(wxUint32 address)
+{
+    m_pmBase = address;
+}
+
+void PlatformEngine::set_dmBase(wxUint32 address)
+{
+    m_dmBase = address;
+}
+
+void PlatformEngine::set_dramBase(wxUint32 address)
+{
+    m_dramBase = address;
+}
