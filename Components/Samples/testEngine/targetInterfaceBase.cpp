@@ -35,6 +35,8 @@ void targetInterfaceBase::set_target_engine(TARGET_ENGINE_PTR pEngine, size_t in
 
     if (index < MAX_ENGINES) {
         m_pEngine[index] = pEngine;
+        m_pAlloc[index]  = std::make_shared<targetAllocator>();
+        m_pAlloc[index]->reset( *pEngine->get_engine() );
     } else {
         RMDBGLOG((LOCALDBG, "ERROR: index >= MAX_ENGINES!\n"));
     }

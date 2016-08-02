@@ -70,7 +70,7 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
     PlatformDatabase            platDB;
     bool                        bRes = false;
 
-    RMDBGLOG((LOCALDBG, "%s(%s, %s, %d, %s)", __PRETTY_FUNCTION__,
+    RMDBGLOG((LOCALDBG, "%s(%s, %s, %d, %s)\n", __PRETTY_FUNCTION__,
               sChipID.c_str(), sBlockID.c_str(), nEngineIndex,
               (eType == UCODE_DEBUG)?"Debug":"Release"));
 
@@ -104,6 +104,11 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
                     m_resetOff = block.get_resetReg();
 
                     m_engine = block[m_nEngineIndex];
+
+                    if (m_dramBase != m_engine.get_dramBase()) {
+                        RMDBGLOG((LOCALDBG, "-- setting dram base address to 0x%08X\n", m_dramBase ));
+                        m_engine.set_dramBase( m_dramBase );
+                    }
 
 #ifdef _DEBUG
                     m_engine.Dump(stderr);
@@ -370,12 +375,33 @@ bool targetEngine::load_ucode(std::string sUcodeFilename)
 
             m_uiDRAMPtr += dram_high_offset;
 
+            RMDBGLOG((LOCALDBG, "binSize = %zu dram_hi = 0x%08X dram_lo = 0x%08X\n",
+                      m_binSize, m_dram_hi, m_dram_lo));
+            RMDBGLOG((LOCALDBG, "uiDRAMPtr = 0x%08X\n", m_uiDRAMPtr));
+
             delete [] pBinData;
 
             bRes = true;
         }
     }
     return bRes;
+}
+
+/**
+ *
+ */
+
+void targetEngine::get_ucode_offset(RMuint32* lo, RMuint32* hi)
+{
+    if (lo != nullptr) {
+        *lo = m_dram_lo;
+    }
+
+    if (hi != nullptr) {
+        *hi = m_dram_hi;
+    }
+
+    return;
 }
 
 /**

@@ -69,7 +69,7 @@ int main(int argc, char * argv[])
 
                 pStdIF = std::make_shared<targetStandardInterface>(pTarget);
 
-                pStdIF->test_function();
+                pStdIF->init_video_engine();
             }
 
 //            pTarget->test_function();

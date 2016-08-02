@@ -59,6 +59,8 @@
 			<Option target="Debug" />
 		</Unit>
 		<Unit filename="main.cpp" />
+		<Unit filename="targetAllocator.cpp" />
+		<Unit filename="targetAllocator.h" />
 		<Unit filename="targetEngine.cpp" />
 		<Unit filename="targetEngine.h" />
 		<Unit filename="targetInterfaceBase.cpp" />

@@ -76,6 +76,10 @@ public:
 
     void                test_function();
 
+    void                get_ucode_offset(RMuint32* lo, RMuint32* hi);
+
+    bool                set_dram_base(RMuint32 dram_base);
+
 protected:
 
     bool                resolve_files();

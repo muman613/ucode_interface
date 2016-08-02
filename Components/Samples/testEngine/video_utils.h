@@ -20,7 +20,14 @@ RMstatus video_get_scheduler_memory(
 	RMuint32 *pstart_address,
 	RMuint32 *psize);
 
+RMstatus video_set_scheduler_memory(
+	controlInterface* pIF,
+	RMuint32 MemBase,
+	RMuint32 start_address,
+	RMuint32 size);
+
 }
+
 
 #endif // __VIDEO_UTILS_H__
 

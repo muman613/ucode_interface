@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include "targetEngine.h"
+#include "targetAllocator.h"
 
 #define MAX_ENGINES         2
 
@@ -18,6 +19,7 @@ public:
 
 protected:
     TARGET_ENGINE_PTR       m_pEngine[MAX_ENGINES];
+    TARGET_ALLOC_PTR        m_pAlloc[MAX_ENGINES];
 };
 
 #endif // __TARGET_INTERFACE_BASE_H__
