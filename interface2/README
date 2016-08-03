@@ -1,0 +1,12 @@
+Build 
+
+make clean && make
+
+Example invocation
+
+set_em8xxx sizzle:3049
+./bin/Release/x86/interface2 -c 8760 -m r -s /media/elementary/mpeg2/test100.m2v -p mpeg2 -O /tmp/
+
+set_em8xxx 10.10.10.12:0
+./bin/Release/x86/interface2 -c 8758 -m r -s /media/elementary/mpeg2/test100.m2v -p mpeg2 -O /tmp/
+

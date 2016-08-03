@@ -330,8 +330,8 @@ void launch_viewer(CONTEXT* pCtx)
 
     if (pCtx->picture_count > 0) {
         snprintf(szFilename, 1024, "%s", pCtx->file.sYUVFilename.c_str());
-        snprintf(szDimensions, 32, "%ldx%ld", pCtx->picture_w, pCtx->picture_h);
-        snprintf(szFrame, 8, "%ld", pCtx->picture_count - 1);
+        snprintf(szDimensions, 32, "%ldx%ld", (unsigned long)pCtx->picture_w, (unsigned long)pCtx->picture_h);
+        snprintf(szFrame, 8, "%ld", (unsigned long)pCtx->picture_count - 1);
 
         argv[2] = szFilename;
         argv[4] = szDimensions;

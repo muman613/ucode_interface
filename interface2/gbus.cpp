@@ -34,7 +34,7 @@ struct gbus *gbus_open(struct llad *h)
 	pgbus->sd = sock_connect(port, h->hostname);
 	if (pgbus->sd == NULL) {
 		free(pgbus);
-		fprintf(stderr, "network/" __FILE__ ": Unable to open connection to %s:%lu\n", h->hostname, h->device);
+		fprintf(stderr, "network/" __FILE__ ": Unable to open connection to %s:%lu\n", h->hostname, (unsigned long)h->device);
 		return NULL;
 	}
 
