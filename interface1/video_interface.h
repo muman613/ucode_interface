@@ -439,6 +439,16 @@ struct EMhwlibPostProcessing {
 	*/
 };
 
+struct EMhwlibMasteringDisplayColorVolume {
+     RMuint32 display_primaries_xy0;
+     RMuint32 display_primaries_xy1;
+     RMuint32 display_primaries_xy2;
+     RMuint32 white_point_xy;
+     RMuint32 max_display_mastering_luma;
+     RMuint32 min_display_mastering_luma;
+     RMuint32 light_level_information;
+};
+
 /*  WARNING: This structure must be kept in sync with the definition of
  *  "decoder_picture_buffer_t dma struct" in emhwlib_v2/video/ucode/global.h
  */
@@ -486,6 +496,9 @@ struct VideoMicrocodePicture {
 	RMuint32 vertical_bar;                          /* 0xe8 */
 	RMuint32 frame_count;                           /* 0xec */
 	RMuint32 native_time_increment_resolution;      /* 0xf0 */
+	RMuint32 decoding_duration;                     /* 0xf4 number of system_frequency cycles needed for decode */
+	RMuint32 num_pics_used_for_output;              /* 0xf8 number of pictures in DPB, not sent to display */
+	struct EMhwlibMasteringDisplayColorVolume mastering_display_metadata; /* 0xfc ... 0x114 */
 };
 
 struct video_task_data_base {                     /* videotask_database dma struct*/
