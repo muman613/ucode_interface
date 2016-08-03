@@ -70,6 +70,7 @@ int main(int argc, char * argv[])
                 pStdIF = std::make_shared<targetStandardInterface>(pTarget);
 
                 pStdIF->init_video_engine();
+                pStdIF->open_video_decoder();
             }
 
 //            pTarget->test_function();

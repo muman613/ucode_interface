@@ -39,6 +39,7 @@ public:
     void                test_function();
 
     RMstatus            init_video_engine();
+    RMstatus            open_video_decoder();
 
 protected:
     bool                bValid;

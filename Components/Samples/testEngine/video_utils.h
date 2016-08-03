@@ -26,6 +26,25 @@ RMstatus video_set_scheduler_memory(
 	RMuint32 start_address,
 	RMuint32 size);
 
+RMstatus video_set_display_error_threshold(
+	controlInterface* pIF,
+	RMuint32 threshold);
+
+RMstatus video_set_anchor_propagation_parms(
+	controlInterface* pIF,
+	RMuint32 threshold, RMuint32 length);
+
+RMstatus video_set_vti_pointer(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 pvti);
+
+RMstatus video_set_vtdb_pointer(
+	controlInterface* pIF,
+	RMuint32 MemBase,
+	RMuint32 index,
+	RMuint32 pvtdb);
+
 }
 
 

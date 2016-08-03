@@ -72,3 +72,195 @@ RMstatus targetStandardInterface::init_video_engine()
 
     return RM_OK;
 }
+
+
+#define INIT_STRUCT( var, str )                                                 \
+    nStructSize = pStructDB->get_structure( (str) )->size();                    \
+    (var)       = pAlloc->alloc(targetAllocator::ALLOC_DRAM, nStructSize);      \
+                                                                                \
+    for (i = 0 ; i < nStructSize ; i++) {                                       \
+        m_pEngine[0]->get_gbusptr()->gbus_write_uint32((var) + 4 * i, 0);       \
+    }
+
+/**
+ *
+ */
+
+RMstatus targetStandardInterface::open_video_decoder()
+{
+    RMstatus                nStatus     = RM_ERROR;
+    TARGET_ALLOC_PTR        pAlloc      = m_pAlloc[0];
+    structure_database*     pStructDB   = m_pEngine[0]->get_structdb();
+    RMuint32                nStructSize = 0L;
+    RMuint32                i;
+
+    assert(pStructDB != nullptr);
+
+    pAlloc->alloc(targetAllocator::ALLOC_DRAM, 4);
+
+    INIT_STRUCT( pvtdb, "video_task_data_base" );
+    INIT_STRUCT( pvti,  "video_task_interface" );
+
+    RMDBGLOG((LOCALDBG, "pvtdb = 0x%08X\n", pvtdb));
+    RMDBGLOG((LOCALDBG, "pvti  = 0x%08X\n", pvti));
+
+    video_set_display_error_threshold(dynamic_cast<controlInterface*>(this), 0);
+    video_set_anchor_propagation_parms(dynamic_cast<controlInterface*>(this), 500, 13);
+
+    /* Set pvti pointer in DRAM */
+    video_set_vti_pointer(dynamic_cast<controlInterface*>(this), pvtdb, pvti);
+    /* Set pvtb in DMEM */
+//    video_set_vtdb_pointer(dynamic_cast<controlInterface*>(this), MEM_BASE_mpeg_engine_0, 0, pContext->pvtdb);
+
+    return nStatus;
+}
+
+#if 0
+
+static RMstatus open_video_decoder(CONTEXT_PTR pContext)
+{
+    RMuint32		unprotected_ptr = 0;
+    RMuint32		i;
+    RMstatus 		err;
+    RMuint32 		video_bts_fifo;
+    RMuint32		video_pts_fifo;
+
+    unprotected_ptr = (pContext->uiDRAMPtr & 0xfffffffc) + 4;
+
+    /* init video_task_data_base*/
+    pContext->pvtdb = unprotected_ptr;
+    for (i=0; i< sizeof(struct video_task_data_base)/4; i++)
+        gbus_write_uint32(pContext->pgbus, unprotected_ptr+(4*i), 0);
+    unprotected_ptr += sizeof(struct video_task_data_base);
+
+#ifndef ENABLE_CURSES
+//    printf("video_task_data_base @ 0x%08lx\n", pContext->pvtdb);
+//    fflush(stdout);
+#endif // ENABLE_CURSES
+
+    /*init video_task_interface*/
+    pContext->pvti = unprotected_ptr;
+    for (i=0; i< sizeof(struct video_task_interface)/4; i++)
+        gbus_write_uint32(pContext->pgbus, unprotected_ptr+(4*i), 0);
+    unprotected_ptr += sizeof(struct video_task_interface);
+
+#ifndef ENABLE_CURSES
+//    printf("video_task_interface @ 0x%08lx\n", pContext->pvti);
+//    fflush(stdout);
+#endif // ENABLE_CURSES
+
+    video_set_display_error_threshold(pContext->pgbus, (struct video_task_interface *)pContext->pvti, 0);
+    video_set_anchor_propagation_parms(pContext->pgbus, (struct video_task_interface *)pContext->pvti, 500, 13);
+
+    /* Set pvti pointer in DRAM */
+    video_set_vti_pointer(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, pContext->pvti);
+    /* Set pvtb in DMEM */
+    video_set_vtdb_pointer(pContext->pgbus, MEM_BASE_mpeg_engine_0, 0, pContext->pvtdb);
+
+#if (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
+    /* Implement picture buffer variables here */
+    err = video_set_data_context_buffer(pContext->pgbus, (struct video_task_interface *)pContext->pvti,
+                                        RM_NEXT_TILE_ALIGN(unprotected_ptr), pContext->DecoderDataSize, pContext->DecoderContextSize);
+    unprotected_ptr = RM_NEXT_TILE_ALIGN(unprotected_ptr) + pContext->DecoderDataSize;
+
+    if (RMFAILED(err))
+    {
+        RMDBGLOG((ENABLE, "video_set_data_context_buffer failed!\n"));
+        goto over;
+    }
+#else
+    err = video_set_data_context_buffer(pContext->pgbus, (struct video_task_interface *)pContext->pvti,
+                                        RM_NEXT_TILE_ALIGN(unprotected_ptr), pContext->DecoderDataSize, pContext->DecoderContextSize);
+    unprotected_ptr = RM_NEXT_TILE_ALIGN(unprotected_ptr) + pContext->DecoderDataSize;
+
+    if (RMFAILED(err))
+    {
+        RMDBGLOG((ENABLE, "video_set_data_context_buffer failed!\n"));
+        goto over;
+    }
+#endif
+
+    gbus_write_uint32(pContext->pgbus, (RMuint32)&((struct video_task_interface *)pContext->pvti)->MiscFlags, 1);
+
+    /* use the inside allocated dram output fifo, we don't have to connect to a demux output or program */
+    video_bts_fifo = unprotected_ptr;
+    unprotected_ptr += sizeof(struct gbus_fifo_eraser);
+
+    gbus_fifo_eraser_open(pContext->pgbus, RM_NEXT_PAGE_ALIGN(unprotected_ptr), pContext->BitstreamFIFOSize, video_bts_fifo);
+    err = video_set_bts_fifo_pointer(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, video_bts_fifo);
+    pContext->bts_fifo = video_bts_fifo;
+    unprotected_ptr = RM_NEXT_PAGE_ALIGN(unprotected_ptr) + pContext->BitstreamFIFOSize;
+
+    /* video pts fifo container is in video_task_data_base structure and data is allocated in DRAM */
+    err = video_get_pts_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, &video_pts_fifo);
+    err = video_open_pts_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->PtsFIFOCount);
+    unprotected_ptr += pContext->PtsFIFOCount * VPTS_FIFO_ENTRY_SIZE;
+
+#if 1	// inband fifo
+    /* video inband fifo container is in video_task_data_base structure and data is allocated in DRAM */
+    video_open_inband_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->InbandFIFOCount);
+    unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandCommand);
+    pContext->inband_params_address = unprotected_ptr;
+    unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandParams);
+    /* allocate and clear inband_params */
+    {
+        RMuint32 i;
+        // clear params memory
+        for (i=0; i<pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandParams)/sizeof(RMuint32); i++)
+        {
+            gbus_write_uint32(pContext->pgbus, pContext->inband_params_address + 4*i, 0);
+        }
+    }
+    gbus_write_uint32(pContext->pgbus, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->Inband_Params_Address), pContext->inband_params_address);
+#endif
+    // the display fifo container is in video decoder interface
+    err = video_get_display_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, &pContext->display_fifo);
+
+    gbus_entry_fifo_open(pContext->pgbus, unprotected_ptr, pContext->NumOfPictures + 1, pContext->display_fifo);
+
+    //clear the pointers to picture buffers
+    for ( i =0; i < pContext->NumOfPictures + 1; i++)
+    {
+        gbus_write_uint32(pContext->pgbus, unprotected_ptr + (4* i), 0);
+    }
+
+    unprotected_ptr += sizeof(RMuint32) * (pContext->NumOfPictures + 1);
+
+
+    video_get_irq_info(pContext->pgbus, (struct video_task_interface *)pContext->pvti, &pContext->event_table_pointer);
+
+
+    /* initialize user data fifo - the container and data are in DRAM */
+    err = video_get_user_data_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, &pContext->user_data_fifo);
+    err = video_open_user_data_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->UserDataSize);
+    unprotected_ptr += pContext->UserDataSize;
+    if (pContext->UserDataSize)
+    {
+        /* initialize the internal user_data input and helper fifo  */
+        gbus_fifo_eraser_open(pContext->pgbus, unprotected_ptr, pContext->UserDataSize, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_in_fifo));
+        unprotected_ptr += pContext->UserDataSize;
+        gbus_entry_fifo_eraser_open(pContext->pgbus, unprotected_ptr, pContext->UserDataSize / 16, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_info_fifo));
+        unprotected_ptr += (pContext->UserDataSize / 16)  * (2*sizeof(RMuint32));
+    }
+    else
+    {
+        /* if user data is not required initialize the start address to 0 for the internal user_data input and helper fifo  */
+        gbus_fifo_eraser_open(pContext->pgbus, 0, 0, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_in_fifo));
+        gbus_entry_fifo_eraser_open(pContext->pgbus, 0, 0, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_info_fifo));
+    }
+
+    err = video_open_error_code_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, DECODE_ERROR_ENTRIES);//pValueIn->ErrorCodeCount);
+    unprotected_ptr += DECODE_ERROR_ENTRIES * sizeof(struct EMhwlibVideoDecoder_DecodeError);
+
+    video_set_extra_pictures(pContext->pgbus, (struct video_task_interface *)pContext->pvti, pContext->ExtraPictureBufferCount);
+    /* commands sent by application or microcode (from outside) */
+
+    pContext->uiDRAMPtr = unprotected_ptr;
+
+
+over:
+
+    return err;
+}
+#endif
+
