@@ -9,7 +9,7 @@
 			<Target title="Debug">
 				<Option output="bin/Debug/testPlatformDB" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
-				<Option external_deps="../../libs/Linux/libplatformdb.a;" />
+				<Option external_deps="../../libs/Linux/x86_64/libplatformdb2_d.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -17,14 +17,14 @@
 					<Add option="-D_DEBUG=1" />
 				</Compiler>
 				<Linker>
-					<Add option="../../libs/Linux/libplatformdb_d.a" />
+					<Add option="../../libs/Linux/x86_64/libplatformdb2_d.a" />
 					<Add option="`xml2-config --libs`" />
 				</Linker>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/testPlatformDB" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
-				<Option external_deps="../../libs/Linux/libplatformdb.a;" />
+				<Option external_deps="../../libs/Linux/x86_64/libplatformdb2.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -32,7 +32,7 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="../../libs/Linux/libplatformdb.a" />
+					<Add option="../../libs/Linux/x86_64/libplatformdb2.a" />
 					<Add option="`xml2-config --libs`" />
 				</Linker>
 			</Target>
@@ -142,9 +142,10 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-std=c++11" />
 			<Add option="-fexceptions" />
 			<Add option="`xml2-config --cflags`" />
-			<Add directory="../../platformDB" />
+			<Add directory="../../platformDB2" />
 		</Compiler>
 		<Unit filename="main.cpp" />
 		<Extensions>

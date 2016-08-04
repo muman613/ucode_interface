@@ -10,16 +10,16 @@ TARGET_EXE=testPlatformDB
 CPP_SOURCES=main.cpp
 
 ifdef DEBUG
-PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb_d.a
+PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb2_d.a
 else
-PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb.a
+PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb2.a
 endif
 
 
 LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)
 LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
-PLATDB_CFLAGS=-I../../platformDB/
-CFLAGS=$(WX_CFLAGS) $(PLATDB_CFLAGS) $(LIBXML_CFLAGS)
+PLATDB_CFLAGS=-I../../platformDB2/
+CFLAGS=$(WX_CFLAGS) $(PLATDB_CFLAGS) $(LIBXML_CFLAGS) -std=c++11
 LIBS=$(PLATDB_LIBS) $(WX_LIBS) $(LIBXML_LIBS)
 
 include ../../../Build/buildsys.mk
