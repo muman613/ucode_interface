@@ -18,7 +18,10 @@ namespace video_utils {
 #define RESOLVE_SYMBOL(sym)                                                     \
     (*pSymMgr)[(sym)]
 
-/* set the DRAM address where the video microcode is loaded */
+/**
+ *  set the DRAM address where the video microcode is loaded
+ */
+
 RMstatus video_set_ucode_dram_offset(
 	controlInterface* pIF,
 	RMuint32 MemBase,
@@ -36,6 +39,10 @@ RMstatus video_set_ucode_dram_offset(
 
 	return RM_OK;
 }
+
+/**
+ *
+ */
 
 RMstatus video_get_scheduler_memory(
 	controlInterface* pIF,
@@ -55,7 +62,6 @@ RMstatus video_get_scheduler_memory(
 	schedStart |= (pGBus->gbus_read_uint32(scheduler_data_address + 4) << 16);
 
 	*pstart_address = schedStart;
-//	*psize = sizeof(struct scheduler_data);
 
     pDef = pIF->get_structdb()->get_structure("scheduler_data");
     if (pDef != nullptr) {
@@ -121,13 +127,16 @@ RMstatus video_set_scheduler_memory(
 	return RM_OK;
 }
 
-/* The pictures with an error count above this value are not sent to display. */
+/**
+ *  The pictures with an error count above this value are not sent to display.
+ */
+
 RMstatus video_set_display_error_threshold(
 	controlInterface* pIF,
+	RMuint32 pvti,
 	RMuint32 threshold)
 {
     GBUS_PTR                    pGBus     = pIF->get_gbusptr();
-//  UcodeSymbolMgr*             pSymMgr   = pIF->get_symmgr();
     structure_database*         pStructDB = pIF->get_structdb();
 	const structure_definition* pStruct   = nullptr;
 
@@ -135,49 +144,60 @@ RMstatus video_set_display_error_threshold(
 
     pStruct = pStructDB->get_structure("video_task_interface");
     if (pStruct != nullptr) {
-        addr = pStruct->member("DisplayErrorThreshold")->offset();
+        addr = pvti + pStruct->member("DisplayErrorThreshold")->offset();
 
         RMDBGLOG((LOCALDBG, "video_set_display_error_threshold addr=0x%lx %ld (previous=%ld)\n",
             addr, threshold, pGBus->gbus_read_uint32(addr)));
 
         pGBus->gbus_write_uint32(addr, threshold);
     } else {
-
+        RMDBGLOG((LOCALDBG, "ERROR: Unable to resolve 'video_task_interface'!\n"));
     }
+
 	return RM_OK;
 }
 
-/* Set the anchor error propagation parameters */
+/**
+ *  Set the anchor error propagation parameters.
+ */
+
 RMstatus video_set_anchor_propagation_parms(
 	controlInterface* pIF,
+	RMuint32 pvti,
 	RMuint32 threshold, RMuint32 length)
 {
+    RMstatus                    result    = RM_ERROR;
     GBUS_PTR                    pGBus     = pIF->get_gbusptr();
-//    UcodeSymbolMgr*             pSymMgr   = pIF->get_symmgr();
     structure_database*         pStructDB = pIF->get_structdb();
 	const structure_definition* pStruct   = nullptr;
-	RMuint32 addr =  0L; //(RMuint32) &(pvti->AnchorErrPropagationThreshold);
+	RMuint32                    addr      = 0L;
 
 	RMDBGLOG((LOCALDBG, "video_set_anchor_propagation_parms(%d, %d)\n", threshold, length));
 
     pStruct = pStructDB->get_structure("video_task_interface");
     if (pStruct != nullptr) {
-        addr = pStruct->member("DisplayErrorThreshold")->offset();
+        addr = pvti + pStruct->member("AnchorErrPropagationThreshold")->offset();
         pGBus->gbus_write_uint32(addr, threshold);
-        addr = pStruct->member("AnchorErrPropagationLength")->offset();
+        addr = pvti + pStruct->member("AnchorErrPropagationLength")->offset();
         pGBus->gbus_write_uint32(addr, length);
+        result = RM_OK;
     } else {
-        RMDBGLOG((LOCALDBG, "ERROR: Unable to resolve video_task_interface!\n"));
+        RMDBGLOG((LOCALDBG, "ERROR: Unable to resolve 'video_task_interface'!\n"));
     }
 
-	return RM_OK;
+	return result;
 }
+
+/**
+ *
+ */
 
 RMstatus video_set_vti_pointer(
 	controlInterface* pIF,
 	RMuint32 pvtdb,
 	RMuint32 pvti)
 {
+    RMstatus                    result    = RM_ERROR;
     GBUS_PTR                    pGBus     = pIF->get_gbusptr();
     structure_database*         pStructDB = pIF->get_structdb();
 	const structure_definition* pVtdbStr  = nullptr;
@@ -191,31 +211,42 @@ RMstatus video_set_vti_pointer(
 
     assert( (pVtdbStr != nullptr) && (pVtiStr != nullptr));
 
-	RMDBGLOG((LOCALDBG, "video_set_vti_pointer pvdtb= 0x%lx pvti= 0x%lx\n", pvtdb, pvti));
+    if ((pVtdbStr != nullptr) && (pVtiStr != nullptr)) {
+        RMDBGLOG((LOCALDBG, "video_set_vti_pointer pvdtb= 0x%lx pvti= 0x%lx\n", pvtdb, pvti));
 
-	addr = pvtdb + pVtdbStr->member("Task_InterfacePtr")->offset();
-	pGBus->gbus_write_uint32(addr, pvti);
-	addr = pvti + pVtiStr->member("Command")->offset();
-	pGBus->gbus_write_uint32(addr, VIDEO_NO_CMD);
-	addr = pvti + pVtiStr->member("Status")->offset();
-	pGBus->gbus_write_uint32(addr, VIDEO_UNINIT);
+        addr = pvtdb + pVtdbStr->member("Task_InterfacePtr")->offset();
+        pGBus->gbus_write_uint32(addr, pvti);
+        addr = pvti + pVtiStr->member("Command")->offset();
+        pGBus->gbus_write_uint32(addr, VIDEO_NO_CMD);
+        addr = pvti + pVtiStr->member("Status")->offset();
+        pGBus->gbus_write_uint32(addr, VIDEO_UNINIT);
 
-	return RM_OK;
+        result = RM_OK;
+    } else {
+        RMDBGLOG((LOCALDBG, "ERROR: Unable to resolve video_task_data_base or video_task_interface!\n"));
+    }
+
+	return result;
 }
 
-/* set video_task_data_base */
+/**
+ *  set video_task_data_base
+ */
+
 RMstatus video_set_vtdb_pointer(
 	controlInterface* pIF,
 	RMuint32 MemBase,
 	RMuint32 index,
 	RMuint32 pvtdb)
 {
+    RMstatus                    result    = RM_ERROR;
     GBUS_PTR                    pGBus     = pIF->get_gbusptr();
     structure_database*         pStructDB = pIF->get_structdb();
-	const structure_definition* pVtdbStr  = nullptr;
-	const structure_definition* pVtiStr   = nullptr;
+    UcodeSymbolMgr*             pSymMgr   = pIF->get_symmgr();
+	const structure_definition* pTaskStr  = nullptr;
 	RMuint32                    addr      =  0L;
 	RMuint32                    scheduler_data_address;
+	RMuint32                    decoderHead = 0;
 
 	scheduler_data_address = MemBase + RESOLVE_SYMBOL("SchedulerDataStart");
 
@@ -224,41 +255,32 @@ RMstatus video_set_vtdb_pointer(
 
 	RMDBGLOG((LOCALDBG, "video_set_vtdb_pointer addr= 0x%lx pvtb= 0x%lx\n", addr, pvtdb));
 
-	return RM_OK;
+	pTaskStr = pStructDB->get_structure("task_entry");
+
+	if (pTaskStr != nullptr) {
+        const member_definition* pMember = nullptr;
+
+        pMember = pTaskStr->member("DataBasePtr");
+        if (pMember != nullptr) {
+            decoderHead = pGBus->gbus_read_uint32(scheduler_data_address);
+            decoderHead |= (pGBus->gbus_read_uint32(scheduler_data_address + 4) << 16);
+
+            RMDBGLOG((LOCALDBG, "SchedulerDataStart = 0x%lx\n", decoderHead));
+
+            addr = decoderHead + (index * pTaskStr->size()) + sizeof(RMuint32);
+            pGBus->gbus_write_uint32(addr, pvtdb);
+
+            RMDBGLOG((LOCALDBG, "video_set_vtdb_pointer addr= 0x%lx pvtb= 0x%lx\n", addr, pvtdb));
+
+            result = RM_OK;
+        } else {
+            RMDBGLOG((LOCALDBG, "ERROR: No member 'DataBasePtr'!\n"));
+        }
+	} else {
+        RMDBGLOG((LOCALDBG, "ERROR: Unable to resolve 'video_task_interface'!\n"));
+	}
+
+	return result;
 }
-
-#if 0
-
-
-/* set video_task_data_base */
-RMstatus video_set_vtdb_pointer(
-	controlInterface* pIF,
-	RMuint32 MemBase,
-	RMuint32 index,
-	RMuint32 pvtdb)
-{
-	RMuint32 addr;
-	RMuint32 decoderHead = 0;
-	struct task_entry* pEntry = 0;
-	RMuint32 scheduler_data_address = MemBase + resolve_symbol("SchedulerDataStart");
-
-	if (index >= MAX_TASK_COUNT)
-		return RM_ERROR;
-
-	decoderHead = gbus_read_uint32(pGBus, scheduler_data_address);
-	decoderHead |= (gbus_read_uint32(pGBus, scheduler_data_address + 4) << 16);
-
-	RMDBGLOG((LOCALDBG, "SchedulerDataStart = 0x%lx\n", decoderHead));
-
-	addr 	= decoderHead + (index * sizeof(struct task_entry)) + sizeof(RMuint32);
-	pEntry 	= (struct task_entry*)addr;
-
-	gbus_write_uint32(pGBus, (RMuint32) &(pEntry->DataBasePtr), pvtdb);
-
-	RMDBGLOG((LOCALDBG, "video_set_vtdb_pointer addr= 0x%lx pvtb= 0x%lx\n", addr, pvtdb));
-
-	return RM_OK;
-}
-#endif // 0
 
 }

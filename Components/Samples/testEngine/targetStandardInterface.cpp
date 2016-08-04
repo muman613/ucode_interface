@@ -18,22 +18,50 @@
 
 using namespace video_utils;
 
+/**
+ *  Object represents the standard microcode interface.
+ */
+
 targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
 :   targetInterfaceBase(pEngine)
 {
     RMuint32 offset = 0;
     // ctor
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
     pEngine->get_ucode_offset(nullptr, &offset);
-
     m_pAlloc[0]->alloc(targetAllocator::ALLOC_DRAM, offset);
 
+#ifdef _DEBUG
     m_pAlloc[0]->dump(std::cerr);
+#endif // _DEBUG
+
+    init_parameters();
 }
 
 targetStandardInterface::~targetStandardInterface()
 {
     // dtor
+}
+
+/**
+ *  Initialize parameters...
+ */
+
+void targetStandardInterface::init_parameters()
+{
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    DecoderDataSize	            = DECODER_DATA_SIZE;
+    DecoderContextSize          = DECODER_CTX_SIZE;
+    BitstreamFIFOSize           = (2 * 1024 * 1024);
+    PtsFIFOCount                = 512;
+    InbandFIFOCount             = 512;
+    NumOfPictures               = PICTURE_COUNT;
+    soc_arch                    = SOC_TANGO;
+    storage_format              = 0;
+    luma_nb_comp_per_sample     = 1;
+    chroma_nb_comp_per_sample   = 2;
 }
 
 void targetStandardInterface::test_function()
@@ -92,9 +120,11 @@ RMstatus targetStandardInterface::open_video_decoder()
     TARGET_ALLOC_PTR        pAlloc      = m_pAlloc[0];
     structure_database*     pStructDB   = m_pEngine[0]->get_structdb();
     RMuint32                nStructSize = 0L;
-    RMuint32                i;
+    controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+    RMuint32                i           = 0;
 
     assert(pStructDB != nullptr);
+    assert(pIF != nullptr);
 
     pAlloc->alloc(targetAllocator::ALLOC_DRAM, 4);
 
@@ -104,15 +134,60 @@ RMstatus targetStandardInterface::open_video_decoder()
     RMDBGLOG((LOCALDBG, "pvtdb = 0x%08X\n", pvtdb));
     RMDBGLOG((LOCALDBG, "pvti  = 0x%08X\n", pvti));
 
-    video_set_display_error_threshold(dynamic_cast<controlInterface*>(this), 0);
-    video_set_anchor_propagation_parms(dynamic_cast<controlInterface*>(this), 500, 13);
+    video_set_display_error_threshold(pIF, pvti, 0);
+    video_set_anchor_propagation_parms(pIF, pvti, 500, 13);
 
     /* Set pvti pointer in DRAM */
-    video_set_vti_pointer(dynamic_cast<controlInterface*>(this), pvtdb, pvti);
+    video_set_vti_pointer(pIF, pvtdb, pvti);
     /* Set pvtb in DMEM */
-//    video_set_vtdb_pointer(dynamic_cast<controlInterface*>(this), MEM_BASE_mpeg_engine_0, 0, pContext->pvtdb);
+    video_set_vtdb_pointer(pIF,
+                           m_pEngine[0]->get_engine()->get_pmBase(),
+                           0,
+                           pvtdb);
 
     return nStatus;
+}
+
+typedef struct {
+    std::string sID;
+    RMuint32    tileW;
+    RMuint32    tileH;
+} tileDef;
+
+static tileDef  chipTileSizes[] = {
+    { "8758", 8, 5, },
+    { "8760", 9, 5, },
+};
+
+/**
+ *
+ */
+
+bool targetStandardInterface::set_tile_dimensions(std::string sChipId)
+{
+    for (size_t i = 0 ; i < sizeof(chipTileSizes)/sizeof(tileDef) ; i++) {
+        if (sChipId == chipTileSizes[i].sID) {
+            set_tile_dimensions( chipTileSizes[i].tileW, chipTileSizes[i].tileH );
+            return true;
+        }
+    }
+
+    set_tile_dimensions( 8, 5 );
+
+    return false;
+}
+
+void targetStandardInterface::set_tile_dimensions(RMuint32 tsw, RMuint32 tsh)
+{
+    RMDBGLOG((LOCALDBG, "%s(%ld, %ld)\n", __PRETTY_FUNCTION__, tsw, tsh));
+
+    tile_width_l2       = tsw;
+    tile_height_l2      = tsh;
+    pvc_tw              = (1 << tsw);
+    pvc_th              = (1 << tsh);
+    pvc_ts              = pvc_tw * pvc_th;
+
+    return;
 }
 
 #if 0

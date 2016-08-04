@@ -42,6 +42,11 @@ public:
     RMstatus            open_video_decoder();
 
 protected:
+
+    void                init_parameters();
+    bool                set_tile_dimensions(std::string sChip);
+    void                set_tile_dimensions(RMuint32 tsw, RMuint32 tsh);
+
     bool                bValid;
 
     SOC_ARCH            soc_arch;
@@ -85,6 +90,11 @@ protected:
     RMuint32            picture_h;
     RMuint32            picture_count;
 };
+
+#define VPTS_FIFO_ENTRY_SIZE	8 /* 8 bytes = PTS on 32 bits and byte counter on 32 bits */
+#define DECODE_ERROR_ENTRIES 	128
+#define DECODER_DATA_SIZE       (29638656 * 12)
+#define DECODER_CTX_SIZE        6242304
 
 typedef std::shared_ptr<targetStandardInterface>    TARGET_STD_IF;
 
