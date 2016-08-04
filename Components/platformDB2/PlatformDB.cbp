@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="PlatformDatabase2" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="../libs/Linux/platformdb2_d" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Debug/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="`xml2-config --cflags`" />
+					<Add option="-D_DEBUG=1" />
+				</Compiler>
+				<Linker>
+					<Add option="`xml2-config --libs`" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="../libs/Linux/platformdb2" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Release/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="`xml2-config --cflags`" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="`xml2-config --libs`" />
+				</Linker>
+			</Target>
+			<Target title="wxWidgets Debug">
+				<Option output="bin/wxDebug/platformdb2" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/wxDebug/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="`/opt/wx/3.0.0/bin/wx-config --cflags`" />
+					<Add option="-D_DEBUG=1" />
+				</Compiler>
+				<Linker>
+					<Add option="`/opt/wx/3.0.0/bin/wx-config --libs`" />
+				</Linker>
+			</Target>
+			<Target title="wxWidgets Release">
+				<Option output="bin/wxRelease/platformdb" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/wxRelease/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="`/opt/wx/3.0.0/bin/wx-config --cflags`" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="`/opt/wx/3.0.0/bin/wx-config --libs`" />
+				</Linker>
+			</Target>
+			<Target title="Shared Debug">
+				<Option output="bin/SharedDebug/platformdb_d" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin/SharedDebug" />
+				<Option object_output="obj/SharedDebug/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="`xml2-config --cflags`" />
+					<Add option="-fPIC" />
+					<Add option="-D_DEBUG=1" />
+				</Compiler>
+				<Linker>
+					<Add option="`xml2-config --libs`" />
+				</Linker>
+			</Target>
+			<Target title="Shared Release">
+				<Option output="bin/SharedRelease/platformdb" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin/SharedRelease" />
+				<Option object_output="obj/SharedRelease/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-std=c++11" />
+					<Add option="`xml2-config --cflags`" />
+					<Add option="-fPIC" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="`xml2-config --libs`" />
+				</Linker>
+			</Target>
+			<Target title="Shared wxWidgets Debug">
+				<Option output="bin/SharedwxDebug/wxplatformdb_d" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin/SharedwxDebug" />
+				<Option object_output="obj/SharedwxDebug/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="`/opt/wx/3.0.0/bin/wx-config --cflags`" />
+					<Add option="-fPIC" />
+					<Add option="-D_DEBUG=1" />
+				</Compiler>
+				<Linker>
+					<Add option="`/opt/wx/3.0.0/bin/wx-config --static=no --libs`" />
+				</Linker>
+			</Target>
+			<Target title="Shared wxWidgets Release">
+				<Option output="bin/SharedwxRelease/wxplatformdb" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin/SharedwxRelease" />
+				<Option object_output="obj/SharedwxRelease/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="`/opt/wx/3.0.0/bin/wx-config --cflags`" />
+					<Add option="-fPIC" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="`/opt/wx/3.0.0/bin/wx-config --static=no --libs`" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-std=c++11" />
+		</Compiler>
+		<Unit filename="PlatformBlock.cpp" />
+		<Unit filename="PlatformBlock.h" />
+		<Unit filename="PlatformChip.cpp" />
+		<Unit filename="PlatformChip.h" />
+		<Unit filename="PlatformDatabase.cpp" />
+		<Unit filename="PlatformDatabase.h" />
+		<Unit filename="PlatformDebug.h" />
+		<Unit filename="PlatformEngine.cpp" />
+		<Unit filename="PlatformEngine.h" />
+		<Unit filename="PlatformTargetBase.h" />
+		<Unit filename="PlatformTypes.h" />
+		<Unit filename="libplatformdb.h" />
+		<Unit filename="xml_utils.cpp" />
+		<Unit filename="xml_utils.h" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<lib_finder disable_auto="1" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
