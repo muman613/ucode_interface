@@ -92,10 +92,18 @@ void PlatformChip::Dump(FILE* fOut)
 #endif  // __WXGTK__
 }
 
-size_t PlatformChip::get_block_count() {
+size_t PlatformChip::get_block_count() const {
 #if (defined(__WXGTK__) || defined(__WXMSW__))
     return m_blocks.GetCount();
 #else
     return m_blocks.size();
 #endif // __WXGTK__
+}
+
+STRING PlatformChip::get_chip_id() const {
+    return m_ChipID;
+}
+
+STRING PlatformChip::get_hw_type() const {
+    return m_hwType;
 }

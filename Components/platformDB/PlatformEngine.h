@@ -25,8 +25,8 @@ class DLLSPEC PlatformEngine {
         PlatformEngine() {}
         virtual ~PlatformEngine();
 
-        int			get_engine_num();
-        wxUint32	get_ioBase();
+        int			get_engine_num() const;
+        wxUint32	get_ioBase() const;
 
         wxUint32	get_pmBase() const;
         wxUint32	get_pmSize() const;
@@ -44,7 +44,7 @@ class DLLSPEC PlatformEngine {
 		void        set_dmBase(wxUint32 address);
 		void        set_dramBase(wxUint32 address);
 
-        void		Dump(FILE* ofp);
+        void		Dump(FILE* ofp = stderr);
 
     protected:
         int         m_engineNum;

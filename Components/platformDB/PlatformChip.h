@@ -3,6 +3,12 @@
 
 #include "libplatformdb.h"
 
+class PlatformDatabase;
+
+/**
+ *  Chip object contains an array of blocks.
+ */
+
 class DLLSPEC PlatformChip {
     public:
         PlatformChip(STRING sChipID, STRING sHWType = "RiscDSPHard", STRING sName = "");
@@ -10,27 +16,25 @@ class DLLSPEC PlatformChip {
         PlatformChip(const PlatformChip& copy);
         virtual ~PlatformChip();
 
-        STRING& get_chip_id() {
-            return m_ChipID;
-        }
+        STRING get_chip_id() const;
+        STRING get_hw_type() const;
+        size_t get_block_count() const;
 
-        STRING& get_hw_type() {
-            return m_hwType;
-        }
-
-        void AddBlock(PlatformBlock& newBlock);
         void Dump(FILE* fOut = stdout);
-
-        size_t get_block_count();
 
         PlatformBlock operator[](size_t index);
         PlatformBlock operator[](STRING blockName);
 
     protected:
-        STRING        m_ChipID;
-        STRING        m_ChipName;
-        ArrayOfBlocks m_blocks;
-        STRING        m_hwType;
+        friend class PlatformDatabase;
+
+        /*! Add a block to the block array. */
+        void AddBlock(PlatformBlock& newBlock);
+
+        STRING        m_ChipID;                     ///< String representing Chip ID.
+        STRING        m_ChipName;                   ///< String representing Chip name.
+        ArrayOfBlocks m_blocks;                     ///< Array of blocks on chip.
+        STRING        m_hwType;                     ///< String representing hw type.
 };
 
 #if (defined(__WXGTK__) || defined(__WXMSW__))

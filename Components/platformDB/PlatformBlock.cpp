@@ -34,6 +34,12 @@ PlatformBlock::~PlatformBlock() {
 //    D(debug("PlatformBlock::~PlatformBlock()\n"));
 }
 
+/**
+ *  Add engine to block.
+ *
+ *  @param newEngine    reference to engine to add.
+ */
+
 void PlatformBlock::AddEngine(PlatformEngine& newEngine)
 {
 //    D(debug("PlatformBlock::AddEngine()\n"));
@@ -104,11 +110,11 @@ void PlatformBlock::Dump(FILE* fOut)
 
 }
 
-STRING PlatformBlock::get_block_name() {
+STRING PlatformBlock::get_block_name() const {
     return m_blockName;
 }
 
-size_t PlatformBlock::get_engine_count() {
+size_t PlatformBlock::get_engine_count() const {
 #if (defined(__WXGTK__) || defined(__WXMSW__))
     return m_engines.GetCount();
 #else

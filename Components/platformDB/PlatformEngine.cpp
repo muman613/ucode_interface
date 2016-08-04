@@ -62,11 +62,19 @@ void PlatformEngine::Dump(FILE* fOut) {
 #endif // __WXGTK__
 }
 
-int PlatformEngine::get_engine_num() {
+/**
+ *  Get engine # in block.
+ */
+
+int PlatformEngine::get_engine_num() const {
     return m_engineNum;
 }
 
-wxUint32 PlatformEngine::get_ioBase() {
+/**
+ *  Get I/O base address.
+ */
+
+wxUint32 PlatformEngine::get_ioBase() const {
     return m_ioBase;
 }
 
@@ -106,15 +114,27 @@ wxUint32 PlatformEngine::get_dramWidth() const {
 	return m_dramWidth;
 }
 
+/**
+ *  Set PM base address.
+ */
+
 void PlatformEngine::set_pmBase(wxUint32 address)
 {
     m_pmBase = address;
 }
 
+/**
+ *  Set DM base address.
+ */
+
 void PlatformEngine::set_dmBase(wxUint32 address)
 {
     m_dmBase = address;
 }
+
+/**
+ *  Set DRAM base address.
+ */
 
 void PlatformEngine::set_dramBase(wxUint32 address)
 {

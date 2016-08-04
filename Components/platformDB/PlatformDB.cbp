@@ -143,7 +143,6 @@
 		<Unit filename="PlatformDebug.h" />
 		<Unit filename="PlatformEngine.cpp" />
 		<Unit filename="PlatformEngine.h" />
-		<Unit filename="PlatformTarget.h" />
 		<Unit filename="PlatformTargetBase.h" />
 		<Unit filename="PlatformTypes.h" />
 		<Unit filename="libplatformdb.h" />

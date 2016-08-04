@@ -32,7 +32,7 @@ PlatformDatabase::~PlatformDatabase()
  *
  */
 
-size_t PlatformDatabase::get_chip_count() {
+size_t PlatformDatabase::get_chip_count() const {
 #if (defined(__WXGTK__) || defined(__WXMSW__))
     return m_chips.GetCount();
 #else
@@ -41,7 +41,7 @@ size_t PlatformDatabase::get_chip_count() {
 }
 
 /**
- *
+ *  @param newChip Chip to add to the platform database.
  */
 
 void PlatformDatabase::AddChip(PlatformChip& newChip)
@@ -94,7 +94,11 @@ PlatformChip PlatformDatabase::operator[](STRING& sChipID) {
 }
 
 /**
+ *  Look-up block and engine in database returning copies of the objects.
  *
+ *  @param which        Reference to chip object to fill in.
+ *  @param chip         String representing chip ID to look-up.
+ *  @return             true if the chip was found.
  */
 
 bool PlatformDatabase::FindChip(PlatformChip& which, STRING chip) {
@@ -116,7 +120,14 @@ bool PlatformDatabase::FindChip(PlatformChip& which, STRING chip) {
 }
 
 /**
+ *  Look-up block and engine in database returning copies of the objects.
  *
+ *  @param whichEngine  Reference to engine object to fill in.
+ *  @param whichBlock   Reference to block object to fill in.
+ *  @param chip         String representing chip ID to look-up.
+ *  @param block        String representing block ID to look-up.
+ *  @param engine       Integer representing which engine # to look-up.
+ *  @return             true if the engine was found.
  */
 
 bool PlatformDatabase::FindEngine(PlatformEngine& whichEngine,
@@ -164,53 +175,7 @@ bool PlatformDatabase::FindEngine(PlatformEngine& whichEngine,
 }
 
 /**
- *
- */
-#if 0
-Target* PlatformDatabase::MakeNewTarget(STRING name, STRING chip, STRING block, int engine) {
-    Target*         pTarget = 0L;
-    wxUint32        pm_map, dm_map, pmdm_map, dram_map;
-    wxUint32        pm_size, dm_size;
-    PlatformEngine  whichEngine;
-    PlatformBlock   whichBlock;
-
-
-   // D(debug("PlatformDatabase::MakeNewTarget(%s)", (const char*)name.c_str()));
-
-    pmdm_map = dram_map = 0L;
-
-    if (FindEngine(whichEngine, whichBlock, chip, block, engine)) {
-        pTarget = new PlatformTarget(name);
-//      wxASSERT(pTarget != 0L);
-
-        ((PlatformTarget*)pTarget)->SetBlock(whichBlock);
-        ((PlatformTarget*)pTarget)->SetEngine(whichEngine);
-//        ((PlatformTarget*)pTarget)->SetBlockName(block);
-//        ((PlatformTarget*)pTarget)->SetDMWidth(whichEngine.get_dmWidth());
-
-        pm_map   = whichEngine.get_pmBase();
-        pm_size  = whichEngine.get_pmSize();
-        pmdm_map = pm_map;
-        dm_map   = whichEngine.get_dmBase();
-        dm_size  = whichEngine.get_dmSize();
-        dram_map = whichEngine.get_dramBase();
-
-        pTarget->SetValue(string_t("PMDM_map"),    pmdm_map);
-        pTarget->SetValue(string_t("PM_map"),      pm_map);
-        pTarget->SetValue(string_t("PM_size"),     pm_size);
-
-        pTarget->SetValue(string_t("DM_map"),      dm_map);
-        pTarget->SetValue(string_t("DM_size"),     dm_size);
-
-        pTarget->SetValue(string_t("DRAM_map"),    dram_map);
-    }
-
-    return pTarget;
-}
-#endif
-
-/**
- *
+ *  Dump the contents of the platform database to the file.
  */
 
 void PlatformDatabase::Dump(FILE* fOut) {
@@ -250,8 +215,13 @@ void PlatformDatabase::Dump(FILE* fOut) {
 
 
 #if (defined(__WXGTK__) || defined(__WXMSW__))
+
 /**
- *  Load platform database from XML file.
+ *  Load the platform database from XML file.
+ *
+ *  @param sDbFilename  String representing the XML filename to load.
+ *  @param sInstallPath String representing the path to the XML file.
+ *  @return true if file is loaded OK.
  */
 
 bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
@@ -467,6 +437,14 @@ bool PlatformDatabase::HandleEngineNode(PlatformBlock* pBlock, XML_NODE& eNode) 
 
 #else   // __WXGTK__
 
+/**
+ *  Load the platform database from XML file.
+ *
+ *  @param sDbFilename  String representing the XML filename to load.
+ *  @param sInstallPath String representing the path to the XML file.
+ *  @return true if file is loaded OK.
+ */
+
 bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
     bool            bResult = false;
     STRING          sDbFullpath;
@@ -654,7 +632,7 @@ bool PlatformDatabase::parse_hostint_string(STRING hostIntStr, REG_PAIR_VECTOR& 
 #if (defined(__WXGTK__) || defined(__WXMSW__))
     wxStringTokenizer   tokenizer;
 
-#ifdef  VERBOS_UTILS
+#ifdef  VERBOSE_UTILS
     wxLogDebug("parse_hostint_string(%s, ...)", hostIntStr);
 #endif
 
@@ -702,9 +680,9 @@ bool PlatformDatabase::parse_hostint_string(STRING hostIntStr, REG_PAIR_VECTOR& 
     char *saveptr1 = 0L, *saveptr2 = 0;
     char *token = 0L;
 
-#ifdef  VERBOS_UTILS
+#ifdef  VERBOSE_UTILS
     D(debug("parse_hostint_string(%s, ...)", hostIntStr.c_str()));
-#endif // VERBOS_UTILS
+#endif // VERBOSE_UTILS
 
     regVec.clear();
 
@@ -719,9 +697,9 @@ bool PlatformDatabase::parse_hostint_string(STRING hostIntStr, REG_PAIR_VECTOR& 
         wxUint32    address = 0,
                     value   = 0;
 
-#ifdef  VERBOS_UTILS
+#ifdef  VERBOSE_UTILS
         D(debug("token = %s\n", token));
-#endif // VERBOS_UTILS
+#endif // VERBOSE_UTILS
 
 #ifdef  _WIN32
         while ((token2 = strtok_s(str2, "=", &saveptr2)) != 0) {
@@ -769,11 +747,12 @@ bool PlatformDatabase::parse_hostint_string(STRING hostIntStr, REG_PAIR_VECTOR& 
     return bRes;
 }
 
+/**
+ *  @param sVec Vector of strings.
+ */
 
-bool PlatformDatabase::GetChipNames(STRING_VECTOR& sVec)
+bool PlatformDatabase::GetChipNames(STRING_VECTOR& sVec) const
 {
-//	bool bRes = false;
-
 	for (size_t i = 0 ; i < m_chips.size() ; i++) {
 		STRING sChipName = m_chips[i].get_chip_id();
 		sVec.push_back( sChipName );
