@@ -85,11 +85,19 @@ static RMstatus parse_profile_option(CONTEXT_PTR ctx, const char* profile)
     return ((int)codec_id != -1)?RM_OK:RM_ERROR;
 }
 
+/**
+ *  Print usage information.
+ */
+
 static void print_usage(const char* sAppName) {
     struct profileEntry *pCurEntry = profileTable;
     char *sAppCopy = strdup(sAppName);
 
-    fprintf(stderr, "Usage: %s [-b binfile] [-c binfile] [-s streamfile] [-p (codec profile)] [-o YUVFile.yuv]\n", basename(sAppCopy));
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "   %s [-c chipid] [-m mode] [-s stream] [-p codec] [-o capfile]\n", basename(sAppCopy));
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Mode is 'r' for release or 'd' for debug.\n");
+    fprintf(stderr, "\n");
     fprintf(stderr, "Supported codec profiles:\n");
     free(sAppCopy);
 
