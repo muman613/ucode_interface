@@ -174,7 +174,11 @@ const PLATFORM_CHIP_PTR PlatformBlock::get_parent() const {
 void PlatformBlock::Release() {
     D(debug("%s()\n", __PRETTY_FUNCTION__));
 
+#if (defined(__WXGTK__) || defined(__WXMSW__))
+    m_engines.Clear();
+#else
     m_engines.clear();
+#endif
 
     return;
 }

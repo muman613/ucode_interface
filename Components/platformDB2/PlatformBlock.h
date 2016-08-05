@@ -31,13 +31,19 @@ class DLLSPEC PlatformBlock {
         PlatformBlock() {}
         virtual ~PlatformBlock();
 
+        /*! Get the block name. */
         STRING		        get_block_name() const;
+        /*! Get count of engines in block. */
         size_t		        get_engine_count() const;
+        /*! Dump block information to output stream. */
         void		        Dump(FILE* fOut = stdout);
+        /*! Retrieve the engine pointer for specified engine number. */
         PLATFORM_ENGINE_PTR operator[](size_t index);
+        /*! Get the reset register offset. */
         wxUint32	        get_resetReg();
+        /*! Get the host interrupt vector sequence. */
         REG_PAIR_VECTOR&    get_hostint_vector();
-
+        /*! Return pointer to parent chip. */
         const PLATFORM_CHIP_PTR get_parent() const;
 
     protected:

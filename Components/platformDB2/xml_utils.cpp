@@ -1,6 +1,7 @@
 //#include "StdAfx.h"
 //#include "libplatformdb.h"
 
+#include "PlatformTypes.h"
 #if (defined(__WXGTK__) || defined(__WXMSW__))
     #include <wx/arrimpl.cpp>
 	WX_DEFINE_OBJARRAY(ArrayOfNodes);

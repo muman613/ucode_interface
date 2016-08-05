@@ -49,7 +49,7 @@ class DLLSPEC PlatformDatabase
         void            AddChip(PLATFORM_CHIP_PTR newChip);
 
 #if (defined(__WXGTK__) || defined(__WXMSW__))
-        bool            HandleEngineNode(PlatformBlock* pBlock, XML_NODE& node);
+        bool            HandleEngineNode(PLATFORM_BLOCK_PTR pBlock, XML_NODE& node);
 #else
         bool            HandleEngineNode(PLATFORM_BLOCK_PTR pBlock, XML_NODE_PTR pNode);
 #endif // __WXGTK__

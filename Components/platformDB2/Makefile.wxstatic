@@ -2,34 +2,42 @@
 where-am-i = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 MAKEFILE := $(call where-am-i)
 
-TARGET_TYPE?=statlib
+TARGET_TYPE=statlib
 ARCH?=$(shell arch)
 
+WX_CONFIG?=/opt/sigma/wx/3.1.1/bin/wx-config
+
 ifdef DEBUG
-LIBNAME=libplatformdb2_d
+LIBNAME=libwxplatformdb2_d
+BUILDTYPE=wxDebug
 else
-LIBNAME=libplatformdb2
+BUILDTYPE=wxRelease
+LIBNAME=libwxplatformdb2
 endif
 
-CPP_SOURCES=    PlatformChip.cpp  		\
-				PlatformBlock.cpp		\
-				PlatformDatabase.cpp	\
-				PlatformEngine.cpp		\
+CPP_SOURCES=	PlatformBlock.cpp 		\
+				PlatformChip.cpp  		\
+				PlatformDatabase.cpp  	\
+				PlatformEngine.cpp  	\
 				xml_utils.cpp
 
 LIBXML2_CFLAGS=$(shell xml2-config --cflags)
 LIBXML2_LDFLAGS=$(shell xml2-config --libs)
+WX_CFLAGS=$(shell $(WX_CONFIG) --cflags)
+WX_LDFLAGS=$(shell $(WX_CONFIG) --libs)
 
-CFLAGS=$(LIBXML2_CFLAGS) -std=c++11
-LDFLAGS=$(LIBXML2_LDFLAGS)
+CFLAGS=$(LIBXML2_CFLAGS) $(WX_CFLAGS) -std=c++11
+LDFLAGS=$(LIBXML2_LDFLAGS) $(WX_LDFLAGS)
 
 LIB_DIR=../libs/Linux/$(ARCH)
-
 
 include ../../Build/buildsys.mk
 
 info:
 	@echo "ARCH        = $(ARCH)" 
+	@echo "WX_CONFIG   = $(WX_CONFIG)"
+	@echo "WX_CFLAGS   = $(WX_CFLAGS)"
+	@echo "WX_LDLAGS   = $(WX_CFLAGS)"
 	@echo "CFLAGS      = $(CFLAGS)"
 	@echo "LDFLAGS     = $(LDFLAGS)"
 	@echo "OBJ_DIR     = $(OBJ_DIR)"
@@ -37,5 +45,5 @@ info:
 	@echo "LIB_DIR     = $(LIB_DIR)"
 	@echo "TARGET      = $(TARGET)"
 	@echo "TARGET_TYPE = $(TARGET_TYPE)"
-	
+
 -include $(DEPS)

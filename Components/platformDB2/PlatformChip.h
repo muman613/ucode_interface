@@ -26,18 +26,21 @@ class DLLSPEC PlatformChip {
         PlatformChip(const PlatformChip& copy);
         virtual ~PlatformChip();
 
+        /*! Get the chip ID string. */
         STRING              get_chip_id() const;
+        /*! Get the chip name string. */
         STRING              get_chip_name() const;
-
+        /*! Get the Hardware type string. */
         STRING              get_hw_type() const;
+        /*! Get the count of blocks on this chip. */
         size_t              get_block_count() const;
-
+        /*! Dump output to stream */
         void                Dump(FILE* fOut = stdout);
+        /*! Get a list of block names on this chip */
+        bool                GetBlockNames(STRING_VECTOR& sVec);
 
         PLATFORM_BLOCK_PTR operator[](size_t index);
         PLATFORM_BLOCK_PTR operator[](STRING blockName);
-
-        bool                GetBlockNames(STRING_VECTOR& sVec);
 
     protected:
         friend class PlatformDatabase;

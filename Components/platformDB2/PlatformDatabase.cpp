@@ -140,7 +140,7 @@ bool PlatformDatabase::FindBlock(PlatformBlock& whichBlock, STRING sChipID, STRI
                 whichBlock = *pBlock;
                 bRes = true;
             } else {
-                D(debug("-- unable to locate block '%s'!\n", sBlockID.c_str()));
+                D(debug("-- unable to locate block '%s'!\n", (const char*)sBlockID.c_str()));
             }
 
             break;
@@ -211,13 +211,13 @@ void PlatformDatabase::Dump(FILE* fOut) {
 
     if (m_chips.GetCount() > 0) {
         for (size_t i = 0 ; i < m_chips.GetCount() ; i++) {
-            PlatformChip    chip;
+            PLATFORM_CHIP_PTR chip = m_chips[i];
 
-            chip = m_chips.Item(i);
+            //chip = m_chips.Item(i);
             //wxLogDebug("-- Chip [%s] --", chip.get_chip_id());
 
             wxFprintf(fOut, "-----------------------------------------\n");
-            chip.Dump(fOut);
+            chip->Dump(fOut);
             wxFprintf(fOut, "-----------------------------------------\n");
         }
     } else {
@@ -294,12 +294,12 @@ bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
 //debug("found %d target nodes!\n", targetNodeArray.GetCount());
 
                 for (size_t i = 0 ; i < targetNodeArray.GetCount() ; i++) {
-                    ArrayOfNodes    blockNodeArray;
-                    XML_NODE       tNode;
-                    STRING          sChip;
-                    STRING          sHWtype;
-                    STRING          sName;
-                    PlatformChip*   pNewChip;
+                    ArrayOfNodes        blockNodeArray;
+                    XML_NODE            tNode;
+                    STRING              sChip;
+                    STRING              sHWtype;
+                    STRING              sName;
+                    PLATFORM_CHIP_PTR   pNewChip;
 
                     tNode = targetNodeArray.Item(i);
 #if wxCHECK_VERSION(2,9,5)
@@ -312,17 +312,24 @@ bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
                     sName   = tNode.GetPropVal(wxT("name", wxT("")));
 #endif
 
-                    pNewChip = new PlatformChip(sChip, sHWtype);
+#if (__cplusplus >= 201103L)
+                    pNewChip = std::make_shared<PlatformChip>( sChip, sHWtype, sName );
+                    assert((bool)pNewChip == true);
+#else
+                    pNewChip = new PlatformChip(sChip, sHWtype, sName);
+                    assert(pNewChip != nullptr);
+#endif
+                    assert(pNewChip != 0L);
 
                     if (FindTags(wxT("block"), &tNode, blockNodeArray)) {
                         for (size_t j =0 ; j < blockNodeArray.GetCount() ; j++) {
-                            ArrayOfNodes    engineArray;
-                            XML_NODE       bNode;
-                            XML_NODE       *pControlNode = 0;
-                            STRING        sBlockName, sTmp;
-                            PlatformBlock*  pNewBlock;
-                            wxUint32        resetReg = 0;
-                            REG_PAIR_VECTOR hostIntVec;
+                            ArrayOfNodes        engineArray;
+                            XML_NODE            bNode;
+                            XML_NODE_PTR        pControlNode = 0;
+                            STRING              sBlockName, sTmp;
+                            PLATFORM_BLOCK_PTR  pNewBlock;
+                            wxUint32            resetReg = 0;
+                            REG_PAIR_VECTOR     hostIntVec;
 
                             bNode = blockNodeArray.Item(j);
 #if wxCHECK_VERSION(2,9,5)
@@ -344,10 +351,13 @@ bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
 //                                        hostintReg, resetReg);
                             }
 
-                            //pNewBlock = new PlatformBlock(sBlockName, resetReg, hostintReg);
-                            pNewBlock = new PlatformBlock(sBlockName, resetReg, hostIntVec, pNewChip);
-                            wxASSERT(pNewBlock != 0);
-
+#if (__cplusplus >= 201103L)
+                            pNewBlock = std::make_shared<PlatformBlock>( sBlockName, resetReg, hostIntVec, pNewChip );
+                            assert((bool)pNewBlock == true);
+#else
+                            pNewBlock = new PlatformBlock( sBlockName, resetReg, hostIntVec, pNewChip );
+                            assert(pNewBlock != nullptr);
+#endif
                             if(FindTags(wxT("engine"), &bNode, engineArray)) {
 
                                 for (size_t k=0 ; k < engineArray.GetCount() ; k++) {
@@ -355,13 +365,13 @@ bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
                                 }
                             }
 
-                            pNewChip->AddBlock(*pNewBlock);
-                            delete pNewBlock;
+                            pNewChip->AddBlock(pNewBlock);
+//                          delete pNewBlock;
                         }
                     }
 
-                    AddChip(*pNewChip);
-                    delete pNewChip;
+                    AddChip(pNewChip);
+//                  delete pNewChip;
                 }
 
                 //wxLogDebug("There are %ld chips in database!", m_chips.GetCount());
@@ -384,7 +394,7 @@ bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
  *
  */
 
-bool PlatformDatabase::HandleEngineNode(PlatformBlock* pBlock, XML_NODE& eNode) {
+bool PlatformDatabase::HandleEngineNode(PLATFORM_BLOCK_PTR pBlock, XML_NODE& eNode) {
     XML_NODE       *mNode      = 0L;
     STRING        sTmp;
     long            engineNum;
@@ -453,7 +463,7 @@ bool PlatformDatabase::HandleEngineNode(PlatformBlock* pBlock, XML_NODE& eNode) 
 //   wxFprintf(stderr, "Block %-10s Engine %ld : iobase = 0x%08X | pmBase = 0x%08X Size = 0x%08X | dmBase = 0x%08X Size = 0x%08X dmWidth = %d| dramBase = 0x%08X Size = 0x%08X\n",
 //             pBlock->get_block_name(), engineNum, ioBase, pmBase, pmSize, dmBase, dmSize, dmWidth, dramBase, dramSize);
 
-#if 1
+#if (__cplusplus >= 201103L)
     PLATFORM_ENGINE_PTR pNewEngine = std::make_shared<PlatformEngine>( engineNum, ioBase,
 								  pmBase, pmSize, pmWidth,
 								  dmBase, dmSize, dmWidth,
@@ -467,7 +477,8 @@ bool PlatformDatabase::HandleEngineNode(PlatformBlock* pBlock, XML_NODE& eNode) 
 								  dramBase, dramSize, dramWidth, pBlock);
 
     pBlock->AddEngine(newEngine);
-#endif // 1
+#endif //
+
     return true;
 }
 
@@ -487,6 +498,10 @@ bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
     XML_DOC_PTR     pXmlDoc = 0L;
     XML_NODE_PTR    pRoot = 0L;
     XMLNODE_VECTOR  targetNodeArray;
+
+    D(debug("%s(%s, %s)\n", __PRETTY_FUNCTION__,
+            sDbFilename.c_str(),
+            sInstallPath.c_str()));
 
     if (!sInstallPath.empty()) {
         sDbFullpath = sInstallPath;
@@ -519,10 +534,15 @@ bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
                     {
                         get_node_attribute_string(tNode, "name", sName);
 
-                        D(debug("Chip %s %s %s\n", sChip.c_str(), sType.c_str(), sName.c_str()));
+                        D(debug("Chip %s Type %s HW %s\n", sChip.c_str(), sType.c_str(), sName.c_str()));
 
+#if (__cplusplus >= 201103L)
                         pNewChip = std::make_shared<PlatformChip>( sChip, sType, sName );
+                        assert((bool)pNewChip == true);
+#else
+                        pNewChip = new PlatformChip(sChip, sHWtype);
                         assert(pNewChip != 0L);
+#endif
 
                         if (find_child_node( tNode, "block", &blockNodeArray) != 0) {
                             REG_PAIR_VECTOR hostIntVec;
@@ -549,11 +569,13 @@ bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
                                         sscanf(sTmp.c_str(), "0x%08x", &resetReg);
                                     }
                                 }
-
+#if (__cplusplus >= 201103L)
                                 pNewBlock = std::make_shared<PlatformBlock>( sBlockName, resetReg, hostIntVec, pNewChip );
                                 assert((bool)pNewBlock == true);
-//                                pNewBlock = new PlatformBlock( sBlockName, resetReg, hostIntVec );
-//                                assert(pNewBlock != 0L);
+#else
+                                pNewBlock = new PlatformBlock( sBlockName, resetReg, hostIntVec, pNewChip );
+                                assert(pNewBlock != 0L);
+#endif
 
                                 if (find_child_node( bNode, "engine",
                                                      &engineNodeArray) != 0)
@@ -581,6 +603,10 @@ bool PlatformDatabase::LoadDatabase(STRING sDbFilename, STRING sInstallPath) {
 
     return bResult;
 }
+
+/**
+ *  Handle the engine XML node while parsing database.
+ */
 
 bool PlatformDatabase::HandleEngineNode(PLATFORM_BLOCK_PTR pBlock, XML_NODE_PTR pNode)
 {
@@ -644,16 +670,14 @@ bool PlatformDatabase::HandleEngineNode(PLATFORM_BLOCK_PTR pBlock, XML_NODE_PTR 
                     dramWidth = 4;
                 }
             } else {
-#ifdef	_DEBUG
-				fprintf(stderr, "ERROR: Unknown tag [%s]...\n", mapName.c_str());
-#endif
+				D(debug("ERROR: Unknown tag [%s]...\n", mapName.c_str()));
             }
         }
 
         mNode = mNode->next;
     }
 
-#if 1
+#if (__cplusplus >= 201103L)
     PLATFORM_ENGINE_PTR pNewEngine = std::make_shared<PlatformEngine>(engineNum, ioBase,
 								  pmBase, pmSize, pmWidth,
 								  dmBase, dmSize, dmWidth,
@@ -665,13 +689,16 @@ bool PlatformDatabase::HandleEngineNode(PLATFORM_BLOCK_PTR pBlock, XML_NODE_PTR 
 								  dmBase, dmSize, dmWidth,
 								  dramBase, dramSize, dramWidth, pBlock);
     pBlock->AddEngine(newEngine);
-#endif // 1
+#endif // (__cplusplus >= 201103L)
 
     return true;
 }
 
-#endif
+#endif  // __WXGTK__
 
+/**
+ *  Parse host interrupt string.
+ */
 
 bool PlatformDatabase::parse_hostint_string(STRING hostIntStr, REG_PAIR_VECTOR& regVec) {
     bool                bRes = false;
@@ -721,7 +748,9 @@ bool PlatformDatabase::parse_hostint_string(STRING hostIntStr, REG_PAIR_VECTOR& 
     }
 
     bRes = !regVec.empty();
-#else
+
+#else   // __WXGTK__
+
     char *str = (char *)hostIntStr.c_str();
     char *saveptr1 = 0L, *saveptr2 = 0;
     char *token = 0L;
@@ -799,19 +828,24 @@ bool PlatformDatabase::parse_hostint_string(STRING hostIntStr, REG_PAIR_VECTOR& 
 
 bool PlatformDatabase::GetChipIDs(STRING_VECTOR& sVec) const
 {
-#if (defined(__WXGTK__) || defined(__WXMSW__))
-	for (size_t i = 0 ; i < m_chips.GetCount() ; i++) {
+	for (size_t i = 0 ; i < get_chip_count() ; i++) {
 		sVec.push_back( m_chips[i]->get_chip_id() );
 	}
 
 	return ((sVec.size() > 0)?true:false);
-#else
-	for (size_t i = 0 ; i < m_chips.size() ; i++) {
-		sVec.push_back( m_chips[i]->get_chip_id() );
-	}
-
-	return ((sVec.size() > 0)?true:false);
-#endif
+//#if (defined(__WXGTK__) || defined(__WXMSW__))
+//	for (size_t i = 0 ; i < m_chips.GetCount() ; i++) {
+//		sVec.push_back( m_chips[i]->get_chip_id() );
+//	}
+//
+//	return ((sVec.size() > 0)?true:false);
+//#else
+//	for (size_t i = 0 ; i < m_chips.size() ; i++) {
+//		sVec.push_back( m_chips[i]->get_chip_id() );
+//	}
+//
+//	return ((sVec.size() > 0)?true:false);
+//#endif
 }
 
 /**
@@ -820,19 +854,24 @@ bool PlatformDatabase::GetChipIDs(STRING_VECTOR& sVec) const
 
 bool PlatformDatabase::GetChipNames(STRING_VECTOR& sVec) const
 {
-#if (defined(__WXGTK__) || defined(__WXMSW__))
-	for (size_t i = 0 ; i < m_chips.GetCount() ; i++) {
+	for (size_t i = 0 ; i < get_chip_count() ; i++) {
 		sVec.push_back( m_chips[i]->get_chip_name() );
 	}
 
 	return ((sVec.size() > 0)?true:false);
-#else
-	for (size_t i = 0 ; i < m_chips.size() ; i++) {
-		sVec.push_back( m_chips[i]->get_chip_name() );
-	}
-
-	return ((sVec.size() > 0)?true:false);
-#endif
+//#if (defined(__WXGTK__) || defined(__WXMSW__))
+//	for (size_t i = 0 ; i < m_chips.GetCount() ; i++) {
+//		sVec.push_back( m_chips[i]->get_chip_name() );
+//	}
+//
+//	return ((sVec.size() > 0)?true:false);
+//#else
+//	for (size_t i = 0 ; i < m_chips.size() ; i++) {
+//		sVec.push_back( m_chips[i]->get_chip_name() );
+//	}
+//
+//	return ((sVec.size() > 0)?true:false);
+//#endif
 }
 
 /**
@@ -841,7 +880,7 @@ bool PlatformDatabase::GetChipNames(STRING_VECTOR& sVec) const
 
 bool PlatformDatabase::GetChipPairs(STRING_PAIR_VECTOR& sVec) const
 {
-	for (size_t i = 0 ; i < m_chips.size() ; i++) {
+	for (size_t i = 0 ; i < get_chip_count() ; i++) {
         STRING_PAIR     chipPair;
 
         chipPair.first  = m_chips[i]->get_chip_id();
@@ -864,7 +903,11 @@ void PlatformDatabase::Release() {
         m_chips[i]->Release();
     }
 
+#if (defined(__WXGTK__) || defined(__WXMSW__))
+    m_chips.Clear();
+#else
     m_chips.clear();
+#endif
 
     return;
 }

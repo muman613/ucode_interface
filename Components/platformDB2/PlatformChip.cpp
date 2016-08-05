@@ -27,7 +27,7 @@ PlatformChip::PlatformChip(const PlatformChip& copy)
 
 PlatformChip::~PlatformChip() {
     D(debug("PlatformChip::~PlatformChip()\n"));
-    m_blocks.clear();
+    Release();
 }
 
 void PlatformChip::AddBlock(PLATFORM_BLOCK_PTR newBlock)
@@ -69,14 +69,13 @@ PLATFORM_BLOCK_PTR PlatformChip::operator[](STRING blockID) {
 
 void PlatformChip::Dump(FILE* fOut) {
 #if (defined(__WXGTK__) || defined(__WXMSW__))
-    wxFprintf(fOut, "Chip %s:\n", m_ChipID.c_str());
+    wxFprintf(fOut, "Chip %s:\n", m_ChipID);
     if (m_blocks.GetCount() > 0) {
         for (size_t i = 0 ; i < m_blocks.GetCount() ; i++) {
-            PlatformBlock   block;
-            block = m_blocks.Item(i);
+            PLATFORM_BLOCK_PTR block = m_blocks[i];
 
-            wxFprintf(fOut, "Block : %s\n", block.get_block_name());
-            block.Dump(fOut);
+            wxFprintf(fOut, "Block : %s\n", block->get_block_name());
+            block->Dump(fOut);
         }
     } else {
         wxFprintf(fOut, "-- no blocks defined!\n");
@@ -160,6 +159,11 @@ void PlatformChip::Release() {
     for (size_t i = 0 ; i < get_block_count() ; i++) {
         m_blocks[i]->Release();
     }
-
+#if (defined(__WXGTK__) || defined(__WXMSW__))
+    m_blocks.Clear();
+#else
     m_blocks.clear();
+#endif
+
+    return;
 }
