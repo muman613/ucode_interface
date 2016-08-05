@@ -147,6 +147,7 @@
 		<Unit filename="PlatformEngine.h" />
 		<Unit filename="PlatformTargetBase.h" />
 		<Unit filename="PlatformTypes.h" />
+		<Unit filename="dbg_utils.h" />
 		<Unit filename="libplatformdb.h" />
 		<Unit filename="xml_utils.cpp" />
 		<Unit filename="xml_utils.h" />

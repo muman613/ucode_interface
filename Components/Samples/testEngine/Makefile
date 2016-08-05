@@ -20,18 +20,16 @@ CPP_SOURCES=main.cpp targetEngine.cpp ucode_utils.cpp video_utils.cpp			\
             targetAllocator.cpp
 
 ifdef DEBUG
-PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb_d.a
+PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb2_d.a
 RCLIENT_LIBS=../../libs/Linux/$(ARCH)/libremote_d.a -lpthread
-#GBUSFIFO_LIBS=../../libs/Linux/$(ARCH)/libgbusfifo_d.a 
 SYMMGR_LIBS=../../libs/Linux/$(ARCH)/libsymbolmgr_d.a -lpthread
 STRUCT_LIBS=../../libs/Linux/$(ARCH)/libstructcontrol_d.a
 RESOLV_LIBS=../../libs/Linux/$(ARCH)/libfileresolver_d.a
 
 CPP_SOURCES+=../common/dbgimplementation.cpp
 else
-PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb.a
+PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb2.a
 RCLIENT_LIBS=../../libs/Linux/$(ARCH)/libremote.a
-#GBUSFIFO_LIBS=../../libs/Linux/$(ARCH)/libgbusfifo.a
 SYMMGR_LIBS=../../libs/Linux/$(ARCH)/libsymbolmgr.a
 STRUCT_LIBS=../../libs/Linux/$(ARCH)/libstructcontrol.a
 RESOLV_LIBS=../../libs/Linux/$(ARCH)/libfileresolver.a
@@ -40,7 +38,7 @@ endif
 TRE_CFLAGS=-I../../include
 TRE_LIBS=../../libs/Linux/$(ARCH)/libtre.a
 
-PLATDB_CFLAGS=-I../../platformDB/
+PLATDB_CFLAGS=-I../../
 RCLIENT_CFLAGS=-I../../remote_client
 
 LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)

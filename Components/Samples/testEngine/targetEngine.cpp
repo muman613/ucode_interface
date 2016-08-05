@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "platformDB/PlatformDatabase.h"
+#include "platformDB2/libplatformdb.h"
 #include "fileresolver/fileresolver.h"
 #include "symbolmgr/symbolmgr.h"
 #include "ucode_utils.h"
@@ -94,7 +94,7 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
                 fprintf(stderr, "Chip found!\n");
 #endif // _DEBUG
 
-                block       = chip[m_sBlockID];
+                block       = (*chip[m_sBlockID]);
                 engineCount = block.get_engine_count();
 
                 if ((engineCount > 0) && (engineCount > nEngineIndex)) {
@@ -103,7 +103,7 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
 #endif // _DEBUG
                     m_resetOff = block.get_resetReg();
 
-                    m_engine = block[m_nEngineIndex];
+                    m_engine = (*block[m_nEngineIndex]);
 
                     if (m_dramBase != m_engine.get_dramBase()) {
                         RMDBGLOG((LOCALDBG, "-- setting dram base address to 0x%08X\n", m_dramBase ));
@@ -486,9 +486,9 @@ bool targetEngine::stop()
 }
 
 
-void targetEngine::test_function()
-{
-    RMuint32 start, size;
-
-    video_utils::video_get_scheduler_memory(CONTROL_IF, m_engine.get_pmBase(), &start, &size);
-}
+//void targetEngine::test_function()
+//{
+//    RMuint32 start, size;
+//
+//    video_utils::video_get_scheduler_memory(CONTROL_IF, m_engine.get_pmBase(), &start, &size);
+//}

@@ -64,12 +64,12 @@ void targetStandardInterface::init_parameters()
     chroma_nb_comp_per_sample   = 2;
 }
 
-void targetStandardInterface::test_function()
-{
-    GBUS_PTR pGbus = m_pEngine[0]->get_gbusptr();
-
-    pGbus->gbus_write_uint32(0x100000, 0xdeadbeef);
-}
+//void targetStandardInterface::test_function()
+//{
+//    GBUS_PTR pGbus = m_pEngine[0]->get_gbusptr();
+//
+//    pGbus->gbus_write_uint32(0x100000, 0xdeadbeef);
+//}
 
 /**
  *

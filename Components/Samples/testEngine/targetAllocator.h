@@ -3,7 +3,8 @@
 
 #include <iostream>
 #include <memory>
-#include "platformDB/PlatformDatabase.h"
+#include "platformDB2/libplatformdb.h"
+
 
 /**
  *

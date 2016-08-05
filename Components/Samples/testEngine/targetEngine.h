@@ -5,12 +5,18 @@
 #include <string>
 #include <memory>
 
-#include "platformDB/PlatformDatabase.h"
+#include "platformDB2/libplatformdb.h"
 #include "fileresolver/fileresolver.h"
 #include "structure_control/structure_control.h"
 #include "symbolmgr/symbolmgr.h"
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"
+
+/**
+ *  controlInterface is a pure virtual interface providing utilities with
+ *  objects including the gbus pointer, structure database object, symbol
+ *  manager, current platform engine, and the mutex object.
+ */
 
 class controlInterface {
 public:
@@ -22,12 +28,12 @@ public:
 };
 
 /**
- *
+ *  targetEngine encapsulates the target engine block on the remote system.
  */
 
 class targetEngine : public controlInterface {
 public:
-
+    /*! Enumerated type indicating microcode type */
     enum ucodeType {
         UCODE_DEBUG,
         UCODE_RELEASE,
@@ -39,26 +45,32 @@ public:
                  ucodeType eType = UCODE_RELEASE);
     virtual ~targetEngine();
 
+    /*! Return true if the targetEngine is valid */
     bool                is_valid() const;
+    /*! Return true if the targetEngine is connected to a remote system. */
     bool                is_connected() const;
-
+    /*! Open the targetEngine using Chip and Block ID, and engine index. */
     bool                open(std::string sChipID,
                              std::string sBlockID,
                              uint32_t engineIndex,
                              ucodeType eType = UCODE_RELEASE);
+    /*! Close the targetEngine. */
     void                close();
-
+    /*! Connect to the remote system specified by the EM8XXX_SERVER environment. */
     bool                connect();
+    /*! Connect to the remote system specified by sHostSpec string. */
     bool                connect(std::string sHostSpec);
+    /*! Connect the target to an existing GBUS_PTR object. */
     bool                connect(GBUS_PTR pGbus);
-
+    /*! Disconnect the targetEngine from the remote system. */
     void                disconnect();
 
     bool                get_info(std::string& sChipID, std::string& sBlockID, uint32_t& engine);
     bool                get_connection_info(std::string& sHostSpec);
 
-    /* Ucode functions */
+    /*! Load microcode from default location. */
     bool                load_ucode();
+    /*! Load microcode from file specified in sUcodeFilename string. */
     bool                load_ucode(std::string sUcodeFilename);
 
     /* Engine control functions */
@@ -74,7 +86,7 @@ public:
     PlatformEngine*     get_engine();
     std::mutex*         get_mutex();
 
-    void                test_function();
+//    void                test_function();
 
     void                get_ucode_offset(RMuint32* lo, RMuint32* hi);
 
