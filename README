@@ -5,6 +5,8 @@
 |_| \_\_____/_/   \_\____/|_|  |_|_____|
 
 --------------------------------------------------------------------------------
+Last updated August 5th, 2016
+--------------------------------------------------------------------------------
 
 Source scripts/env.sh to add scripts to the path.
 
@@ -34,3 +36,14 @@ Debug x86}.
 
 Helper scripts such as 'build.sh' which are in the path if the 'env.sh' script
 is sourced provide the Text UI for building.
+
+HELPER SCRIPTS
+
+makeall.sh			-	Build all configurations.
+CLEAN=1 makeall.sh 	-	Clean the project and rebuild it.
+build.sh			-	Build all configurations in a text GUI.
+CLEAN=1 build.sh	-	Clean the project and rebuild in a text GUI.
+
+TO BUILD ALL CONFIGURATIONS:
+
+CLEAN=1 build.sh	# Clean the project before building.
