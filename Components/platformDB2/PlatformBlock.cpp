@@ -40,7 +40,7 @@ PlatformBlock::~PlatformBlock() {
     // dtor
     D(debug("PlatformBlock::~PlatformBlock()\n"));
 
-    m_engines.clear();
+    Release();
 }
 
 /**
