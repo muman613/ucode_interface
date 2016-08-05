@@ -3,9 +3,9 @@
 #	Utility script to build all targets in a text GUI.
 ################################################################################
 
-if [ -f buildoptions ]; then
-makeall.sh | tee buildlog |  dialog --backtitle "Interface Build Tools"		\
+#if [ -f buildoptions ]; then
+./makeall.sh | tee buildlog |  dialog --backtitle "Interface Build Tools"		\
                                       --title "Build Output" --programbox 40 128
-else
-	echo "No makeall.sh script found!"
-fi
+#else
+#	echo "No makeall.sh script found!"
+#fi
