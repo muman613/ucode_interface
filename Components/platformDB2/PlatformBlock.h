@@ -53,13 +53,13 @@ class DLLSPEC PlatformBlock {
         void		        AddEngine(PLATFORM_ENGINE_PTR newEngine);
         void                Release();
 
-        STRING			    m_blockName;
-        ArrayOfEngines      m_engines;
+        STRING			    m_blockName;            ///< Block name.
+        ArrayOfEngines      m_engines;              ///< Array of engines.
 
-        wxUint32            m_resetReg;
-        REG_PAIR_VECTOR     m_hostintRegVec;
+        wxUint32            m_resetReg;             ///< Gbus address of RESET.
+        REG_PAIR_VECTOR     m_hostintRegVec;        ///< Host interrupt registers.
 
-        PLATFORM_CHIP_PTR   m_parentChip;
+        PLATFORM_CHIP_PTR   m_parentChip;           ///< Pointer to the chip.
 };
 
 #if (__cplusplus >= 201103L)

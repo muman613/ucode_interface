@@ -14,6 +14,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add option="`xml2-config --cflags`" />
 					<Add option="-D_DEBUG=1" />
 				</Compiler>
 				<Linker>
@@ -29,6 +30,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="`xml2-config --cflags`" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -39,35 +41,31 @@
 			<Target title="wxWidgets Debug">
 				<Option output="bin/wxDebug/testPlatformDB" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/wxDebug/" />
-				<Option external_deps="../libplatformdb/bin/wxDebug/libplatformdb.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
-					<Add option="`/opt/wx/3.0.0/bin/wx-config --cflags`" />
+					<Add option="`/opt/sigma/wx/3.1.1/bin/wx-config --cflags`" />
 					<Add option="-D_DEBUG=1" />
 				</Compiler>
 				<Linker>
-					<Add option="../libplatformdb/bin/wxDebug/libplatformdb.a" />
-					<Add option="`xml2-config --libs`" />
-					<Add option="`/opt/wx/3.0.0/bin/wx-config --libs`" />
+					<Add option="../../libs/Linux/x86_64/libwxplatformdb2_d.a" />
+					<Add option="`/opt/sigma/wx/3.1.1/bin/wx-config --libs`" />
 				</Linker>
 			</Target>
 			<Target title="wxWidgets Release">
 				<Option output="bin/wxRelease/testPlatformDB" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/wxRelease/" />
-				<Option external_deps="../libplatformdb/bin/wxRelease/libplatformdb.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add option="`/opt/wx/3.0.0/bin/wx-config --cflags`" />
+					<Add option="`/opt/sigma/wx/3.1.1/bin/wx-config --cflags`" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="../libplatformdb/bin/wxRelease/libplatformdb.a" />
-					<Add option="`xml2-config --libs`" />
-					<Add option="`/opt/wx/3.0.0/bin/wx-config --libs`" />
+					<Add option="../../libs/Linux/x86_64/libwxplatformdb2.a" />
+					<Add option="`/opt/sigma/wx/3.1.1/bin/wx-config --libs`" />
 				</Linker>
 			</Target>
 			<Target title="Shared Debug">
@@ -144,7 +142,6 @@
 			<Add option="-Wall" />
 			<Add option="-std=c++11" />
 			<Add option="-fexceptions" />
-			<Add option="`xml2-config --cflags`" />
 			<Add directory="../../platformDB2" />
 		</Compiler>
 		<Unit filename="main.cpp" />

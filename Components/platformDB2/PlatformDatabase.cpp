@@ -1,4 +1,4 @@
-//#include "libplatformdb.h"
+#include "libplatformdb.h"
 #include <assert.h>
 #include <algorithm>
 #if (defined(__WXGTK__) || defined(__WXMSW__))

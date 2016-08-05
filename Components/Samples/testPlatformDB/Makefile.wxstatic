@@ -1,0 +1,44 @@
+#	Get the current makefile to MAKEFILE
+where-am-i = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+MAKEFILE := $(call where-am-i)
+
+ARCH?=$(shell arch)
+TARGET_TYPE=exe
+TARGET_EXE=wxtestPlatformDB
+
+WX_CONFIG?=/opt/sigma/wx/3.1.1/bin/wx-config
+
+CPP_SOURCES=main.cpp
+
+ifdef DEBUG
+PLATDB_LIBS=../../libs/Linux/$(ARCH)/libwxplatformdb2_d.a
+else
+PLATDB_LIBS=../../libs/Linux/$(ARCH)/libwxplatformdb2.a
+endif
+
+WX_CFLAGS=$(shell $(WX_CONFIG) --cflags) -DwxDEBUG_LEVEL=0
+WX_LDFLAGS=$(shell $(WX_CONFIG) --libs)
+
+PLATDB_CFLAGS=-I../../platformDB2/
+CFLAGS=$(WX_CFLAGS) $(PLATDB_CFLAGS) -std=c++11
+LIBS=$(PLATDB_LIBS) $(WX_LDFLAGS)
+
+include ../../../Build/buildsys.mk
+
+info:
+	@echo "PLATDB_CFLAGS = $(PLATDB_CFLAGS)"
+	@echo "PLATDB_LIBS   = $(PLATDB_LIBS)"
+	@echo "CFLAGS        = $(CFLAGS)"
+	@echo "LDFLAGS       = $(LDFLAGS)"
+	@echo "LIBXML_CFLAGS = $(LIBXML_CFLAGS)"
+	@echo "LIBXML_LIBS   = $(LIBXML_LIBS)"
+	@echo "WX_CFLAGS     = $(WX_CFLAGS)"
+	@echo "WX_LIBS       = $(WX_LIBS)"
+	@echo "DEPS          = $(DEPS)"
+	@echo "DEP_DIR       = $(DEP_DIR)" 
+	@echo "EXE_DIR       = $(EXE_DIR)"
+	@echo "OBJ_DIR       = $(OBJ_DIR)"
+	@echo "LIB_DIR       = $(LIB_DIR)"
+	
+-include $(DEPS)
+

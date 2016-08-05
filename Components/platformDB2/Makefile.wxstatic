@@ -21,13 +21,13 @@ CPP_SOURCES=	PlatformBlock.cpp 		\
 				PlatformEngine.cpp  	\
 				xml_utils.cpp
 
-LIBXML2_CFLAGS=$(shell xml2-config --cflags)
-LIBXML2_LDFLAGS=$(shell xml2-config --libs)
-WX_CFLAGS=$(shell $(WX_CONFIG) --cflags)
+#LIBXML2_CFLAGS=$(shell xml2-config --cflags)
+#LIBXML2_LDFLAGS=$(shell xml2-config --libs)
+WX_CFLAGS=$(shell $(WX_CONFIG) --cflags) -DwxDEBUG_LEVEL=0
 WX_LDFLAGS=$(shell $(WX_CONFIG) --libs)
 
-CFLAGS=$(LIBXML2_CFLAGS) $(WX_CFLAGS) -std=c++11
-LDFLAGS=$(LIBXML2_LDFLAGS) $(WX_LDFLAGS)
+CFLAGS=$(WX_CFLAGS) -std=c++11
+LDFLAGS=$(WX_LDFLAGS)
 
 LIB_DIR=../libs/Linux/$(ARCH)
 

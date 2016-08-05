@@ -35,19 +35,27 @@ class DLLSPEC PlatformEngine {
         PlatformEngine() {}
         virtual ~PlatformEngine();
 
+        /*! Get the engine #. */
         int			get_engine_num() const;
+        /*! Get the io base address. */
         wxUint32	get_ioBase() const;
-
+        /*! Get PM base address. */
         wxUint32	get_pmBase() const;
+        /*! Get PM size. */
         wxUint32	get_pmSize() const;
+        /*! Get PM width. */
 		wxUint32	get_pmWidth() const;
-
+        /*! Get DM base address. */
         wxUint32	get_dmBase() const;
+        /*! Get DM size. */
         wxUint32	get_dmSize() const;
+        /*! Get DM width. */
 		wxUint32	get_dmWidth() const;
-
+        /*! Get DRAM base address. */
         wxUint32	get_dramBase() const;
+        /*! Get DRAM size. */
         wxUint32	get_dramSize() const;
+		/*! Get DRAM width. */
 		wxUint32	get_dramWidth() const;
 
 		void        set_pmBase(wxUint32 address);

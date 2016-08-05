@@ -8,7 +8,6 @@
 #endif
 
 #include "PlatformTypes.h"
-
 #include "PlatformDatabase.h"
 #include "PlatformChip.h"
 #include "PlatformBlock.h"
@@ -18,22 +17,9 @@
 #pragma warning( pop )
 #endif
 
-#ifdef	_DEBUG
-#define D(x)  (x)
-#ifdef _WIN32
-inline void debug(const char* sFmt, ...) {
-	static char dbgBuffer[256];
-	va_list vargs;
-	va_start(sFmt, vargs);
-	vsnprintf(dbgBuffer, 256, sFmt, vargs);
-	OutputDebugStringA(dbgBuffer);
-	va_end(vargs);
-}
-#else
-extern void debug(const char*, ...);
-#endif
-#else	// _DEBUG
-#define D(x) /* x */
-#endif	// _DEBUG
+/* Version information */
+
+#define LIBPLATFORMDB_MAJOR_VERSION         2       ///< Library major version #.
+#define LIBPLATFORMDB_MINOR_VERSION         0       ///< Library minor version #.
 
 #endif // __LIBPLATFORMDB_H__
