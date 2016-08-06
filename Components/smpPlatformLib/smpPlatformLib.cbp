@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="smpPlatformLib" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="x86_64 Debug">
+				<Option output="../libs/Linux/x86_64/smpplatform_d" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Debug/x86_64/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-m64" />
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add option="-m64" />
+				</Linker>
+			</Target>
+			<Target title="x86_64 Release">
+				<Option output="../libs/Linux/x86_64/smpplatform" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Release/x86_64/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-Wall" />
+					<Add option="-m64" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m64" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-std=c++11" />
+			<Add option="`xml2-config --cflags`" />
+			<Add directory="../.." />
+			<Add directory=".." />
+		</Compiler>
+		<Unit filename="targetAllocator.cpp" />
+		<Unit filename="targetAllocator.h" />
+		<Unit filename="targetEngine.cpp" />
+		<Unit filename="targetEngine.h" />
+		<Unit filename="targetInterfaceBase.cpp" />
+		<Unit filename="targetInterfaceBase.h" />
+		<Unit filename="targetStandardInterface.cpp" />
+		<Unit filename="targetStandardInterface.h" />
+		<Unit filename="ucode_utils.cpp" />
+		<Unit filename="ucode_utils.h" />
+		<Unit filename="video_utils.cpp" />
+		<Unit filename="video_utils.h" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
