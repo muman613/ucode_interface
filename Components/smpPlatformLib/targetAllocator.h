@@ -13,9 +13,11 @@
 class targetAllocator {
 public:
     enum allocType {
-        ALLOC_PM,
-        ALLOC_DM,
-        ALLOC_DRAM,
+        ALLOC_PM = 0,
+        ALLOC_DM = 1,
+        ALLOC_DRAM = 2,
+        ALLOC_TILEALIGN = 4,
+        ALLOC_PAGEALIGN = 8,
     };
 
     targetAllocator();
@@ -31,11 +33,13 @@ public:
     /*! Reset the allocator to represent values from PlatformEngine. */
     void            reset(const PlatformEngine& engine);
     /*! Allocate size bytes from type memory. */
-    RMuint32        alloc(allocType type, size_t size);
+    RMuint32        alloc(uint32_t flags, size_t size);
 
     RMuint32        pmPtr() const;
     RMuint32        dmPtr() const;
     RMuint32        dramPtr() const;
+
+    void            set_tile_size(int w, int h);
 
 protected:
     struct targetMemSpec {
@@ -54,6 +58,7 @@ protected:
     RMuint32        m_dmPtr;                    ///< DM Memory Pointer.
     RMuint32        m_dramPtr;                  ///< DRAM Memory Pointer.
 
+    RMuint32        m_tilesize;
 private:
 };
 

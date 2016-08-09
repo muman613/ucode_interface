@@ -9,6 +9,8 @@
 #include "targetInterfaceBase.h"
 #include "targetStandardInterface.h"
 #include "video_utils.h"
+#include "struct_utils.h"
+#include "gbus_fifo_eraser.h"
 
 #ifdef _DEBUG
 #define LOCALDBG    ENABLE
@@ -30,13 +32,15 @@ targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
     pEngine->get_ucode_offset(nullptr, &offset);
+
+    init_parameters();
+
     m_pAlloc[0]->alloc(targetAllocator::ALLOC_DRAM, offset);
 
 #ifdef _DEBUG
     m_pAlloc[0]->dump(std::cerr);
 #endif // _DEBUG
 
-    init_parameters();
 }
 
 targetStandardInterface::~targetStandardInterface()
@@ -62,6 +66,10 @@ void targetStandardInterface::init_parameters()
     storage_format              = 0;
     luma_nb_comp_per_sample     = 1;
     chroma_nb_comp_per_sample   = 2;
+
+    set_tile_dimensions( m_pEngine[0]->get_engine()->get_parent()->get_parent()->get_chip_id() );
+
+    //m_pAlloc[0]->set_tile_dimensions( )
 }
 
 //void targetStandardInterface::test_function()
@@ -122,6 +130,11 @@ RMstatus targetStandardInterface::open_video_decoder()
     RMuint32                nStructSize = 0L;
     controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     RMuint32                i           = 0;
+    RMstatus 		        err         = RM_OK;
+    RMuint32                dramPtr     = 0;
+    RMuint32                video_bts_fifo,
+                            video_pts_fifo;
+    RMuint32                fifoEraserSize = 0;
 
     assert(pStructDB != nullptr);
     assert(pIF != nullptr);
@@ -144,6 +157,71 @@ RMstatus targetStandardInterface::open_video_decoder()
                            m_pEngine[0]->get_engine()->get_pmBase(),
                            0,
                            pvtdb);
+    dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM|targetAllocator::ALLOC_TILEALIGN, DecoderDataSize);
+
+    err = video_set_data_context_buffer(pIF, pvti, dramPtr,
+                                        DecoderDataSize, DecoderContextSize);
+
+    struct_utils::write_structure_member(pIF, pvti, "video_task_interface", "MiscFlags", 1);
+
+    fifoEraserSize = struct_utils::get_structure_size(pIF, "gbus_fifo_eraser");
+
+    video_bts_fifo = pAlloc->alloc(targetAllocator::ALLOC_DRAM|targetAllocator::ALLOC_PAGEALIGN, fifoEraserSize);
+    RMDBGLOG((LOCALDBG, "video_bts_fifo = %08X\n", video_bts_fifo));
+    dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM|targetAllocator::ALLOC_PAGEALIGN, BitstreamFIFOSize);
+    RMDBGLOG((LOCALDBG, "dramPtr = %08X\n", dramPtr));
+
+    gbus_fifo_eraser_open( pIF->get_gbusptr(), dramPtr, BitstreamFIFOSize, video_bts_fifo );
+    err = video_set_bts_fifo_pointer( pIF, pvtdb, video_bts_fifo );
+
+    dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM, (RMuint32)(PtsFIFOCount * VPTS_FIFO_ENTRY_SIZE));
+
+    err = video_get_pts_fifo(pIF, pvtdb, &video_pts_fifo);
+    err = video_open_pts_fifo(pIF, pvtdb, dramPtr, PtsFIFOCount);
+
+    dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM,
+                            (RMuint32)(InbandFIFOCount * sizeof(struct MicrocodeInbandCommand)));
+    video_open_inband_fifo(pIF, pvtdb, dramPtr, InbandFIFOCount);
+
+    dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM,
+                            (RMuint32)(InbandFIFOCount * sizeof(struct MicrocodeInbandParams)));
+    inband_params_address = dramPtr;
+
+    RMDBGLOG((LOCALDBG, "inband_params_address = %08X\n", inband_params_address));
+
+    {
+        RMuint32 i;
+
+        for (i = 0 ; i < InbandFIFOCount * sizeof(struct MicrocodeInbandParams)/sizeof(RMuint32) ; i++)
+        {
+            pIF->get_gbusptr()->gbus_write_uint32( inband_params_address + (4*i), 0);
+        }
+    }
+
+#if 0
+#if (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
+    /* Implement picture buffer variables here */
+    err = video_set_data_context_buffer(pContext->pgbus, (struct video_task_interface *)pContext->pvti,
+                                        RM_NEXT_TILE_ALIGN(unprotected_ptr), pContext->DecoderDataSize, pContext->DecoderContextSize);
+    unprotected_ptr = RM_NEXT_TILE_ALIGN(unprotected_ptr) + pContext->DecoderDataSize;
+
+    if (RMFAILED(err))
+    {
+        RMDBGLOG((ENABLE, "video_set_data_context_buffer failed!\n"));
+        goto over;
+    }
+#else
+    err = video_set_data_context_buffer(pContext->pgbus, (struct video_task_interface *)pContext->pvti,
+                                        RM_NEXT_TILE_ALIGN(unprotected_ptr), pContext->DecoderDataSize, pContext->DecoderContextSize);
+    unprotected_ptr = RM_NEXT_TILE_ALIGN(unprotected_ptr) + pContext->DecoderDataSize;
+
+    if (RMFAILED(err))
+    {
+        RMDBGLOG((ENABLE, "video_set_data_context_buffer failed!\n"));
+        goto over;
+    }
+#endif
+#endif // 1
 
     return nStatus;
 }
@@ -165,6 +243,8 @@ static tileDef  chipTileSizes[] = {
 
 bool targetStandardInterface::set_tile_dimensions(std::string sChipId)
 {
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, sChipId.c_str()));
+
     for (size_t i = 0 ; i < sizeof(chipTileSizes)/sizeof(tileDef) ; i++) {
         if (sChipId == chipTileSizes[i].sID) {
             set_tile_dimensions( chipTileSizes[i].tileW, chipTileSizes[i].tileH );
@@ -177,6 +257,10 @@ bool targetStandardInterface::set_tile_dimensions(std::string sChipId)
     return false;
 }
 
+/**
+ *
+ */
+
 void targetStandardInterface::set_tile_dimensions(RMuint32 tsw, RMuint32 tsh)
 {
     RMDBGLOG((LOCALDBG, "%s(%ld, %ld)\n", __PRETTY_FUNCTION__, tsw, tsh));
@@ -186,6 +270,8 @@ void targetStandardInterface::set_tile_dimensions(RMuint32 tsw, RMuint32 tsh)
     pvc_tw              = (1 << tsw);
     pvc_th              = (1 << tsh);
     pvc_ts              = pvc_tw * pvc_th;
+
+    m_pAlloc[0]->set_tile_size( tsw, tsh );
 
     return;
 }

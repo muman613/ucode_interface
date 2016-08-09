@@ -24,6 +24,9 @@
 #define VIDEO_PLAYBWD			7
 #define VIDEO_FASTBWD			8
 
+
+#define COMMAND_PARAMS_RMUINT32_SIZE  (20)   /* size in RMuint32 */
+
 typedef enum _SOC_ARCH {
   SOC_TANGO,
   SOC_CALYPSO,
@@ -42,6 +45,18 @@ public:
     RMstatus            open_video_decoder();
 
 protected:
+    struct MicrocodeInbandParams {
+        RMuint32 ref_cnt;
+        RMuint32 params[COMMAND_PARAMS_RMUINT32_SIZE];
+    };
+
+    struct MicrocodeInbandCommand {
+        RMuint32 flags_tag;      // INBAND_COMMAND_GET_TAG() is the macro to find the tag
+        RMuint32 byte_counter;   // byte counter - see EMhwlibInbandOffset
+        RMuint32 target;         // destination or target id. If 0 = broadcast.
+        RMuint32 params_address; // pointer to the "union params_type" that contains the specific parameters
+        RMuint32 params_ref_cnt; // 0 if free
+    };
 
     void                init_parameters();
     bool                set_tile_dimensions(std::string sChip);
@@ -95,6 +110,8 @@ protected:
 #define DECODE_ERROR_ENTRIES 	128
 #define DECODER_DATA_SIZE       (29638656 * 12)
 #define DECODER_CTX_SIZE        6242304
+
+
 
 typedef std::shared_ptr<targetStandardInterface>    TARGET_STD_IF;
 

@@ -23,6 +23,7 @@
 					<Add option="../../libs/Linux/x86_64/libsymbolmgr_d.a" />
 					<Add option="../../libs/Linux/x86_64/libstructcontrol_d.a" />
 					<Add option="../../libs/Linux/x86_64/libremote_d.a" />
+					<Add option="../../libs/Linux/x86_64/libgbusfifo_d.a" />
 					<Add option="`xml2-config --libs`" />
 					<Add option="`pkg-config --libs tre`" />
 				</Linker>
@@ -44,6 +45,7 @@
 					<Add option="../../libs/Linux/x86_64/libsymbolmgr.a" />
 					<Add option="../../libs/Linux/x86_64/libstructcontrol.a" />
 					<Add option="../../libs/Linux/x86_64/libremote.a" />
+					<Add option="../../libs/Linux/x86_64/libgbusfifo.a" />
 					<Add option="`xml2-config --libs`" />
 					<Add option="`pkg-config --libs tre`" />
 				</Linker>
@@ -56,6 +58,7 @@
 			<Add option="`xml2-config --cflags`" />
 			<Add directory="../../" />
 			<Add directory="../../.." />
+			<Add directory="../../smpPlatformLib" />
 		</Compiler>
 		<Unit filename="../common/dbgimplementation.cpp">
 			<Option target="Debug" />

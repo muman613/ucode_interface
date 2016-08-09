@@ -24,14 +24,16 @@ static const char* szAllocType[] = {
 #endif // _DEBUG
 
 targetAllocator::targetAllocator(const PlatformEngine& engine)
-:   m_valid(false)
+:   m_valid(false),
+    m_tilesize(14)
 {
     // ctor
     reset(engine);
 }
 
 targetAllocator::targetAllocator()
-:   m_valid(false)
+:   m_valid(false),
+    m_tilesize(14)
 {
     // ctor
 }
@@ -51,17 +53,17 @@ bool targetAllocator::valid()
  *
  */
 
-RMuint32 targetAllocator::alloc(allocType type, size_t size)
+RMuint32 targetAllocator::alloc(uint32_t type, size_t size)
 {
     RMuint32 pMemory = 0;
     RMuint32 alignedSize;
 
     RMDBGLOG((LOCALDBG, "%s(%s, %zu)\n", __PRETTY_FUNCTION__,
-              szAllocType[type], size));
+              szAllocType[type & 0x03], size));
 
     alignedSize = (((size + 3) >> 2) << 2);
 
-    switch (type) {
+    switch (type & 0x3) {
     case ALLOC_PM:
         pMemory = m_pmPtr;
         m_pmPtr += alignedSize;
@@ -73,8 +75,18 @@ RMuint32 targetAllocator::alloc(allocType type, size_t size)
         break;
 
     case ALLOC_DRAM:
-        pMemory = m_dramPtr;
-        m_dramPtr += alignedSize;
+        if (type & ALLOC_TILEALIGN) {
+            m_dramPtr = RMALIGNTONEXT(m_dramPtr, m_tilesize);
+            pMemory = m_dramPtr;
+            m_dramPtr += alignedSize;
+        } else if (type & ALLOC_PAGEALIGN) {
+            m_dramPtr = RM_NEXT_PAGE_ALIGN(m_dramPtr);
+            pMemory = m_dramPtr;
+            m_dramPtr += alignedSize;
+        } else {
+            pMemory = m_dramPtr;
+            m_dramPtr += alignedSize;
+        }
         break;
     }
 
@@ -149,4 +161,10 @@ RMuint32 targetAllocator::dmPtr() const
 RMuint32 targetAllocator::dramPtr() const
 {
     return m_dramPtr;
+}
+
+void targetAllocator::set_tile_size(int w, int h)
+{
+    RMDBGLOG((LOCALDBG, "%s(%d, %d)\n", __PRETTY_FUNCTION__, w, h));
+   // m_tilesize = w + h;
 }

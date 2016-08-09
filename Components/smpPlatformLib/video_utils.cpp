@@ -6,6 +6,10 @@
 
 #include "targetStandardInterface.h"
 #include "video_utils.h"
+#include "struct_utils.h"
+#include "gbus_fifo.h"
+#include "gbus_packet_fifo.h"
+#include "gbus_packet_fifo_eraser.h"
 
 #ifdef _DEBUG
     #define LOCALDBG ENABLE
@@ -281,6 +285,266 @@ RMstatus video_set_vtdb_pointer(
 	}
 
 	return result;
+}
+
+#if 1
+#if (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
+
+/**
+ *  Set the DRAM address for picture and context for legacy codecs.
+ */
+
+RMstatus video_set_data_context_buffer(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	RMuint32 start_address,
+	RMuint32 total_size,
+	RMuint32 context_size)
+{
+	RMDBGLOG((LOCALDBG, "%s: addr= 0x%lx total_size= 0x%lx context_size= 0x%lx\n",
+             __PRETTY_FUNCTION__, start_address, total_size, context_size));
+
+ #if 1
+    struct_utils::write_structure_member (pIF, pvti,
+                                         "video_task_interface",
+                                         "ContextBuffer.StartAddress",
+                                         start_address);
+    struct_utils::write_structure_member (pIF, pvti,
+                                         "video_task_interface",
+                                         "ContextBuffer.Size",
+                                         context_size);
+    struct_utils::write_structure_member (pIF, pvti,
+                                         "video_task_interface",
+                                         "LumaFrameBuffer0.StartAddress",
+                                         (start_address + context_size));
+    struct_utils::write_structure_member (pIF, pvti,
+                                         "video_task_interface",
+                                         "LumaFrameBuffer0.Size",
+                                         (total_size - context_size));
+    struct_utils::write_structure_member (pIF, pvti,
+                                         "video_task_interface",
+                                         "LumaFrameBuffer1.StartAddress",
+                                         0);
+    struct_utils::write_structure_member (pIF, pvti,
+                                         "video_task_interface",
+                                         "LumaFrameBuffer1.Size",
+                                         0);
+ #else
+    structure_database* pStructDB   = pIF->get_structdb();
+    GBUS_PTR            pGBus       = pIF->get_gbusptr();
+    RMuint32            gbusAddress = 0L;
+
+    gbusAddress = struct_utils::resolve_offset(pStructDB, pvti,
+                                               "video_task_interface",
+                                               "ContextBuffer.StartAddress");
+    pGBus->gbus_write_uint32( gbusAddress, start_address );
+
+    gbusAddress = struct_utils::resolve_offset(pStructDB, pvti,
+                                               "video_task_interface",
+                                               "ContextBuffer.Size");
+    pGBus->gbus_write_uint32( gbusAddress, context_size );
+
+    gbusAddress = struct_utils::resolve_offset(pStructDB, pvti,
+                                               "video_task_interface",
+                                               "LumaFrameBuffer0.StartAddress");
+    pGBus->gbus_write_uint32( gbusAddress, start_address + context_size );
+
+    gbusAddress = struct_utils::resolve_offset(pStructDB, pvti,
+                                               "video_task_interface",
+                                               "LumaFrameBuffer0.Size");
+    pGBus->gbus_write_uint32( gbusAddress, total_size - context_size );
+
+    gbusAddress = struct_utils::resolve_offset(pStructDB, pvti,
+                                               "video_task_interface",
+                                               "LumaFrameBuffer1.StartAddress");
+    pGBus->gbus_write_uint32( gbusAddress, 0 );
+
+    gbusAddress = struct_utils::resolve_offset(pStructDB, pvti,
+                                               "video_task_interface",
+                                               "LumaFrameBuffer1.Size");
+    pGBus->gbus_write_uint32( gbusAddress, 0 );
+#endif // 1
+
+	return RM_OK;
+}
+
+RMstatus video_set_picture_buffer(
+	controlInterface* pIF,
+	RMuint32 pvti, /* struct video_task_data_base *pvtdb, */
+	RMuint32 id,
+	RMuint32 address,
+	RMuint32 size)
+{
+    return RM_ERROR;
+}
+
+#else // (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
+
+#endif // (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
+
+#else // 1
+#if (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
+/* set the DRAM address where picture buffers are allocated */
+RMstatus video_set_picture_buffer(
+	struct gbus *pGBus,
+	struct video_task_interface *pvti, /* struct video_task_data_base *pvtdb, */
+	RMuint32 id,
+	RMuint32 address,
+	RMuint32 size)
+{
+	RMuint32 buffer_address;
+	RMuint32 size_address;
+	switch(id) {
+	case PICTURE_BUFFER_BANK_0:
+		buffer_address = (RMuint32) &(pvti->LumaFrameBuffer0.StartAddress);
+		size_address   = (RMuint32) &(pvti->LumaFrameBuffer0.Size);
+		break;
+	case PICTURE_BUFFER_BANK_1:
+		buffer_address = (RMuint32) &(pvti->LumaFrameBuffer1.StartAddress);
+		size_address   = (RMuint32) &(pvti->LumaFrameBuffer1.Size);
+		break;
+	default:
+		RMDBGLOG((ENABLE, "%s: ERROR id=%ld address=0x%lx size= %lx\n", __FUNCTION__, id, address, size));
+		return RM_ERROR;
+	}
+	RMDBGLOG((ENABLE, "%s: id=%ld address=0x%lx size= %lx\n", __FUNCTION__, id, address, size));
+	gbus_write_uint32(pGBus, buffer_address, address);
+	gbus_write_uint32(pGBus, size_address, size);
+	return RM_OK;
+}
+
+/* set the DRAM address for context */
+RMstatus video_set_context_buffer(
+	struct gbus *pGBus,
+	struct video_task_interface *pvti, /* struct video_task_data_base *pvtdb, */
+	RMuint32 address,
+	RMuint32 size)
+{
+	RMDBGLOG((ENABLE, "%s: 0x%lx size= %lx\n", __FUNCTION__, address, size));
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->ContextBuffer.StartAddress), address);
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->ContextBuffer.Size), size);
+	return RM_OK;
+}
+/* set the DRAM address for picture and context for legacy codecs */
+RMstatus video_set_data_context_buffer(
+	struct gbus *pGBus,
+	struct video_task_interface *pvti,
+	RMuint32 start_address,
+	RMuint32 total_size,
+	RMuint32 context_size)
+{
+	RMDBGLOG((LOCALDBG, "%s: addr= 0x%lx total_size= 0x%lx context_size= 0x%lx\n", __FUNCTION__, start_address, total_size, context_size));
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->ContextBuffer.StartAddress), start_address);
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->ContextBuffer.Size), context_size);
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->LumaFrameBuffer0.StartAddress), start_address + context_size);
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->LumaFrameBuffer0.Size), total_size - context_size);
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->LumaFrameBuffer1.StartAddress), 0);
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->LumaFrameBuffer1.Size), 0);
+	return RM_OK;
+}
+#else // (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
+/* set the DRAM address where picture buffers are allocated */
+RMstatus video_set_data_context_buffer(
+	struct gbus *pGBus,
+	struct video_task_interface *pvti,
+	RMuint32 start_address,
+	RMuint32 total_size,
+	RMuint32 context_size)
+{
+	RMDBGLOG((LOCALDBG, "%s: addr= 0x%lx total_size= 0x%lx context_size= 0x%lx\n", __FUNCTION__, start_address, total_size, context_size));
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->DataAddress), start_address);
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->DataSize), total_size);
+	gbus_write_uint32(pGBus, (RMuint32) &(pvti->ContextTotalSize), context_size);
+	return RM_OK;
+}
+#endif // (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
+
+#endif // 0
+
+/**
+ *  set the pointer to bitstream fifo container, located in demux DMEM.
+ */
+
+RMstatus video_set_bts_fifo_pointer(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 bts_fifo)
+{
+    const structure_definition* pStruct = pIF->get_structdb()->get_structure("video_task_data_base");
+    RMuint32 gBusAddress = pvtdb;
+
+	RMDBGLOG((LOCALDBG, "video_set_bts_fifo_pointer= 0x%lx\n", bts_fifo));
+
+	if (pStruct != nullptr) {
+        gBusAddress += pStruct->member("InputFifoPtr")->offset();
+        pIF->get_gbusptr()->gbus_write_uint32(gBusAddress, bts_fifo);
+	}
+
+	return RM_OK;
+}
+
+/* get the pointer to time stamp fifo container, allocated in DRAM */
+RMstatus video_get_pts_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 *pts_fifo)
+{
+    RMuint32 ptsFifo = pvtdb;
+    const structure_definition* pStruct = pIF->get_structdb()->get_structure( "video_task_data_base");
+
+    if (pStruct != nullptr) {
+        ptsFifo += pStruct->member("pts_fifo")->offset();
+    }
+	*pts_fifo = ptsFifo;
+
+	RMDBGLOG((LOCALDBG, "video_get_pts_fifo= 0x%lx\n", *pts_fifo));
+
+	return RM_OK;
+}
+
+/* initialize the time stamp fifo, allocated in DRAM, size in entries */
+RMstatus video_open_pts_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size)
+{
+    RMuint32 ptsFifo = pvtdb;
+    const structure_definition* pStruct = pIF->get_structdb()->get_structure( "video_task_data_base");
+
+    if (pStruct != nullptr) {
+        ptsFifo += pStruct->member("pts_fifo")->offset();
+        RMDBGLOG((LOCALDBG, "video_open_pts_fifo= 0x%lx start= 0x%lx size= %lx\n",
+            ptsFifo, start, size));
+        gbus_entry_fifo_open(pIF->get_gbusptr(), start, size, ptsFifo);
+    }
+
+	return RM_OK;
+}
+
+/**
+ *  initialize the inband command fifo container, allocated in DRAM, size in entries
+ */
+
+RMstatus video_open_inband_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size)
+{
+    RMuint32 inbFifo = pvtdb;
+    const structure_definition* pStruct = pIF->get_structdb()->get_structure( "video_task_data_base");
+
+    if (pStruct != nullptr) {
+        inbFifo += pStruct->member("inband_cmd_fifo")->offset();
+        RMDBGLOG((LOCALDBG, "video_open_inband_fifo= 0x%lx start= 0x%lx size= %lx\n",
+            inbFifo, start, size));
+        gbus_entry_fifo_eraser_open(pIF->get_gbusptr(), start, size, inbFifo);
+    } else {
+        /* */
+    }
+
+	return RM_OK;
 }
 
 }

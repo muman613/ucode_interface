@@ -17,6 +17,7 @@
 					<Add option="-Wall" />
 					<Add option="-m64" />
 					<Add option="-g" />
+					<Add option="-D_DEBUG=1" />
 				</Compiler>
 				<Linker>
 					<Add option="-m64" />
@@ -43,9 +44,15 @@
 		<Compiler>
 			<Add option="-std=c++11" />
 			<Add option="`xml2-config --cflags`" />
+			<Add option="-DRMFEATURE_VIDEO_INTERFACE_VERSION=2" />
 			<Add directory="../.." />
 			<Add directory=".." />
+			<Add directory="../gbusfifolib" />
 		</Compiler>
+		<Unit filename="string_utils.cpp" />
+		<Unit filename="string_utils.h" />
+		<Unit filename="struct_utils.cpp" />
+		<Unit filename="struct_utils.h" />
 		<Unit filename="targetAllocator.cpp" />
 		<Unit filename="targetAllocator.h" />
 		<Unit filename="targetEngine.cpp" />

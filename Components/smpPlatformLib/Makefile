@@ -21,14 +21,16 @@ CPP_SOURCES = 	targetAllocator.cpp												\
 				targetInterfaceBase.cpp											\
 				targetStandardInterface.cpp										\
 				ucode_utils.cpp													\
-				video_utils.cpp
+				video_utils.cpp													\
+				string_utils.cpp												\
+				struct_utils.cpp
 
-INCLUDES=-I../.. -I..
-
+INCLUDES=-I../.. -I.. -I ../gbusfifolib
+DEFINES=-DRMFEATURE_VIDEO_INTERFACE_VERSION=2
 LIBXML2_CFLAGS=$(shell xml2-config --cflags)
 #LIBXML2_LDFLAGS=$(shell xml2-config --libs)
 
-CFLAGS=$(LIBXML2_CFLAGS) $(INCLUDES) --std=c++11
+CFLAGS=$(DEFINES) $(LIBXML2_CFLAGS) $(INCLUDES) --std=c++11
 #LDFLAGS=$(LIBXML2_LDFLAGS)
 
 LIB_DIR=../libs/Linux/$(ARCH)
