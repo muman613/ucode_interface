@@ -49,6 +49,7 @@ member_definition::member_definition(const char* member, const char* type, size_
 	member_flags(flag_variable),
 	member_maxindex(0)
 {
+    // ctor
 }
 
 member_definition::member_definition(const char* member, const char* type, size_t index, size_t offset)
@@ -58,9 +59,11 @@ member_definition::member_definition(const char* member, const char* type, size_
 	member_flags(flag_array),
 	member_maxindex(index)
 {
+    // ctor
 }
 
 member_definition::member_definition(const member_definition& copy) {
+	// copy ctor
 	member_name 	= copy.member_name;
 	member_type 	= copy.member_type;
 	member_offset 	= copy.member_offset;
@@ -70,7 +73,32 @@ member_definition::member_definition(const member_definition& copy) {
 
 
 member_definition::~member_definition() {
+    // dtor
 }
+
+const STRING& member_definition::name() const {
+    return member_name;
+}
+
+const STRING& member_definition::type() const {
+    return member_type;
+}
+
+size_t member_definition::offset() const {
+    return member_offset;
+}
+
+bool member_definition::is_array() const {
+    return (member_flags & flag_array)?true:false;
+}
+
+size_t member_definition::maxindex() const {
+    return member_maxindex;
+}
+
+/**
+ *  UNION DEFINITION.
+ */
 
 union_definition::union_definition(structure_database* db, const char* name)
 : 	struct_db(db),
@@ -82,6 +110,28 @@ union_definition::union_definition(structure_database* db, const char* name)
 
 union_definition::~union_definition() {
 	members.clear();
+}
+
+const STRING& union_definition::name() const {
+    return struct_name;
+}
+
+int union_definition::member_count() const {
+    return members.size();
+}
+
+size_t union_definition::size() const {
+    return last_offset;
+}
+
+const member_definition* union_definition::operator[](int index) const {
+    const member_definition* pMembDef = nullptr;
+
+    if ((size_t)index < members.size()) {
+        pMembDef = (const member_definition*)&members[index];
+    }
+
+    return pMembDef;
 }
 
 void union_definition::add_member(const char* name, const char* type, size_t offset) {
@@ -129,18 +179,50 @@ const member_definition* union_definition::member(int index) const {
 	}
 }
 
+/**
+ *  Structure definition class.
+ */
+
 structure_definition::structure_definition(structure_database* db, const char* name)
 : 	struct_db(db),
 	struct_name(name),
 	last_offset(0L)
 {
-
+    // ctor
 }
 
 structure_definition::~structure_definition() {
+    // dtor
 	members.clear();
 }
 
+/**
+ *
+ */
+
+const STRING& structure_definition::name() const {
+    return struct_name;
+}
+
+/**
+ *  Get the # of members in this structure
+ */
+
+int structure_definition::member_count() const {
+    return members.size();
+}
+
+/**
+ *  Get the size of the structure...
+ */
+
+size_t structure_definition::size() const {
+    return last_offset;
+}
+
+/**
+ *
+ */
 
 void structure_definition::add_member(const char* name, const char* type, size_t offset) {
 	size_t		member_size = 0L;
@@ -238,6 +320,33 @@ const member_definition* structure_definition::member(int index) const {
 	}
 }
 
+/**
+ *
+ */
+
+const member_definition* structure_definition::operator[](size_t index) const {
+    const member_definition* pMember = nullptr;
+
+    if ((size_t)index < members.size()) {
+        pMember = (const member_definition*)&members[index];
+    }
+
+    return pMember;
+}
+
+/**
+ *
+ */
+
+const member_definition* structure_definition::operator[](std::string sMemberName) const {
+    for (auto iter = members.begin() ; iter != members.end() ; iter++) {
+        if ((*iter).name() == sMemberName) {
+            return &(*iter);
+        }
+    }
+
+    return (const member_definition*)nullptr;
+}
 
 /**
     structure_database constructor
@@ -390,7 +499,291 @@ bool structure_database::open(const char* filename) {
  *	the filename ends in .hh then the file is not preprocessed.
  *
  */
+#if (__cplusplus >= 201103L)
+bool structure_database::parse_file(const char* filename) {
+	bool		result              = true;
+#ifdef  _ENABLE_PIPE
+	char*		env                 = nullptr;
+	bool		bUsePipe            = false;
+	static char	szCommand[MAX_CMD];
+#endif
+    void*       pConstruct          = nullptr;
+	struct stat status;
 
+//	--	Verify that the file exists...
+
+	D(debug("structure_database::parse_file(%s)\n", filename));
+
+	if (stat(filename, &status) == -1) {
+        D(debug("ERROR: Header file %s not found!\n", filename));
+#ifdef  _VERBOSE_ERRORS
+		fprintf(stderr, "ERROR: Header file %s not found!\n", filename);
+#endif
+		return false;
+	}
+
+#ifdef  _ENABLE_PIPE
+//	--	Check if file extension is .h, if so set bUsePipe to true
+
+	{
+		const char  *pExt = nullptr;
+		char		ext[32];
+
+		if ((pExt = rindex(filename, '.')) != 0) {
+			strncpy(ext, pExt, 32);
+		}
+
+//	--	If file ends in '.h'
+
+        D3(debug("-- extension %s\n", ext));
+
+		if (strcmp(ext, ".hh") == 0) {
+			bUsePipe = false;
+		} else if (strcmp(ext, ".h") == 0) {
+			bUsePipe = true;
+		}
+
+	}
+
+//	--	Open file piped through CPP (C Preprocessor)...
+
+	if (bUsePipe == true) {
+		static char		RMCFLAGS[256] = {0};
+
+		if ((env = getenv("RMCFLAGS")) == 0) {
+#ifdef  _VERBOSE_ERRORS
+			fprintf(stderr, "ERROR: Environment RMCFLAGS not initialized!\n");
+#endif
+			return false;
+		}
+
+		//D3(debug("-- piping %s through C preprocessor...\n", filename));
+
+		strncpy(RMCFLAGS, env, 256);
+
+		snprintf(szCommand, MAX_CMD, "cpp 2> /dev/null %s %s", RMCFLAGS, filename);
+		ifp = popen(szCommand, "r");
+	} else {
+		ifp = fopen(filename, "r");
+	}
+
+#else   // _ENABLE_PIPE
+
+    ifp = fopen(filename, "r");
+
+#endif  // _ENABLE_PIPE
+
+	if (ifp == 0) {
+		D2(debug("ERROR: Unable to open input file...\n"));
+		return false;
+	}
+
+	init_regexp_parser();
+	{
+//		regmatch_t		matches[4];
+		char*	    lineptr = 0;
+		int		    flags = 0;
+        int         lineNo = 0;
+        std::cmatch matches;
+
+		lineptr = (char *)malloc(PF_BUF_SIZE);
+
+		while (NULL != fgets(lineptr, PF_BUF_SIZE, ifp)) {
+		    lineNo++;
+
+			if (!feof(ifp) && ('\n' != lineptr[strlen(lineptr) - 1])) {
+				/* error: the line was too long to fit in lineptr */
+
+#ifdef  _VERBOSE_ERRORS
+				fprintf(stderr, "ERROR: line #%d too long (more than %d characters.)\n",
+						lineNo, PF_BUF_SIZE );
+#endif
+				result = false;
+				break;
+			}
+
+            lineptr[strlen(lineptr) - 1] = '\0';
+
+			if ((*lineptr == '\n') || (lineptr[0] == '#')) {
+				continue;
+			}
+
+            fprintf(stderr, "%d : %s\n", lineNo, lineptr);
+
+            flags = peek_state(&pConstruct);
+
+            if (flags == FLAGS_NONE) {
+
+//                D3(debug("A\n"));
+
+                if (std::regex_match(lineptr, matches, exp_startstruct)) {
+                    structure_definition*	pStruct = nullptr;
+                    std::string             struct_name = matches[1].str();
+
+                    fprintf(stderr, "Found struct %s\n", struct_name.c_str());
+
+                    if (get_structure((const char*)struct_name.c_str()) == 0) {
+                        pStruct = new_structure((const char*)struct_name.c_str());
+                        push_state(FLAGS_IN_STRUCT, (void*)pStruct);
+                    } else {
+                        D3(debug("Duplicate structure [%s]\n", struct_name));
+                    }
+                    continue;
+                } else if (std::regex_match(lineptr, matches, exp_start_namedunion)) {
+                    union_definition*	    pUnion = nullptr;
+                    std::string             union_name = matches[1].str();
+
+                    fprintf(stderr, "Found union %s\n", union_name.c_str());
+
+                    if (get_union((const char*)union_name.c_str()) == 0) {
+                        pUnion = new_union((const char*)union_name.c_str());
+                        push_state(FLAGS_IN_UNION, (void*)pUnion);
+                    } else {
+                        D3(debug("Duplicate union [%s]\n", union_name.c_str()));
+                    }
+                    continue;
+                }
+            }
+
+            if (FLAG_ISSET(flags, FLAGS_IN_STRUCT) ||
+                FLAG_ISSET(flags, FLAGS_IN_UNNAMEDSTRUCT) ||
+                FLAG_ISSET(flags, FLAGS_IN_UNION) ||
+                FLAG_ISSET(flags, FLAGS_IN_UNNAMEDUNION))
+            {
+                fprintf(stderr, "--- waiting for end of struct/union ---\n");
+                //char	member_type[1024], member_name[1024], member_index[1024];
+                std::string member_type, member_name, member_index;
+//                D3(debug("B\n"));
+
+                if (std::regex_match(lineptr, matches, exp_endstruct)) {
+//                if (regexec(&exp_endstruct, lineptr, 0, NULL, 0) == 0) {
+                    fprintf(stderr, "-- end of structure or union!\n");
+                    pop_state();
+                } else if ((FLAG_ISSET(flags, FLAGS_IN_UNNAMEDSTRUCT) || FLAG_ISSET(flags, FLAGS_IN_UNNAMEDUNION))
+                         && std::regex_match(lineptr, matches, exp_end_unnamed_struct))
+                {
+                    int nextFlag;
+                    structure_definition *unnamed_struct_def = nullptr; //, *struct_def = 0;
+//                    size_t    len = matches[1].rm_eo - matches[1].rm_so;
+//
+//                    member_name[len] = 0;
+//                    strncpy(member_name, lineptr + matches[1].rm_so, len);
+                    member_name = matches[1].str();
+
+                    pop_state(0, (void**)&unnamed_struct_def);
+
+                    D(debug("-- end of unnamed struct [%s] %s!\n", unnamed_struct_def->name().c_str(), member_name.c_str()));
+                    nextFlag = peek_state(&pConstruct);
+
+                    assert(pConstruct != 0L);
+                    if (FLAG_ISSET(nextFlag, FLAGS_IN_STRUCT) || FLAG_ISSET(nextFlag, FLAGS_IN_UNNAMEDSTRUCT)) {
+                        D3(debug("-- adding member %s of type %s to structure %s...\n", member_name, unnamed_struct_def->name().c_str(), ((structure_definition*)pConstruct)->name().c_str()));
+                        if (FLAG_ISSET(flags, FLAGS_IN_STRUCT) || FLAG_ISSET(flags, FLAGS_IN_UNNAMEDSTRUCT)) {
+                            ((structure_definition*)pConstruct)->add_member(member_name.c_str(), unnamed_struct_def->name().c_str());
+                        } else if (FLAG_ISSET(flags, FLAGS_IN_UNION) || FLAG_ISSET(flags, FLAGS_IN_UNNAMEDUNION)) {
+                            ((structure_definition*)pConstruct)->add_union_member(member_name.c_str(), unnamed_struct_def->name().c_str());
+                        }
+                    } else if (FLAG_ISSET(nextFlag, FLAGS_IN_UNION) || FLAG_ISSET(nextFlag, FLAGS_IN_UNNAMEDUNION)) {
+                        D3(debug("-- adding member %s of type %s to union %s...\n", member_name, unnamed_struct_def->name().c_str(), ((union_definition*)pConstruct)->name().c_str()));
+                        ((union_definition*)pConstruct)->add_member(member_name.c_str(), unnamed_struct_def->name().c_str());
+                    }
+                } else {
+    //	--	Check if member is a structure...
+                    if (std::regex_match(lineptr, matches, exp_member)) {
+                        member_type = matches[1].str();
+                        member_name = matches[2].str();
+
+                        D(debug("MEMBER %s TYPE %s\n", member_name.c_str(), member_type.c_str()));
+
+                        if ((flags & FLAGS_IN_STRUCT) || (flags & FLAGS_IN_UNNAMEDSTRUCT)) {
+                            assert(pConstruct != 0L);
+                            ((structure_definition*)pConstruct)->add_member(member_name.c_str(), member_type.c_str());
+                        } else if ((flags & FLAGS_IN_UNION) || (flags & FLAGS_IN_UNNAMEDUNION)) {
+                            assert(pConstruct != 0L);
+                            ((union_definition*)pConstruct)->add_member(member_name.c_str(), member_type.c_str());
+                        }
+                    } else if (std::regex_match(lineptr, matches, exp_membstruct)) {
+                        member_type = matches[1].str();
+                        member_name = matches[2].str();
+
+                        D(debug("STRUCTURE MEMBER type %s name %s!\n", member_type.c_str(), member_name.c_str()));
+
+//	--	Add this member to the current structure...
+
+                        if ((flags & FLAGS_IN_STRUCT) || (flags & FLAGS_IN_UNNAMEDSTRUCT)) {
+                            assert(pConstruct != 0L);
+                            ((structure_definition*)pConstruct)->add_member(member_name.c_str(), member_type.c_str());
+                        } else if ((flags & FLAGS_IN_UNION) || (flags & FLAGS_IN_UNNAMEDUNION)) {
+                            assert(pConstruct != 0L);
+                            ((union_definition*)pConstruct)->add_member(member_name.c_str(), member_type.c_str());
+                        }
+                    } else if (std::regex_match(lineptr, matches, exp_membenum)) {
+                        member_type = matches[1].str();
+                        member_name = matches[2].str();
+
+                        D(debug("ENUM MEMBER type %s name %s!\n", member_type.c_str(), member_name.c_str()));
+
+//	--	Add this member to the current structure...
+
+                        if ((flags & FLAGS_IN_STRUCT) || (flags & FLAGS_IN_UNNAMEDSTRUCT)) {
+                            assert(pConstruct != 0L);
+                            ((structure_definition*)pConstruct)->add_member(member_name.c_str(), member_type.c_str());
+                        } else if ((flags & FLAGS_IN_UNION) || (flags & FLAGS_IN_UNNAMEDUNION)) {
+                            assert(pConstruct != 0L);
+                            ((union_definition*)pConstruct)->add_member(member_name.c_str(), member_type.c_str());
+                        }
+//                    } else if (regexec(&exp_memb_union, lineptr, 3, matches, 0) == 0) {
+                    } else if (std::regex_match(lineptr, matches, exp_memb_union)) {
+                        D(debug("FOUND UNION MEMBER!\n"));
+
+                        //member_type[len] = 0;
+                        //strncpy(member_type, lineptr + matches[1].rm_so, len);
+
+                        //len = matches[2].rm_eo - matches[2].rm_so;
+                        //member_name[len] = 0;
+                        //strncpy(member_name, lineptr + matches[2].rm_so, len);
+
+                        member_type = matches[1].str();
+                        member_name = matches[2].str();
+
+                        D(debug("MEMBER %s TYPE %s\n", member_name.c_str(), member_type.c_str()));
+                        if ((flags & FLAGS_IN_STRUCT) || (flags & FLAGS_IN_UNNAMEDSTRUCT)) {
+                            assert(pConstruct != 0L);
+                            ((structure_definition*)pConstruct)->add_member(member_name.c_str(), member_type.c_str());
+                        } else if ((flags & FLAGS_IN_UNION) || (flags & FLAGS_IN_UNNAMEDUNION)) {
+                            assert(pConstruct != 0L);
+                            ((union_definition*)pConstruct)->add_member(member_name.c_str(), member_type.c_str());
+                        }
+                    } else if (std::regex_match(lineptr, matches, exp_array_membstruct)) {
+                        unsigned int member_index_size = 0;
+
+                        member_type     = matches[1].str();
+                        member_name     = matches[2].str();
+                        member_index    = matches[3].str();
+
+                        member_index_size = calculate_array_size( member_index.c_str() );
+
+                        D(debug("-- STRUCTURE ARRAY %s TYPE %s SIZE %d!\n",
+                                member_name.c_str(),
+                                member_type.c_str(),
+                                member_index_size));
+
+                        if ((flags & FLAGS_IN_STRUCT) || (flags & FLAGS_IN_UNNAMEDSTRUCT)) {
+                            assert(pConstruct != 0L);
+                            ((structure_definition*)pConstruct)->add_array_member(member_name.c_str(), member_type.c_str(), member_index_size);
+                        } else if ((flags & FLAGS_IN_UNION) || (flags & FLAGS_IN_UNNAMEDUNION)) {
+                            assert(pConstruct != 0L);
+                            ((union_definition*)pConstruct)->add_array_member(member_name.c_str(), member_type.c_str(), member_index_size);
+                        }
+                    }
+                }
+            }
+		}
+	}
+
+    return result;
+}
+#else
 bool structure_database::parse_file(const char* filename) {
 	bool		result = true;
 #ifdef  _ENABLE_PIPE
@@ -817,6 +1210,8 @@ bool structure_database::parse_file(const char* filename) {
 
 	return result;
 }
+#endif
+
 
 #ifdef  _ENABLE_HTML_OUTPUT
 void structure_database::dump_html_table(const char* szFileName, const char* szHeading) {
@@ -1090,6 +1485,59 @@ bool structure_database::init_regexp_parser() {
 //	--	Compile the regular expression...
     D(debug("Compiling the regular expressions...\n"));
 
+#if (__cplusplus >= 201103L)
+
+    if (add_regexp("^\\s*struct \(\\w+)\\s*\\{$", exp_startstruct) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+    if (add_regexp("^\\s*};$", exp_endstruct) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+    if (add_regexp("^\\s*struct\\s+(\\w+\\s*?\\*?)\\s+(\\w+);", exp_membstruct) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+    if (add_regexp("^\\s*struct\\s+(\\w+)\\s+(\\w+)\\[(.*)\\];", exp_array_membstruct) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+    if (add_regexp("^\\s*enum\\s+(\\w+)\\s+(\\w+);", exp_membenum) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+    if (add_regexp("^\\s*(\\w+)\\s+(\\w+);", exp_member) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+    if (add_regexp("^\\s*(\\w+)\\s+(\\w+)(\\[.*\\]);", exp_array_member) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+
+    if (add_regexp("^\\s*union\\s*([a-zA-Z0-9_]+)\\s*\\{", exp_start_namedunion) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+    if (add_regexp("^\\s*struct\\s*\\{", exp_memb_unnamed_struct) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+    if (add_regexp("^\\s*\\}\\s+([a-zA-Z0-9_]+);", exp_end_unnamed_struct) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+    if (add_regexp("^\\s*union\\s*\\{", exp_memb_unnamed_union) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+
+    if (add_regexp("^\\s*union\\s+([a-zA-Z0-9_]+)\\s+([a-zA-Z0-9_]+)\\s*;", exp_memb_union) == false) {
+		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
+		return false;
+    }
+#else
     if (add_regexp("^\\s*struct \(\\w+)\\s*\\{$", &exp_startstruct) == false) {
 		fprintf(stderr, "ERROR: Unable to initialize regular expression parser!\n");
 		return false;
@@ -1141,17 +1589,22 @@ bool structure_database::init_regexp_parser() {
 		return false;
     }
 
+#endif
+
     return true;
 }
 
 void structure_database::release_regexp_parser() {
 	D(debug("structure_database::release_regexp_parser()\n"));
 
+#if (__cplusplus >= 201103L)
+#else
     /* free all compiled regular expressions */
     for (size_t i = 0 ; i < m_reList.size() ; i++) {
         regfree(m_reList[i]);
     }
     m_reList.clear();
+#endif
 
     return;
 }
@@ -1187,7 +1640,21 @@ unsigned int structure_database::calculate_array_size(const char* szSize) {
     return result;
 }
 
+#if (__cplusplus >= 201103L)
+bool structure_database::add_regexp(const char* sRegex, std::regex& expression) {
+    D(debug("structure_database::add_regexp(%s, ...)\n", sRegex));
 
+try {
+    expression = std::regex(sRegex);
+
+    return true;
+}
+catch (std::regex_error& err) {
+    D(debug("-- caught exception! %s\n", err.what()));
+    return false;
+}
+}
+#else // (__cplusplus >= 201103L)
 bool structure_database::add_regexp(const char* sRegex, regex_t* expression) {
     int reError;
 
@@ -1211,5 +1678,34 @@ bool structure_database::add_regexp(const char* sRegex, regex_t* expression) {
 
     return true;
 }
+#endif // (__cplusplus >= 201103L)
 
+/**
+ *  Return the structure definition by the index.
+ */
+
+const structure_definition* structure_database::operator[](size_t index) const {
+    const structure_definition* pStructDef = nullptr;
+
+    if ((size_t)index < structure_vector.size()) {
+        pStructDef = (const structure_definition*)structure_vector[index];
+    }
+
+    return pStructDef;
+}
+
+/**
+ *
+ */
+
+const structure_definition* structure_database::operator[](std::string sStructName) const {
+    for (auto it = structure_vector.begin() ; it != structure_vector.end() ; it++)
+    {
+        if ((*it)->name() == sStructName) {
+            return (*it);
+        }
+    }
+
+    return (const structure_definition*)nullptr;
+}
 
