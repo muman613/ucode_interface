@@ -1,9 +1,3 @@
-/*****************************************
- Copyright © 2001-2003  
- Sigma Designs, Inc. All Rights Reserved
- Proprietary and Confidential
- *****************************************/
-
 #include "llad/include/llad.h"
 #include "include/gbus_fifo_eraser.h"
 

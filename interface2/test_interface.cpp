@@ -622,6 +622,8 @@ static RMstatus open_video_decoder(CONTEXT_PTR pContext)
     video_open_inband_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->InbandFIFOCount);
     unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandCommand);
     pContext->inband_params_address = unprotected_ptr;
+    RMDBGLOG((LOCALDBG, "inband_params_address = %08X\n", pContext->inband_params_address));
+
     unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandParams);
     /* allocate and clear inband_params */
     {
@@ -1661,7 +1663,6 @@ void init_context(CONTEXT_PTR ctx) {
     ctx->decoderProfile      = VideoProfileMPEG2;        // default to MPEG2 stream
 
     set_tile_dimensions( ctx.get(), RMTILE_WIDTH_SHIFT, RMTILE_HEIGHT_SHIFT );
-
     ctx->soc_arch            = SOC_TANGO;
     ctx->reset_control       = G2L_ANOTHER_RESET_CONTROL;
 
