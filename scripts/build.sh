@@ -3,9 +3,14 @@
 #	Utility script to build all targets in a text GUI.
 ################################################################################
 
-if [ -f makeall.sh ]; then
-./makeall.sh | tee buildlog |  dialog --backtitle "Interface Build Tools"		\
-                                      --title "Build Output" --programbox 40 128
+eval $( resize )
+HEIGHT=$(($LINES - 6))
+
+
+if [ -f buildoptions ]; then
+makeall.sh | tee buildlog |  dialog --backtitle "Interface Build Tools"		\
+                                      --title "Build Output" --programbox $HEIGHT 128
 else
-	echo "No makeall.sh script found!"
+./makeall.sh | tee buildlog |  dialog --backtitle "Interface Build Tools"		\
+                                      --title "Build Output" --programbox $HEIGHT 128
 fi

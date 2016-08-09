@@ -1,19 +1,15 @@
+/**
+ *  @file       gbus_fifo_eraser.cpp
+ *  @date       August 8, 2016
+ *  @author     Michael A. Uman
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
-
 #define ALLOW_OS_CODE
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"
 #include "gbus_fifo_eraser.h"
-
-/*****************************************
- Copyright © 2001-2016
- Sigma Designs, Inc. All Rights Reserved
- Proprietary and Confidential
- *****************************************/
-
-//#include "llad/include/llad.h"
-//#include "include/gbus_fifo_eraser.h"
 
 struct gbus_fifo_eraser *gbus_fifo_eraser_open(GBUS_PTR h, RMuint32 data_address, RMuint32 data_size, RMuint32 fifo_address)
 {

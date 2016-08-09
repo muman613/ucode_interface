@@ -1,3 +1,9 @@
+/**
+ *  @file       gbus_fifo.cpp
+ *  @date       August 8, 2016
+ *  @author     Michael A. Uman
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -5,12 +11,6 @@
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"
 #include "gbus_fifo.h"
-
-/*****************************************
- Copyright © 2001-2016
- Sigma Designs, Inc. All Rights Reserved
- Proprietary and Confidential
- *****************************************/
 
 struct gbus_fifo *gbus_fifo_open(GBUS_PTR pgbus, RMuint32 data_address, RMuint32 data_size, RMuint32 fifo_address)
 {

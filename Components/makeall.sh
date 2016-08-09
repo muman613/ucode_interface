@@ -3,12 +3,12 @@
 #	Build all components
 ###############################################################################
 
-COMPONENTS="gbusfifolib platformDB remote_client structure_control symbolmgr fileresolver"
+COMPONENTS="gbusfifolib platformDB platformDB2 remote_client structure_control symbolmgr fileresolver smpPlatformLib"
 
 for comp in $COMPONENTS; do
 	pushd > /dev/null $comp
 	echo "Building $comp"
-	./makeall.sh
+	makeall.sh
 	popd > /dev/null
 done
 

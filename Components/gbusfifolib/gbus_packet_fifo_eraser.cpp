@@ -1,3 +1,9 @@
+/**
+ *  @file       gbus_packet_fifo_eraser.cpp
+ *  @date       August 8, 2016
+ *  @author     Michael A. Uman
+ */
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,15 +11,6 @@
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"
 #include "gbus_packet_fifo_eraser.h"
-
-/*****************************************
- Copyright © 2001-2003
- Sigma Designs, Inc. All Rights Reserved
- Proprietary and Confidential
- *****************************************/
-
-
-//#include "include/gbus_packet_fifo_eraser.h"
 
 static void gbus_packet_fifo_eraser_get_pointer(GBUS_PTR pgbus, struct gbus_packet_fifo_eraser *fifo,
 					 RMuint32 *base, RMuint32 *size, RMuint32 *rd_ptr, RMuint32 *wr_ptr, RMuint32 *er_ptr)

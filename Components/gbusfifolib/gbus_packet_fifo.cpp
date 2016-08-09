@@ -1,3 +1,9 @@
+/**
+ *  @file       gbus_packet_fifo.cpp
+ *  @date       August 8, 2016
+ *  @author     Michael A. Uman
+ */
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,13 +11,6 @@
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"
 #include "gbus_packet_fifo.h"
-
-/*****************************************
- Copyright © 2001-2003
- Sigma Designs, Inc. All Rights Reserved
- Proprietary and Confidential
- *****************************************/
-
 
 //#include "include/gbus_packet_fifo.h"
 

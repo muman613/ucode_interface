@@ -17,11 +17,13 @@
 					<Add option="-D_DEBUG=1" />
 				</Compiler>
 				<Linker>
+					<Add option="../../libs/Linux/x86_64/libsmpplatform_d.a" />
 					<Add option="../../libs/Linux/x86_64/libplatformdb_d.a" />
 					<Add option="../../libs/Linux/x86_64/libfileresolver_d.a" />
 					<Add option="../../libs/Linux/x86_64/libsymbolmgr_d.a" />
 					<Add option="../../libs/Linux/x86_64/libstructcontrol_d.a" />
 					<Add option="../../libs/Linux/x86_64/libremote_d.a" />
+					<Add option="../../libs/Linux/x86_64/libgbusfifo_d.a" />
 					<Add option="`xml2-config --libs`" />
 					<Add option="`pkg-config --libs tre`" />
 				</Linker>
@@ -37,11 +39,13 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="../../libs/Linux/x86_64/libfileresolver.a" />
+					<Add option="../../libs/Linux/x86_64/libsmpplatform.a" />
 					<Add option="../../libs/Linux/x86_64/libplatformdb.a" />
+					<Add option="../../libs/Linux/x86_64/libfileresolver.a" />
 					<Add option="../../libs/Linux/x86_64/libsymbolmgr.a" />
 					<Add option="../../libs/Linux/x86_64/libstructcontrol.a" />
 					<Add option="../../libs/Linux/x86_64/libremote.a" />
+					<Add option="../../libs/Linux/x86_64/libgbusfifo.a" />
 					<Add option="`xml2-config --libs`" />
 					<Add option="`pkg-config --libs tre`" />
 				</Linker>
@@ -54,23 +58,12 @@
 			<Add option="`xml2-config --cflags`" />
 			<Add directory="../../" />
 			<Add directory="../../.." />
+			<Add directory="../../smpPlatformLib" />
 		</Compiler>
 		<Unit filename="../common/dbgimplementation.cpp">
 			<Option target="Debug" />
 		</Unit>
 		<Unit filename="main.cpp" />
-		<Unit filename="targetAllocator.cpp" />
-		<Unit filename="targetAllocator.h" />
-		<Unit filename="targetEngine.cpp" />
-		<Unit filename="targetEngine.h" />
-		<Unit filename="targetInterfaceBase.cpp" />
-		<Unit filename="targetInterfaceBase.h" />
-		<Unit filename="targetStandardInterface.cpp" />
-		<Unit filename="targetStandardInterface.h" />
-		<Unit filename="ucode_utils.cpp" />
-		<Unit filename="ucode_utils.h" />
-		<Unit filename="video_utils.cpp" />
-		<Unit filename="video_utils.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />

@@ -4,23 +4,24 @@ MAKEFILE := $(call where-am-i)
 
 ARCH?=$(shell arch)
 TARGET_TYPE=exe
-TARGET_EXE=testPlatformDB
-#PLATDB_CONFIG?="/opt/sigma/platformdb/bin/platformdb-config"
+TARGET_EXE=wxtestPlatformDB
+
+WX_CONFIG?=/opt/sigma/wx/3.1.1/bin/wx-config
 
 CPP_SOURCES=main.cpp
 
 ifdef DEBUG
-PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb2_d.a
+PLATDB_LIBS=../../libs/Linux/$(ARCH)/libwxplatformdb2_d.a
 else
-PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb2.a
+PLATDB_LIBS=../../libs/Linux/$(ARCH)/libwxplatformdb2.a
 endif
 
+WX_CFLAGS=$(shell $(WX_CONFIG) --cflags) -DwxDEBUG_LEVEL=0
+WX_LDFLAGS=$(shell $(WX_CONFIG) --libs)
 
-LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)
-LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
 PLATDB_CFLAGS=-I../../platformDB2/
-CFLAGS=$(WX_CFLAGS) $(PLATDB_CFLAGS) $(LIBXML_CFLAGS) -std=c++11
-LIBS=$(PLATDB_LIBS) $(WX_LIBS) $(LIBXML_LIBS)
+CFLAGS=$(WX_CFLAGS) $(PLATDB_CFLAGS) -std=c++11
+LIBS=$(PLATDB_LIBS) $(WX_LDFLAGS)
 
 include ../../../Build/buildsys.mk
 
