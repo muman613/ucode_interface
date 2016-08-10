@@ -6,7 +6,7 @@
 where-am-i = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 MAKEFILE := $(call where-am-i)
 
-TARGET_TYPE=statlib
+TARGET_TYPE?=statlib
 ARCH?=$(shell arch)
 
 
@@ -28,12 +28,32 @@ CPP_SOURCES = 	targetAllocator.cpp												\
 INCLUDES=-I../.. -I.. -I ../gbusfifolib
 DEFINES=-DRMFEATURE_VIDEO_INTERFACE_VERSION=2
 LIBXML2_CFLAGS=$(shell xml2-config --cflags)
-#LIBXML2_LDFLAGS=$(shell xml2-config --libs)
+LIBXML2_LDFLAGS=$(shell xml2-config --libs)
 
 CFLAGS=$(DEFINES) $(LIBXML2_CFLAGS) $(INCLUDES) --std=c++11
-#LDFLAGS=$(LIBXML2_LDFLAGS)
+#CFLAGS=$(DEFINES) $(INCLUDES) --std=c++11
+LDFLAGS=$(LIBXML2_LDFLAGS)
 
 LIB_DIR=../libs/Linux/$(ARCH)
+
+ifeq ($(TARGET_TYPE), dynlib)
+ifdef DEBUG
+LDFLAGS+=../libs/Linux/${ARCH}/libplatformdb2_d.a								\
+		 ../libs/Linux/${ARCH}/libstructcontrol_d.a								\
+		 ../libs/Linux/${ARCH}/libfileresolver_d.a								\
+		 ../libs/Linux/${ARCH}/libremote_d.a									\
+		 ../libs/Linux/${ARCH}/libsymbolmgr_d.a									\
+		 ../libs/Linux/${ARCH}/libgbusfifo_d.a
+ else
+LDFLAGS+=../libs/Linux/${ARCH}/libplatformdb2.a									\
+		 ../libs/Linux/${ARCH}/libstructcontrol.a								\
+		 ../libs/Linux/${ARCH}/libfileresolver.a								\
+		 ../libs/Linux/${ARCH}/libremote.a										\
+		 ../libs/Linux/${ARCH}/libsymbolmgr.a									\
+		 ../libs/Linux/${ARCH}/libgbusfifo.a
+endif
+endif
+
 
 include ../../Build/buildsys.mk
 
