@@ -288,10 +288,16 @@ size_t structure_database::get_type_size(const char* type) {
 	} else {
 		const structure_definition*	pDef = get_structure(type);
 
-		if (pDef != 0) {
+		if (pDef != NULL) {
 			result = pDef->size();
 		} else {
-			result = 4;
+			const union_definition* pUnion = get_union(type);
+
+			if (pUnion != NULL) {
+				result = pUnion->size();
+			} else {
+				result = 4;
+			}
 		}
 	}
 
