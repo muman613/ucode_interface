@@ -13,9 +13,29 @@ MAKEFILE := $(call where-am-i)
 
 ARCH?=$(shell arch)
 TARGET_TYPE=exe
-TARGET_EXE=testEngine
 
 CPP_SOURCES=main.cpp
+
+ifdef SHARED
+TARGET_EXE=testEngine_shared
+
+ifdef DEBUG
+PLATLIB_LIBS=-L../../libs/Linux/${ARCH}/ -lsmpplatform_d
+
+CPP_SOURCES+=../common/dbgimplementation.cpp
+else
+PLATLIB_LIBS=-L../../libs/Linux/${ARCH}/ -lsmpplatform
+endif
+
+PLATLIB_CFLAGS=-I../../smpPlatformLib/
+LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)
+LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
+INCLUDES=-I../.. -I../../..
+CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) $(PLATLIB_CFLAGS) -std=c++11
+LIBS=$(PLATLIB_LIBS) $(LIBXML_LIBS)
+
+else	# SHARED
+TARGET_EXE=testEngine
 
 ifdef DEBUG
 PLATLIB_LIBS=../../libs/Linux/$(ARCH)/libsmpplatform_d.a
@@ -52,6 +72,8 @@ INCLUDES=-I../.. -I../../.. $(PLATLIB_CFLAGS) $(GBUSFIFO_CFLAGS)
 CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) $(TRE_CFLAGS) -std=c++11
 LIBS=$(PLATLIB_LIBS) $(PLATDB_LIBS) $(RCLIENT_LIBS) $(SYMMGR_LIBS)				\
      $(STRUCT_LIBS) $(RESOLV_LIBS) $(LIBXML_LIBS) $(GBUSFIFO_LIBS) $(TRE_LIBS)
+
+endif	# SHARED
 
 include ../../../Build/buildsys.mk
 

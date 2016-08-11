@@ -6,7 +6,11 @@
 where-am-i = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 MAKEFILE := $(call where-am-i)
 
-TARGET_TYPE?=statlib
+ifdef SHARED
+TARGET_TYPE=dynlib
+else
+TARGET_TYPE=statlib
+endif
 ARCH?=$(shell arch)
 
 
