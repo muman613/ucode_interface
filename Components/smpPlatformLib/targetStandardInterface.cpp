@@ -11,6 +11,7 @@
 #include "video_utils.h"
 #include "struct_utils.h"
 #include "gbus_fifo_eraser.h"
+#include "gbus_packet_fifo.h"
 
 #ifdef _DEBUG
 #define LOCALDBG    ENABLE
@@ -197,6 +198,15 @@ RMstatus targetStandardInterface::open_video_decoder()
             pIF->get_gbusptr()->gbus_write_uint32( inband_params_address + (4*i), 0);
         }
     }
+
+    video_set_inband_param_addr(pIF, pvtdb, inband_params_address);
+
+    err = video_get_display_fifo(pIF, pvtdb, &display_fifo);
+
+    dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM, (sizeof(RMuint32) * (NumOfPictures + 1)));
+
+    //gbus_entry_fifo_open(pContext->pgbus, unprotected_ptr, pContext->NumOfPictures + 1, pContext->display_fifo);
+    gbus_entry_fifo_open( pIF->get_gbusptr(), dramPtr, (NumOfPictures + 1), display_fifo );
 
 #if 0
 #if (RMFEATURE_VIDEO_INTERFACE_VERSION==2)

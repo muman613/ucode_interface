@@ -547,4 +547,53 @@ RMstatus video_open_inband_fifo(
 	return RM_OK;
 }
 
+/**
+ *
+ */
+
+RMstatus video_set_inband_param_addr(
+    controlInterface* pIF,
+    RMuint32 pvtdb,
+    RMuint32 inband_param_addr)
+{
+try {
+    RMuint32 gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                     pvtdb,
+                                                     "video_task_data_base",
+                                                     "Inband_Params_Address");
+
+    pIF->get_gbusptr()->gbus_write_uint32( gbusAddr, inband_param_addr );
+
+    return RM_OK;
+}
+catch (std::runtime_error& err) {
+    RMDBGLOG((LOCALDBG, "ERROR: video_set_inband_param_addr() failed!\n"));
+    return RM_ERROR;
+}
+}
+
+/* get display data fifo container */
+RMstatus video_get_display_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 *display_fifo)
+{
+try {
+    RMuint32 gbusAddr = 0;
+
+    gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                            pvtdb,
+                                            "video_task_data_base",
+                                            "display_fifo");
+	*display_fifo = gbusAddr;
+	RMDBGLOG((LOCALDBG, "video_get_display_fifo = %lx\n", *display_fifo));
+
+	return RM_OK;
+}
+catch (std::runtime_error& err) {
+    RMDBGLOG((LOCALDBG, "ERROR: video_get_display_fifo() failed!\n"));
+    return RM_ERROR;
+}
+}
+
 }

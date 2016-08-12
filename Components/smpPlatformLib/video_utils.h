@@ -82,6 +82,17 @@ RMstatus video_open_inband_fifo(
 	RMuint32 pvtdb,
 	RMuint32 start,
 	RMuint32 size);
+
+RMstatus video_set_inband_param_addr(
+    controlInterface* pIF,
+    RMuint32 pvtdb,
+    RMuint32 inband_param_addr);
+
+RMstatus video_get_display_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 *display_fifo);
+
 }
 
 
