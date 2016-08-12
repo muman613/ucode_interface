@@ -468,7 +468,7 @@ static void do_stop_engine(CONTEXT_PTR pContext) {
     RMuint32    reset_control_reg = 0L;
 
     assert(pContext != 0L);
-    reset_control_reg = pContext->memBaseAddress + pContext->reset_control;
+    reset_control_reg = pContext->regBaseAddress + pContext->reset_control;
 
 #ifndef ENABLE_CURSES
     printf("Stopping DSP engine %ld...\n", (RMuint32)0);
@@ -494,7 +494,7 @@ static void do_start_engine(CONTEXT_PTR pContext) {
     RMuint32    reset_control_reg = 0L;
 
     assert(pContext != 0L);
-    reset_control_reg = pContext->memBaseAddress + pContext->reset_control;
+    reset_control_reg = pContext->regBaseAddress + pContext->reset_control;
 
 #ifndef ENABLE_CURSES
     printf("Starting DSP engine %ld...\n", (RMuint32)0);

@@ -540,6 +540,8 @@ static RMstatus init_video_engine (CONTEXT* pContext)
     RMuint32 memBase = pContext->memBaseAddress;
     RMuint32 Address, Size;
 
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
     video_get_scheduler_memory(pContext->pgbus, memBase, &Address, &Size);
 
     if ((Address == 0) && Size) {
@@ -643,6 +645,8 @@ static RMstatus open_video_decoder (CONTEXT* pContext)
     video_open_inband_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->InbandFIFOCount);
     unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandCommand);
     pContext->inband_params_address = unprotected_ptr;
+    RMDBGLOG((LOCALDBG, "inband_params_address = %08X\n", pContext->inband_params_address));
+
     unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandParams);
     /* allocate and clear inband_params */
     {
