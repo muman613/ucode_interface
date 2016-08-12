@@ -390,7 +390,7 @@ static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
         /* open file */
         ifp = fopen(szBinName, "r");
         if (ifp) {
-            fread(pBinData, 1, binSize, ifp);
+            size_t bytesread __attribute__((unused)) = fread(pBinData, 1, binSize, ifp);
 
             ucode_get_microcode_size(pBinData, binSize, &dram_low_offset, &dram_high_offset);
 
@@ -1104,10 +1104,10 @@ static RMstatus process_picture(CONTEXT* ctx, RMuint32 picture_address)
             char sYFname[128], sUVFname[128];
             FILE *yFP = 0, *uvFP = 0;
 
-            RMDBGLOG((LOCALDBG, "Saving frame %ld .Y & .UV to /tmp/\n", frame_count));
+            RMDBGLOG((LOCALDBG, "Saving frame %ld .Y & .UV to /tmp/\n", (long int)frame_count));
 
-            snprintf(sYFname, 128, "/tmp/frame%03ld-tiled.Y", frame_count);
-            snprintf(sUVFname, 128, "/tmp/frame%03ld-tiled.UV", frame_count);
+            snprintf(sYFname, 128, "/tmp/frame%03ld-tiled.Y", (long int)frame_count);
+            snprintf(sUVFname, 128, "/tmp/frame%03ld-tiled.UV", (long int)frame_count);
 
             yFP = fopen(sYFname, "wb");
             uvFP = fopen(sUVFname, "wb");

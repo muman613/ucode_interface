@@ -69,7 +69,7 @@ struct llad *llad_open(RMascii *device)
 	    (uid != (RMuint32) getuid())) {
 		free(pllad->hostname);
  		free(pllad);
-		fprintf(stderr, "network/" __FILE__ ": Connection refused, locked by user %lu\n", uid);
+		fprintf(stderr, "network/" __FILE__ ": Connection refused, locked by user %lu\n", (unsigned long)uid);
 		return NULL;
 	}
 
@@ -91,7 +91,7 @@ void llad_get_config(struct llad *h, RMascii* config_name, RMuint32 config_size)
 
 #ifndef WITH_DISPLAY_C_SIMULATION
 	RMuint32 length;
-	snprintf(config_name, config_size, "%s:%lu <> ", h->hostname, h->device);
+	snprintf(config_name, config_size, "%s:%lu <> ", h->hostname, (unsigned long)h->device);
 
 	length = strlen(config_name);
 	config_name += length;
