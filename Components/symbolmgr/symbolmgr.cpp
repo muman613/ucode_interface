@@ -94,7 +94,7 @@ bool UcodeSymbolMgr::LoadMicrocodeSymbolsFromH(const STRING sLabelHeader,
     char                    symbol_name[MAX_SYMBOL_LEN];
     STRING                  sFoundPath;
 
-    D(debug("probePaneMgr::LoadMicrocodeSymbolsFromH(%s) pmOffset 0x%08lx\n",
+    D(debug("%s(%s) pmOffset 0x%08lx\n", __PRETTY_FUNCTION__,
             sLabelHeader.c_str(), memBase));
 
 //    assert(szLabelHeader != 0);
