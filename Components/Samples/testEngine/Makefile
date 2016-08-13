@@ -32,7 +32,7 @@ LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)
 LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
 INCLUDES=-I../.. -I../../..
 CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) $(PLATLIB_CFLAGS) -std=c++11
-LIBS=$(PLATLIB_LIBS) $(LIBXML_LIBS)
+LIBS=$(PLATLIB_LIBS) $(LIBXML_LIBS) -lpthread
 
 else	# SHARED
 TARGET_EXE=testEngine
@@ -40,7 +40,7 @@ TARGET_EXE=testEngine
 ifdef DEBUG
 PLATLIB_LIBS=../../libs/Linux/$(ARCH)/libsmpplatform_d.a
 PLATDB_LIBS=../../libs/Linux/$(ARCH)/libplatformdb2_d.a
-RCLIENT_LIBS=../../libs/Linux/$(ARCH)/libremote_d.a -lpthread
+RCLIENT_LIBS=../../libs/Linux/$(ARCH)/libremote_d.a
 GBUSFIFO_LIBS=../../libs/Linux/$(ARCH)/libgbusfifo_d.a 
 SYMMGR_LIBS=../../libs/Linux/$(ARCH)/libsymbolmgr_d.a -lpthread
 STRUCT_LIBS=../../libs/Linux/$(ARCH)/libstructcontrol_d.a
@@ -69,9 +69,9 @@ LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
 
 INCLUDES=-I../.. -I../../.. $(PLATLIB_CFLAGS) $(GBUSFIFO_CFLAGS)
 
-CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) $(TRE_CFLAGS) -std=c++11
+CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) -std=c++11
 LIBS=$(PLATLIB_LIBS) $(PLATDB_LIBS) $(RCLIENT_LIBS) $(SYMMGR_LIBS)				\
-     $(STRUCT_LIBS) $(RESOLV_LIBS) $(LIBXML_LIBS) $(GBUSFIFO_LIBS) $(TRE_LIBS)
+     $(STRUCT_LIBS) $(RESOLV_LIBS) $(LIBXML_LIBS) $(GBUSFIFO_LIBS) -lpthread
 
 endif	# SHARED
 

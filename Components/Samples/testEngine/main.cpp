@@ -68,9 +68,12 @@ int main(int argc, char * argv[])
                 TARGET_STD_IF pStdIF;
 
                 pStdIF = std::make_shared<targetStandardInterface>(pTarget);
-
-                pStdIF->init_video_engine();
-                pStdIF->open_video_decoder();
+                if (pStdIF) {
+                    pStdIF->play_stream("/media/elementary/mpeg2/test100.m2v",
+                                        "/tmp/capture.yuv");
+                }
+//                pStdIF->init_video_engine();
+//                pStdIF->open_video_decoder();
             }
 
 //            pTarget->test_function();
