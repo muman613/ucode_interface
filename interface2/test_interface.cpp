@@ -63,6 +63,8 @@ struct profileEntry profileTable[] = {
     { "h264",   VideoProfileH264, },
     { "h265",   VideoProfileH265, },
     { "hevc",   VideoProfileH265, },
+    { "divx",   VideoProfileDIVX3, },
+    { "spu",    VideoProfileDVDSpu, },
     { 0L, 0, },
 };
 
@@ -252,20 +254,18 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
         }
 
         pCtx->sChip     = sChipID;
+
 #ifdef ENABLE_CURSES
         pCtx->pUIContext->szChip = pCtx->sChip.c_str(); //getenv("EM8XXX_SERVER");
 #endif // ENABLE_CURSES
-        pCtx->serverStr = getenv("EM8XXX_SERVER");
-
-        if (pCtx->serverStr.empty()) {
-            fprintf(stderr, "EM8XXX_SERVER environment is not defined!\n");
-            result = RM_ERROR;
-        } else {
+        if (get_environment_string("EM8XXX_SERVER", pCtx->serverStr)) {
 #ifdef ENABLE_CURSES
-            pCtx->pUIContext->szConn = pCtx->serverStr.c_str(); //getenv("EM8XXX_SERVER");
+            pCtx->pUIContext->szConn = pCtx->serverStr.c_str();
 #endif // ENABLE_CURSES
+        } else {
+            result = RM_ERROR;
+            fprintf(stderr, "Environment variable EM8XXX_SERVER must be set!\n");
         }
-
     }
 
 exitParse:

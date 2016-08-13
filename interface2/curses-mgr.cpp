@@ -309,7 +309,7 @@ int update_user_interface(UI_CONTEXT* pCtx)
         if ((pCtx->flags & FLAG_QUIT_IN_PROGRESS) == 0) {
 
             if ((pCtx->flags & FLAG_SAVING_YUV) != 0) {
-                sMsg = "Hit 'v' to view / Hit 'q' to quit";
+                sMsg = "Hit 'v' to view YUV/ Hit 'q' to quit";
             } else {
                 sMsg = "Hit 'q' to quit";
             }
