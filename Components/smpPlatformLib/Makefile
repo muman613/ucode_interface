@@ -27,7 +27,8 @@ CPP_SOURCES = 	targetAllocator.cpp												\
 				ucode_utils.cpp													\
 				video_utils.cpp													\
 				string_utils.cpp												\
-				struct_utils.cpp
+				struct_utils.cpp												\
+				file_utils.cpp
 
 INCLUDES=-I../.. -I.. -I ../gbusfifolib
 DEFINES=-DRMFEATURE_VIDEO_INTERFACE_VERSION=2

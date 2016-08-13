@@ -3,15 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
+#include <unistd.h>
 #define ALLOW_OS_CODE
 #include "targetEngine.h"
 #include "targetInterfaceBase.h"
 #include "targetStandardInterface.h"
 #include "video_utils.h"
 #include "struct_utils.h"
+#include "gbus_fifo.h"
 #include "gbus_fifo_eraser.h"
 #include "gbus_packet_fifo.h"
+#include "file_utils.h"
 
 #ifdef _DEBUG
 #define LOCALDBG    ENABLE
@@ -21,12 +23,21 @@
 
 using namespace video_utils;
 
+typedef std::lock_guard<std::mutex>     mutex_guard;
+
 /**
  *  Object represents the standard microcode interface.
  */
 
 targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
-:   targetInterfaceBase(pEngine)
+:   targetInterfaceBase(pEngine),
+    pChroma(nullptr),
+    pLuma(nullptr),
+    yuvfp(nullptr),
+    total_frames(0),
+    fifoFillRunning(false),
+    fifoEmptyRunning(false),
+    terminateThreads(false)
 {
     RMuint32 offset = 0;
     // ctor
@@ -47,6 +58,39 @@ targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
 targetStandardInterface::~targetStandardInterface()
 {
     // dtor
+    stop_threads();
+}
+
+
+/**
+ *  Play the stream...
+ */
+
+bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
+                                          const std::string& sOutputYUVName)
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    bool        bRes = false;
+
+    RMDBGLOG((LOCALDBG, "%s(%s, %s)\n", __PRETTY_FUNCTION__,
+              sInputStreamName.c_str(), sOutputYUVName.c_str()));
+
+    if (file_utils::file_exists(sInputStreamName) &&
+        file_utils::can_write_file(sOutputYUVName))
+    {
+        /* copy the names into the class storage. */
+        inputStreamName = sInputStreamName;
+        outputYUVName   = sOutputYUVName;
+
+        init_video_engine();
+        open_video_decoder();
+
+        launch_threads();
+    } else {
+        RMDBGLOG((LOCALDBG, "-- input/output error!\n"));
+    }
+
+    return bRes;
 }
 
 /**
@@ -67,21 +111,15 @@ void targetStandardInterface::init_parameters()
     storage_format              = 0;
     luma_nb_comp_per_sample     = 1;
     chroma_nb_comp_per_sample   = 2;
+    decoderProfile              = VideoProfileMPEG2;
 
     set_tile_dimensions( m_pEngine[0]->get_engine()->get_parent()->get_parent()->get_chip_id() );
 
     //m_pAlloc[0]->set_tile_dimensions( )
 }
 
-//void targetStandardInterface::test_function()
-//{
-//    GBUS_PTR pGbus = m_pEngine[0]->get_gbusptr();
-//
-//    pGbus->gbus_write_uint32(0x100000, 0xdeadbeef);
-//}
-
 /**
- *
+ *  Initialize the video decoder...
  */
 
 RMstatus targetStandardInterface::init_video_engine()
@@ -131,7 +169,7 @@ RMstatus targetStandardInterface::open_video_decoder()
     RMuint32                nStructSize = 0L;
     controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     RMuint32                i           = 0;
-    RMstatus 		        err         = RM_OK;
+    RMstatus 		        err __attribute__ ((unused))         = RM_OK;
     RMuint32                dramPtr     = 0;
     RMuint32                video_bts_fifo,
                             video_pts_fifo;
@@ -207,6 +245,12 @@ RMstatus targetStandardInterface::open_video_decoder()
 
     //gbus_entry_fifo_open(pContext->pgbus, unprotected_ptr, pContext->NumOfPictures + 1, pContext->display_fifo);
     gbus_entry_fifo_open( pIF->get_gbusptr(), dramPtr, (NumOfPictures + 1), display_fifo );
+
+        //clear the pointers to picture buffers
+    for ( i =0; i < NumOfPictures + 1; i++)
+    {
+        pIF->get_gbusptr()->gbus_write_uint32(dramPtr + (4* i), 0);
+    }
 
 #if 0
 #if (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
@@ -284,6 +328,278 @@ void targetStandardInterface::set_tile_dimensions(RMuint32 tsw, RMuint32 tsh)
     m_pAlloc[0]->set_tile_size( tsw, tsh );
 
     return;
+}
+
+#ifdef USE_PTHREADS
+/**
+ *  Stub for the fifo fill thread.
+ */
+
+void* targetStandardInterface::_fifoFillThreadFunc(targetStandardInterface* pThis)
+{
+    return pThis->fifoFillThreadFunc();
+}
+
+/**
+ *  Stub for the fifo empty thread.
+ */
+
+void* targetStandardInterface::_fifoEmptyThreadFunc(targetStandardInterface* pThis)
+{
+    return pThis->fifoEmptyThreadFunc();
+}
+
+#endif // USE_PTHREADS
+
+/**
+ *  Launch the background threads, use std::thread unless USE_PTHREADS is defined.
+ */
+
+bool targetStandardInterface::launch_threads()
+{
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+#ifdef USE_PTHREADS
+    if (pthread_create(&fifoFillThread, NULL, _fifoFillThreadFunc, this) != 0) {
+        RMDBGLOG((LOCALDBG, "Unable to start fifoFillThread!\n"));
+        return false;
+    } else {
+        if (pthread_create(&fifoEmptyThread, NULL, _fifoEmptyThreadFunc) != 0) {
+            RMDBGLOG((LOCALDBG, "Unable to start fifoEmptyThread!\n"));
+            pthread_cancel(fifoFillThread);
+            return false;
+        }
+    }
+#else
+
+    fifoFillThread  = std::thread( &targetStandardInterface::fifoFillThreadFunc, this );
+    fifoEmptyThread = std::thread( &targetStandardInterface::fifoEmptyThreadFunc, this );
+
+#endif // USE_PTHREADS
+
+    /* Wait for both threads to enter running state */
+    while ((fifoFillRunning == false) || (fifoEmptyRunning == false)) {
+        usleep(50);
+    }
+
+    RMDBGLOG((LOCALDBG, "-- threads running!\n"));
+
+    return true;
+}
+
+void targetStandardInterface::stop_threads()
+{
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    terminateThreads = true;
+
+    fifoFillThread.join();
+    fifoEmptyThread.join();
+
+    return;
+}
+
+/**
+ *  Thread responsible for filling the bitstream FIFO.
+ */
+
+void* targetStandardInterface::fifoFillThreadFunc()
+{
+    FILE*           ifp                 = nullptr;
+    unsigned char   Buffer[XFER_BUFFERSIZE];
+    RMuint32        bytesRead           = 0L,
+                    sizeLeft            = 0L;
+    unsigned char*  pBuffer             = nullptr;
+
+    fifoFillRunning = true;
+
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    /* Open the input stream */
+    if ((ifp = fopen(inputStreamName.c_str(), "r")) != 0) {
+
+        while (!feof(ifp)) {
+            bytesRead = fread(Buffer, 1, XFER_BUFFERSIZE, ifp);
+            sizeLeft  = bytesRead;
+            pBuffer   = Buffer;
+
+            while (sizeLeft && (terminateThreads == false)) {
+//                RMuint32 sizeToRead = sizeLeft;
+
+                sizeLeft = write_data_in_circular_bts_fifo( pBuffer, sizeLeft );
+
+//                fprintf(stderr, "sizeLeft = %ld sizeToRead = %ld\n", sizeLeft, sizeToRead);
+
+                if (sizeLeft==0)
+                    break;
+            }
+
+            if (terminateThreads == true) {
+                RMDBGLOG((LOCALDBG, "-- Terminating fifoFillThread thread!\n"));
+                break;
+            }
+
+            usleep(50000);
+        }
+
+        fclose(ifp);
+
+//      printf("%s: EndOfFile %s\n", __FUNCTION__, ctx->szStrFilename);
+
+    } else {
+        RMDBGLOG((LOCALDBG, "ERROR: Unable to open input stream!\n"));
+    }
+
+    RMDBGLOG((LOCALDBG, "-- exiting fifoFillThread()\n"));
+    fifoFillRunning = false;
+
+    return (void*)nullptr;
+}
+
+/**
+ *  Thread responsible for emptying the display FIFO.
+ */
+
+void* targetStandardInterface::fifoEmptyThreadFunc()
+{
+    controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+    RMuint32                rd          = 0,
+                            wr          = 0,
+                            fifo_base   = 0,
+                            fifo_size   = 0;
+    RMuint32                entry_size  = 4; // address for the picture info
+    RMuint32                size        = 0,
+                            picture_address = 0;
+
+    fifoEmptyRunning = true;
+
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    if ((yuvfp = fopen(outputYUVName.c_str(), "w")) != nullptr) {
+        while (terminateThreads == false) {
+            gbus_fifo_get_pointer(pIF->get_gbusptr(), (struct gbus_fifo*)display_fifo,
+                                  &fifo_base, &fifo_size, &rd, &wr);
+
+            if ( wr >= rd ){
+                /* fullness in one chunck */
+                size = wr - rd;
+            } else if (wr != rd) {
+                /* fullness in two chuncks because of circular fifo. */
+                size = fifo_size - rd + wr;
+            }
+
+            while (size && (terminateThreads == false)) {
+                picture_address = pIF->get_gbusptr()->gbus_read_uint32( fifo_base + (rd*entry_size) );
+
+            //    process_picture( picture_address );
+
+                // advance read pointer
+                rd = (rd + 1) % fifo_size;
+                size--;
+                // release pictures
+    //            pIF->get_gbusptr()->gbus_write_uint32((RMuint32) &(((struct VideoMicrocodePicture *)picture_address)->picture_display_status), 0);
+                struct_utils::write_structure_member(pIF, picture_address, "VideoMicrocodePicture", "picture_display_status", 0);
+                total_frames++;
+
+                // update FIFO read pointer
+                //pIF->get_gbusptr()->gbus_write_uint32((RMuint32) &(fifo->rd), rd);
+                gbus_fifo_incr_read_ptr(pIF->get_gbusptr(), (struct gbus_fifo*)display_fifo, 1);
+            }
+
+            usleep(50000);
+        }
+
+        fclose(yuvfp);
+        yuvfp = nullptr;
+    } else {
+        RMDBGLOG((LOCALDBG, "ERROR: Unable to open output YUV file!\n"));
+    }
+
+    RMDBGLOG((LOCALDBG, "-- exiting fifoEmptyThread()\n"));
+
+    fifoEmptyRunning = false;
+
+    return (void*)nullptr;
+}
+
+/**
+ *  Write data into the bitstream FIFO.
+ *
+ *  Function to write data into a circular FIFO including wrap-around condition.
+ */
+
+RMuint32 targetStandardInterface::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
+                                                                  RMuint32 sizeToSend)
+{
+#if 1
+    RMDBGLOG((LOCALDBG, "%s(%p, %d)\n", __PRETTY_FUNCTION__, pBuf, sizeToSend));
+    return 0;
+#else
+    struct gbus*        pgbus = ctx->pgbus;
+	struct gbus_fifo*   fifo;
+	RMuint32            rd, wr, fifo_base, fifo_size;
+	RMuint32            size, sizeLeft;
+
+	fifo = (struct gbus_fifo *)ctx->bts_fifo;
+	fifo_base = gbus_read_uint32(pgbus, (RMuint32) &(fifo->base));
+	fifo_size = gbus_read_uint32(pgbus, (RMuint32) &(fifo->size));
+	rd = gbus_read_uint32(pgbus, (RMuint32) &(fifo->rd));
+	wr = gbus_read_uint32(pgbus, (RMuint32) &(fifo->wr));
+
+#ifdef ENABLE_CURSES
+    lock_context( (UI_CONTEXT*)ctx->pUIContext );
+
+    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoCont, (RMuint32)fifo );
+    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoPtr, fifo_base);
+    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoSize, fifo_size);
+    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoRdPtr, rd);
+    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoWrPtr, wr);
+
+    unlock_context( ctx->pUIContext );
+#else
+    printf("FIFO @ 0x%08lX START 0x%08lX SIZE 0x%08lX RD = 0x%08lX WR = 0x%08lX\n",
+            (unsigned long)fifo, fifo_base, fifo_size, rd, wr);
+    fflush(stdout);
+#endif // ENABLE_CURSES
+
+	if ( rd > wr ) {
+		/* emptiness in one chunk */
+		RMuint32 empty;
+		empty = rd - wr - 1;
+		if (empty < sizeToSend)
+			return sizeToSend;
+
+		gbus_write_data8(pgbus, fifo_base + wr, pBuf, sizeToSend);
+	}
+	else { // rd <= wr
+		/* emptiness in two chunks because of circular fifo. */
+		RMuint32 empty;
+		empty = fifo_size - wr + rd - 1;
+		if (empty < sizeToSend)
+			return sizeToSend;
+		//first chunk
+		size = RMmin(fifo_size - wr, sizeToSend);
+		gbus_write_data8(pgbus, fifo_base + wr, pBuf, size);
+
+		//second chunk
+		sizeLeft = sizeToSend - size;
+		if (sizeLeft)
+			gbus_write_data8(pgbus, fifo_base, pBuf+size, sizeLeft);
+	}
+	sizeLeft = 0;
+	wr = (wr + sizeToSend) % fifo_size;
+	gbus_write_uint32(pgbus, (RMuint32) &(fifo->wr), wr);
+
+#ifndef ENABLE_CURSES
+#ifdef BTS_FIFO_DEBUG
+	printf("%s %s: fifo=%p st=0x%08lx sz=0x%08lx rd=0x%08lx wr=0x%08lx bc=0x%08lx toSend=0x%lx left=0x%lx\n",
+		__FUNCTION__, send_data ?"play":"pause", fifo, fifo_base, fifo_size, rd, wr, pCtx->dt_byte_counter, sizeToSend, sizeLeft);
+    fflush(stdout);
+#endif // BTS_FIFO_DEBUG
+#endif // ENABLE_CURSES
+
+    return sizeLeft;
+#endif // 1
 }
 
 #if 0

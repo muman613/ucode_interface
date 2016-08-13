@@ -6,6 +6,10 @@ using namespace std;
 
 namespace string_utils {
 
+    /**
+     *  Split a string apart by delimeter returning an array of strings.
+     */
+
     bool split(std::string sMembers,
                const char sDelim,
                std::vector<std::string>& sVec)
@@ -16,9 +20,9 @@ namespace string_utils {
         sregex_token_iterator reg_end;
 
         for (; it != reg_end; ++it) {
-             std::cout << it->str() << std::endl;
              sVec.push_back ( *it );
         }
+
         return (sVec.size() > 0)?true:false;
     }
 }

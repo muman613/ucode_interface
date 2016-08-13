@@ -49,6 +49,8 @@
 			<Add directory=".." />
 			<Add directory="../gbusfifolib" />
 		</Compiler>
+		<Unit filename="file_utils.cpp" />
+		<Unit filename="file_utils.h" />
 		<Unit filename="string_utils.cpp" />
 		<Unit filename="string_utils.h" />
 		<Unit filename="struct_utils.cpp" />
