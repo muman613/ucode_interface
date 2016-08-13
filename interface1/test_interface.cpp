@@ -61,6 +61,8 @@ struct profileEntry profileTable[] = {
     { "h264",   VideoProfileH264, },
     { "h265",   VideoProfileH265, },
     { "hevc",   VideoProfileH265, },
+    { "divx",   VideoProfileDIVX3, },
+    { "spu",    VideoProfileDVDSpu, },
     { 0L, 0, },
 };
 
