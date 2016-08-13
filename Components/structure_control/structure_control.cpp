@@ -614,9 +614,11 @@ bool structure_database::parse_file(const char* filename) {
 				continue;
 			}
 
-            fprintf(stderr, "%d : %s\n", lineNo, lineptr);
-
             flags = peek_state(&pConstruct);
+
+#ifdef  _EXPANDED_DEBUG
+            fprintf(stderr, "%d|%02x|%08x : %s", lineNo, flags, (unsigned int)pConstruct, lineptr);
+#endif
 
             if (flags == FLAGS_NONE) {
 
@@ -626,7 +628,7 @@ bool structure_database::parse_file(const char* filename) {
                     structure_definition*	pStruct = nullptr;
                     std::string             struct_name = matches[1].str();
 
-                    fprintf(stderr, "Found struct %s\n", struct_name.c_str());
+                    D(debug("START STRUCT %s\n", struct_name.c_str()));
 
                     if (get_structure((const char*)struct_name.c_str()) == 0) {
                         pStruct = new_structure((const char*)struct_name.c_str());
@@ -639,7 +641,7 @@ bool structure_database::parse_file(const char* filename) {
                     union_definition*	    pUnion = nullptr;
                     std::string             union_name = matches[1].str();
 
-                    fprintf(stderr, "Found union %s\n", union_name.c_str());
+                    D(debug("START UNION %s\n", union_name.c_str()));
 
                     if (get_union((const char*)union_name.c_str()) == 0) {
                         pUnion = new_union((const char*)union_name.c_str());
@@ -656,24 +658,17 @@ bool structure_database::parse_file(const char* filename) {
                 FLAG_ISSET(flags, FLAGS_IN_UNION) ||
                 FLAG_ISSET(flags, FLAGS_IN_UNNAMEDUNION))
             {
-                fprintf(stderr, "--- waiting for end of struct/union ---\n");
-                //char	member_type[1024], member_name[1024], member_index[1024];
                 std::string member_type, member_name, member_index;
-//                D(debug("B\n"));
 
                 if (std::regex_match(lineptr, matches, exp_endstruct)) {
-//                if (regexec(&exp_endstruct, lineptr, 0, NULL, 0) == 0) {
-                    fprintf(stderr, "-- end of structure or union!\n");
+                    D(debug("-- end of structure or union!\n"));
                     pop_state();
                 } else if ((FLAG_ISSET(flags, FLAGS_IN_UNNAMEDSTRUCT) || FLAG_ISSET(flags, FLAGS_IN_UNNAMEDUNION))
                          && std::regex_match(lineptr, matches, exp_end_unnamed_struct))
                 {
                     int nextFlag;
                     structure_definition *unnamed_struct_def = nullptr; //, *struct_def = 0;
-//                    size_t    len = matches[1].rm_eo - matches[1].rm_so;
-//
-//                    member_name[len] = 0;
-//                    strncpy(member_name, lineptr + matches[1].rm_so, len);
+
                     member_name = matches[1].str();
 
                     pop_state(0, (void**)&unnamed_struct_def);
