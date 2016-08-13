@@ -11,11 +11,19 @@
 #include "rmdef/rmmacros_c.h"
 #include "llad_protocol.h"
 
+#if defined(_DEBUG) && defined(GBUS_LOGGER)
+#define ENABLE_GBUS_LOGGER
+#endif // defined
+
 #if 0
 #define LOCALDBG     ENABLE
 #else
 #define LOCALDBG     DISABLE
 #endif // 0
+
+#ifdef ENABLE_GBUS_LOGGER
+static FILE* gbusLogFp = nullptr;
+#endif // ENABLE_GBUS_LOGGER
 
 using namespace rc_sockets;
 
@@ -29,6 +37,10 @@ gbus::gbus()
     sd(0)
 {
     // ctor
+#ifdef ENABLE_GBUS_LOGGER
+    gbusLogFp = fopen("/tmp/gbuslog_te.txt", "w");
+    fprintf(gbusLogFp, "gbus_open()\n");
+#endif // ENABLE_GBUS_LOGGER
 }
 
 /**
@@ -40,6 +52,10 @@ gbus::gbus(LLAD_PTR llad)
     pLlad(0),
     sd(0)
 {
+#ifdef ENABLE_GBUS_LOGGER
+    gbusLogFp = fopen("/tmp/gbuslog_te.txt", "w");
+//  fprintf(gbusLogFp, "gbus_open()\n");
+#endif // ENABLE_GBUS_LOGGER
     valid = open(llad);
 }
 
@@ -51,6 +67,11 @@ gbus::~gbus()
 {
     // dtor
     close();
+#ifdef ENABLE_GBUS_LOGGER
+//  fprintf(gbusLogFp, "gbus_close()\n");
+    fclose(gbusLogFp);
+    gbusLogFp = 0L;
+#endif // ENABLE_GBUS_LOGGER
 }
 
 /**
@@ -68,17 +89,14 @@ const LLAD_PTR  gbus::get_llad()
 }
 
 /**
- *
+ *  Open connection to remote gbus server.
  */
 
 bool gbus::open(LLAD_PTR llad)
 {
 	RMuint16 port = 0;
 
-#ifdef  _DEBUG
-    fprintf(stderr, "%s(%p)\n", __PRETTY_FUNCTION__, llad.get());
-#endif // _DEBUG
-
+    RMDBGLOG((LOCALDBG, "%s(%p)\n", __PRETTY_FUNCTION__, llad.get()));
 
     pLlad = llad;
 
@@ -96,20 +114,26 @@ bool gbus::open(LLAD_PTR llad)
 
 	sock_write_uint32(sd, SOCK_GBUS_SERVICE);
 
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_open()\n");
+#endif // ENABLE_GBUS_LOGGER
+
 	valid = true;
 
     return valid;
 }
 
 /**
- *
+ *  Close the gbus connection.
  */
 
 void gbus::close()
 {
-#ifdef  _DEBUG
-    fprintf(stderr, "%s()\n", __PRETTY_FUNCTION__);
-#endif // _DEBUG
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_close()\n");
+#endif // ENABLE_GBUS_LOGGER
 
     if (valid == true) {
 		sock_close(sd);
@@ -123,7 +147,7 @@ void gbus::close()
 }
 
 /**
- *
+ *  Read 8-bit unsigned value from byte_address.
  */
 
 RMuint8 gbus::gbus_read_uint8(RMuint32 byte_address)
@@ -139,12 +163,16 @@ RMuint8 gbus::gbus_read_uint8(RMuint32 byte_address)
 
 	RMDBGLOG((LOCALDBG, "%s(0x%lx) = 0x%x\n", __PRETTY_FUNCTION__, byte_address, val));
 
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_read_uint8(0x%08X) = 0x%02X\n", byte_address, val);
+#endif // ENABLE_GBUS_LOGGER
+
 	pthread_mutex_unlock(&gbus_lock);
 	return (RMuint8) val;
 }
 
 /**
- *
+ *  Read 16-bit unsigned value from byte_address.
  */
 
 RMuint16 gbus::gbus_read_uint16(RMuint32 byte_address)
@@ -160,12 +188,16 @@ RMuint16 gbus::gbus_read_uint16(RMuint32 byte_address)
 
 	RMDBGLOG((LOCALDBG, "%s(0x%lx) = 0x%x\n", __PRETTY_FUNCTION__, byte_address, val));
 
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_read_uint16(0x%08X) = 0x%04X\n", byte_address, val);
+#endif // ENABLE_GBUS_LOGGER
+
 	pthread_mutex_unlock(&gbus_lock);
 	return (RMuint16) val;
 }
 
 /**
- *
+ *  Read 32-bit unsigned value from byte_address.
  */
 
 RMuint32 gbus::gbus_read_uint32(RMuint32 byte_address)
@@ -179,6 +211,10 @@ RMuint32 gbus::gbus_read_uint32(RMuint32 byte_address)
 		RMPanic(RM_ERROR);
 
 	RMDBGLOG((LOCALDBG, "%s(0x%lx) = 0x%x\n", __PRETTY_FUNCTION__, byte_address, val));
+
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_read_uint32(0x%08X) = 0x%08X\n", byte_address, val);
+#endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
 	return (RMuint32) val;
@@ -195,6 +231,10 @@ void gbus::gbus_write_uint8(RMuint32 byte_address, RMuint8 data)
 
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_UINT8, byte_address, data);
 
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_write_uint8(0x%08X, 0x%02x)\n", byte_address, data);
+#endif // ENABLE_GBUS_LOGGER
+
 	pthread_mutex_unlock(&gbus_lock);
 }
 
@@ -209,6 +249,10 @@ void gbus::gbus_write_uint16(RMuint32 byte_address, RMuint16 data)
 
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_UINT16, byte_address, data);
 
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_write_uint16(0x%08X, 0x%04x)\n", byte_address, data);
+#endif // ENABLE_GBUS_LOGGER
+
 	pthread_mutex_unlock(&gbus_lock);
 }
 
@@ -222,6 +266,10 @@ void gbus::gbus_write_uint32(RMuint32 byte_address, RMuint32 data)
 	RMDBGLOG((LOCALDBG, "%s(0x%lx, %lu=0x%lx)\n", __PRETTY_FUNCTION__, byte_address, data, data));
 
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_UINT32, byte_address, data);
+
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_write_uint32(0x%08X, 0x%08x)\n", byte_address, data);
+#endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
 }
@@ -238,6 +286,10 @@ void gbus::gbus_read_data8(RMuint32 byte_address, RMuint8 *data, RMuint32 count)
 	sock_write_3_uint32(sd, SOCK_GBUS_READ_DATA8, byte_address, count);
 	if (sock_read_buf(sd, (RMuint8 *) data, count * sizeof(RMuint8)) < (RMint32) (count * sizeof(RMuint8)))
 		RMPanic(RM_ERROR);
+
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_read_data8(0x%08X, %d)\n", byte_address, count);
+#endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
 }
@@ -260,6 +312,11 @@ void gbus::gbus_read_data16(RMuint32 byte_address, RMuint16 *data, RMuint32 coun
 	for (i=0 ; i<count ; i++) {
 		data[i] = RMbeBufToUint16((RMuint8 *) (data + i));
 	}
+
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_read_data16(0x%08X, %d)\n", byte_address, count);
+#endif // ENABLE_GBUS_LOGGER
+
 	pthread_mutex_unlock(&gbus_lock);
 }
 
@@ -298,6 +355,11 @@ void gbus::gbus_read_data32(RMuint32 byte_address, RMuint32 *data, RMuint32 coun
 	for (i=0 ; i<count ; i++) {
 		data[i] = RMbeBufToUint32((RMuint8 *) (data + i));
 	}
+
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_read_data32(0x%08X, %d)\n", byte_address, count);
+#endif // ENABLE_GBUS_LOGGER
+
 	pthread_mutex_unlock(&gbus_lock);
 }
 
@@ -313,6 +375,10 @@ void gbus::gbus_write_data8(RMuint32 byte_address, RMuint8 *data, RMuint32 count
 	sock_write_3_uint32(sd, SOCK_GBUS_WRITE_DATA8, byte_address, count);
 	if (sock_write_buf(sd, (RMuint8 *)data, count * sizeof(RMuint8)) < (RMint32) (count * sizeof(RMuint8)))
 		RMPanic(RM_ERROR);
+
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_write_data8(0x%08X, %d)\n", byte_address, count);
+#endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
 }
@@ -341,6 +407,10 @@ void gbus::gbus_write_data16(RMuint32 byte_address, RMuint16 *data, RMuint32 cou
 	for (i=0 ; i<count ; i++)
 		non_const_data[i] = RMbeBufToUint16((RMuint8 *) (non_const_data + i));
 
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_write_data16(0x%08X, %d)\n", byte_address, count);
+#endif // ENABLE_GBUS_LOGGER
+
 	pthread_mutex_unlock(&gbus_lock);
 }
 
@@ -367,6 +437,10 @@ void gbus::gbus_write_data32(RMuint32 byte_address, RMuint32 *data, RMuint32 cou
 
 	for (i=0 ; i<count ; i++)
 		non_const_data[i] = RMbeBufToUint32((RMuint8 *) (non_const_data + i));
+
+#ifdef ENABLE_GBUS_LOGGER
+    fprintf(gbusLogFp, "gbus_write_data32(0x%08X, %d)\n", byte_address, count);
+#endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
 }
