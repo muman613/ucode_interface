@@ -23,6 +23,7 @@ CPP_SOURCES = 	sc_lexer.cpp				\
 #LIBXML2_CFLAGS=$(shell xml2-config --cflags)
 #LIBXML2_LDFLAGS=$(shell xml2-config --libs)
 
+INCLUDES=-I../include
 CFLAGS=$(LIBXML2_CFLAGS) -std=c++11
 LDFLAGS=$(LIBXML2_LDFLAGS)
 
