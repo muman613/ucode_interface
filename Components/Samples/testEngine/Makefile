@@ -30,7 +30,7 @@ endif
 PLATLIB_CFLAGS=-I../../smpPlatformLib/
 LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)
 LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
-INCLUDES=-I../.. -I../../..
+INCLUDES=-I../.. -I../../.. -I ../../include
 CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) $(PLATLIB_CFLAGS) -std=c++11
 LIBS=$(PLATLIB_LIBS) $(LIBXML_LIBS) -lpthread
 
@@ -67,7 +67,7 @@ GBUSFIFO_CFLAGS=-I../../gbusfifolib/
 LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)
 LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
 
-INCLUDES=-I../.. -I../../.. $(PLATLIB_CFLAGS) $(GBUSFIFO_CFLAGS)
+INCLUDES=-I../.. -I../../.. -I ../../include $(PLATLIB_CFLAGS) $(GBUSFIFO_CFLAGS)
 
 CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) -std=c++11
 LIBS=$(PLATLIB_LIBS) $(PLATDB_LIBS) $(RCLIENT_LIBS) $(SYMMGR_LIBS)				\

@@ -114,7 +114,8 @@ public:
     virtual ~targetStandardInterface();
 
     bool                    play_stream(const std::string& sInputStreamName,
-                                        const std::string& sOutputYUVName);
+                                        const std::string& sOutputYUVName,
+                                        RMuint32 profile = VideoProfileMPEG2);
 protected:
     struct MicrocodeInbandParams {
         RMuint32 ref_cnt;
@@ -230,5 +231,8 @@ private:
 
 
 typedef std::shared_ptr<targetStandardInterface>    TARGET_STD_IF;
+
+#define CREATE_NEW_INTERFACE(engine)											\
+	std::make_shared<targetStandardInterface>( engine )
 
 #endif // __TARGET_STD_INTERFACE_H__

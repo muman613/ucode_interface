@@ -3,8 +3,33 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <getopt.h>
+#include "dbgutils.h"
 #include "targetEngine.h"
 #include "targetStandardInterface.h"
+
+////////////////////////////////////////////////////////////////////////////////
+//  optionPack stores options used by the test application.
+////////////////////////////////////////////////////////////////////////////////
+
+class optionPack {
+public:
+//    enum ucodeType {
+//        UCODE_RELEASE,
+//        UCODE_DEBUG,
+//    };
+    optionPack()
+    : engineNo(0),
+      type(targetEngine::UCODE_RELEASE)
+    {
+    }
+    std::string                 chipID;
+    std::string                 inputStream;
+    std::string                 outputYUV;
+    int                         engineNo;
+    targetEngine::ucodeType     type;
+
+};
 
 #ifdef _DEBUG
 void debug(const char* sFmt, ...) {
@@ -17,6 +42,10 @@ void debug(const char* sFmt, ...) {
 }
 #endif // _DEBUG
 
+
+/**
+ *  Display information about the target.
+ */
 
 void display_target_info(TARGET_ENGINE_PTR pEng)
 {
@@ -37,6 +66,63 @@ void display_target_info(TARGET_ENGINE_PTR pEng)
     }
 }
 
+/**
+ *  Parse commandline parameters.
+ */
+
+bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
+    bool            bRes =  false;
+    int             c, option_index = 0;
+    static struct option long_options[] = {
+        { "chip",   required_argument, 0, 'c', },
+        { "stream", required_argument, 0, 's', },
+        { "yuv",    optional_argument, 0, 'y', },
+        { "engine", optional_argument, 0, 'e', },
+        { "mode",   optional_argument, 0, 'm', },
+        { 0, 0, 0, 0, },
+    };
+
+    while ((c=getopt_long(argc, argv, "c:s:y:e:m:", long_options, &option_index)) != -1) {
+        switch (c) {
+        case 'c':
+            if (optarg != nullptr)
+                options.chipID = optarg;
+            break;
+        case 's':
+            if (optarg != nullptr)
+                options.inputStream = optarg;
+            break;
+        case 'y':
+            if (optarg != nullptr)
+                options.outputYUV = optarg;
+            break;
+        case 'e':
+            if (optarg != nullptr)
+                options.engineNo = atoi(optarg);
+            break;
+        case 'm':
+            {
+                std::string sMode;
+                if (optarg != nullptr) {
+                    sMode = optarg;
+
+                    if ((sMode == "d") || (sMode == "r")) {
+                        options.type = (sMode == "d")?targetEngine::UCODE_DEBUG:targetEngine::UCODE_RELEASE;
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    bRes = (!options.chipID.empty() && !options.inputStream.empty());
+
+    return bRes;
+}
+
+
 
 /**
  *  Main entry point
@@ -45,42 +131,55 @@ void display_target_info(TARGET_ENGINE_PTR pEng)
 int main(int argc, char * argv[])
 {
     TARGET_ENGINE_PTR   pTarget;
+    optionPack          opts;
 
-#ifdef _DEBUG
-    open_log_files("messages.txt", "errors.txt");
-#endif // _DEBUG
+    D(open_log_files("messages.txt", "errors.txt"));
 
-    pTarget = std::make_shared<targetEngine>("8758", "Video");
+    if (parse_cmdline_arguments( argc, argv, opts )) {
 
-    if (pTarget && pTarget->is_valid()) {
+////////////////////////////////////////////////////////////////////////////////
+//	Create the target engine, this time a 8758 Video engine.
+////////////////////////////////////////////////////////////////////////////////
 
-        std::cout << "Target is opened!" << std::endl;
+        pTarget = CREATE_NEW_ENGINE( opts.chipID, "Video",
+                                     opts.engineNo, opts.type );
+//      pTarget = std::make_shared<targetEngine>("8758", "Video");
 
-        if (pTarget->connect()) {
-            std::cout << "Target is connected!" << std::endl;
+        if (pTarget && pTarget->is_valid()) {
 
-            display_target_info( pTarget );
+            std::cout << "Target was created, attempting to connect!" << std::endl;
 
-            if (pTarget->load_ucode()) {
+            if (pTarget->connect()) {
+                std::cout << "Target is connected, loading microcode!" << std::endl;
 
-                std::cout << "Microcode loaded!" << std::endl;
+                display_target_info( pTarget );
 
-                TARGET_STD_IF pStdIF;
+                if (pTarget->load_ucode()) {
 
-                pStdIF = std::make_shared<targetStandardInterface>(pTarget);
-                if (pStdIF) {
-                    pStdIF->play_stream("/media/elementary/mpeg2/test100.m2v",
-                                        "/tmp/capture.yuv");
+                    std::cout << "Microcode loaded!" << std::endl;
+
+                    TARGET_STD_IF pStdIF;
+
+////////////////////////////////////////////////////////////////////////////////
+//	Create the interface object and pass it the engine to run on.
+////////////////////////////////////////////////////////////////////////////////
+
+                    pStdIF = CREATE_NEW_INTERFACE( pTarget );
+                    if (pStdIF) {
+                        std::cout << "Interface was creted, playing stream..." << std::endl;
+                        pStdIF->play_stream(opts.inputStream,
+                                            opts.outputYUV);
+                    }
                 }
-//                pStdIF->init_video_engine();
-//                pStdIF->open_video_decoder();
+            } else {
+                std::cout << "UNABLE TO CONNECT TO TARGET!" << std::endl;
             }
 
-//            pTarget->test_function();
+            pTarget.reset();
         }
-
-        pTarget.reset();
     }
+
+    D(debug("-- exiting test application!\n"));
 
     return 0;
 }

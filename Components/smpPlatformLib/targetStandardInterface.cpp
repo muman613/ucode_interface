@@ -67,7 +67,8 @@ targetStandardInterface::~targetStandardInterface()
  */
 
 bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
-                                          const std::string& sOutputYUVName)
+                                          const std::string& sOutputYUVName,
+                                          RMuint32 profile)
 {
     mutex_guard guard(contextMutex);    // obtain the context mutex...
     bool        bRes = false;
@@ -81,6 +82,7 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
         /* copy the names into the class storage. */
         inputStreamName = sInputStreamName;
         outputYUVName   = sOutputYUVName;
+        decoderProfile  = profile;
 
         init_video_engine();
         open_video_decoder();
@@ -292,7 +294,7 @@ static tileDef  chipTileSizes[] = {
 };
 
 /**
- *
+ *  Set tile dimensions by chip ID...
  */
 
 bool targetStandardInterface::set_tile_dimensions(std::string sChipId)
@@ -312,7 +314,7 @@ bool targetStandardInterface::set_tile_dimensions(std::string sChipId)
 }
 
 /**
- *
+ *  Set the tile dimensions tsw x tsh...
  */
 
 void targetStandardInterface::set_tile_dimensions(RMuint32 tsw, RMuint32 tsh)
@@ -360,6 +362,7 @@ bool targetStandardInterface::launch_threads()
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
 #ifdef USE_PTHREADS
+    RMDBGLOG((LOCALDBG, "-- using pthreads to launch threads...\n"));
     if (pthread_create(&fifoFillThread, NULL, _fifoFillThreadFunc, this) != 0) {
         RMDBGLOG((LOCALDBG, "Unable to start fifoFillThread!\n"));
         return false;
@@ -371,6 +374,7 @@ bool targetStandardInterface::launch_threads()
         }
     }
 #else
+    RMDBGLOG((LOCALDBG, "-- using c++11 std::thread to launch threads...\n"));
 
     fifoFillThread  = std::thread( &targetStandardInterface::fifoFillThreadFunc, this );
     fifoEmptyThread = std::thread( &targetStandardInterface::fifoEmptyThreadFunc, this );
@@ -386,6 +390,10 @@ bool targetStandardInterface::launch_threads()
 
     return true;
 }
+
+/**
+ *  Signal the background threads to terminate. Wait for the threads to exit...
+ */
 
 void targetStandardInterface::stop_threads()
 {

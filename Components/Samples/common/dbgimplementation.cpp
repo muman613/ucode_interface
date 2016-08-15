@@ -120,13 +120,17 @@ static char str[RMDBG_MAX_STRING];
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <pthread.h>
+
+static pthread_mutex_t dbgmutex = PTHREAD_MUTEX_INITIALIZER;
 
 #ifndef RMDBGLOG_implementation
 void RMDBGLOG_implementation(RMbool active,const RMascii *filename,RMint32 line,const RMascii *text,...)
 {
+    pthread_mutex_lock(&dbgmutex);
+
 	if (active && (verbose_stderr != 0)) {
 		va_list ap;
-
 		snprintf((char *)str,RMDBG_MAX_STRING,"[%s:%ld] ", (char *)filename, (long int)line);
 
 		va_start(ap, text);
@@ -137,12 +141,16 @@ void RMDBGLOG_implementation(RMbool active,const RMascii *filename,RMint32 line,
 		fprintf(NORMALMSG,"%s", str);
 		fflush(NORMALMSG);
 	}
+
+    pthread_mutex_unlock(&dbgmutex);
 }
 #endif // RMDBGLOG_implementation
 
 #ifndef RMDBGPRINT_implementation
 void RMDBGPRINT_implementation(RMbool active,const RMascii *filename,RMint32 line,const RMascii *text,...)
 {
+    pthread_mutex_lock(&dbgmutex);
+
 	if (active && (verbose_stderr != 0)) {
 		va_list ap;
 
@@ -151,6 +159,8 @@ void RMDBGPRINT_implementation(RMbool active,const RMascii *filename,RMint32 lin
 		va_end(ap);
 		fflush(NORMALMSG);
 	}
+
+    pthread_mutex_unlock(&dbgmutex);
 }
 #endif // RMDBGPRINT_implementation
 
