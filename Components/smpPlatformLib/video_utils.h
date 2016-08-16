@@ -93,6 +93,22 @@ RMstatus video_get_display_fifo(
 	RMuint32 pvtdb,
 	RMuint32 *display_fifo);
 
+RMstatus video_get_irq_info(
+	controlInterface* pIF,
+	RMuint32          pvti,
+	RMuint32*         pevent_table_pointer);
+
+RMstatus video_get_user_data_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 *fifo);
+
+RMstatus video_open_user_data_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size);
+
 }
 
 

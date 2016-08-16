@@ -578,22 +578,95 @@ RMstatus video_get_display_fifo(
 	RMuint32 pvtdb,
 	RMuint32 *display_fifo)
 {
-try {
-    RMuint32 gbusAddr = 0;
+    try {
+        RMuint32 gbusAddr = 0;
 
-    gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
-                                            pvtdb,
-                                            "video_task_data_base",
-                                            "display_fifo");
-	*display_fifo = gbusAddr;
-	RMDBGLOG((LOCALDBG, "video_get_display_fifo = %lx\n", *display_fifo));
+        gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                pvtdb,
+                                                "video_task_data_base",
+                                                "display_fifo");
+        *display_fifo = gbusAddr;
+        RMDBGLOG((LOCALDBG, "video_get_display_fifo = %lx\n", *display_fifo));
+
+        return RM_OK;
+    }
+    catch (std::runtime_error& err) {
+        RMDBGLOG((LOCALDBG, "ERROR: video_get_display_fifo() failed!\n"));
+        return RM_ERROR;
+    }
+}
+
+RMstatus video_get_irq_info(
+	controlInterface* pIF,
+	RMuint32          pvti,
+	RMuint32*         pevent_table_pointer)
+{
+    try {
+        RMuint32 gbusAddr = 0;
+
+        gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                pvti,
+                                                "video_task_interface",
+                                                "EventTablePointer");
+        *pevent_table_pointer = gbusAddr;
+        RMDBGLOG((LOCALDBG, "video_get_irq_info = %lx\n", *pevent_table_pointer));
+
+        return RM_OK;
+    }
+    catch (std::runtime_error& err) {
+        RMDBGLOG((LOCALDBG, "ERROR: video_get_irq_info() failed!\n"));
+        return RM_ERROR;
+    }
+}
+
+/**
+ *  get user data fifo container
+ */
+
+RMstatus video_get_user_data_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 *fifo)
+{
+    try {
+        RMuint32 gbusAddr = 0;
+
+        gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                pvtdb,
+                                                "video_task_data_base",
+                                                "user_data_fifo");
+
+        RMDBGLOG((LOCALDBG, "video_get_user_data_fifo: fifo=%lx\n", gbusAddr));
+        *fifo = gbusAddr;
+
+        return RM_OK;
+    }
+    catch (std::runtime_error& err) {
+        RMDBGLOG((LOCALDBG, "ERROR: video_get_user_data_fifo() failed!\n"));
+        return RM_ERROR;
+    }
+}
+
+/* initialize user data fifo container, allocated in DRAM,  size in entries */
+RMstatus video_open_user_data_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size)
+{
+    RMuint32 gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                pvtdb,
+                                                "video_task_data_base",
+                                                "user_data_fifo");
+//	RMDBGLOG((LOCALDBG, "video_open_user_data_fifo: fifo= %lx start= %lx size= %lx\n",
+//		(RMuint32) &(pvtdb->user_data_fifo), start, size));
+	if (size == 0)
+		start = 0;
+
+	/* allocated size for this container is gbus_fifo_eraser - but the eraser is used only by microcode */
+	gbus_fifo_open(pIF->get_gbusptr(), start, size, (RMuint32) gbusAddr);
 
 	return RM_OK;
-}
-catch (std::runtime_error& err) {
-    RMDBGLOG((LOCALDBG, "ERROR: video_get_display_fifo() failed!\n"));
-    return RM_ERROR;
-}
 }
 
 }

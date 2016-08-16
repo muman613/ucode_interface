@@ -45,7 +45,7 @@ namespace file_utils {
         return result;
     }
 
-    RMstatus can_write_file(std::string sFilename) {
+    bool can_write_file(std::string sFilename) {
         return can_write_file(sFilename.c_str());
     }
 
@@ -53,21 +53,26 @@ namespace file_utils {
      *  Attempt to open file for writing, if no error return true.
      */
 
-    RMstatus can_write_file(const char* szFilename) {
-        RMstatus    result  = RM_ERROR;
+    bool can_write_file(const char* szFilename) {
+        bool        bRes    = false;
         FILE*       fp      = nullptr;
 
         RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, szFilename));
+        assert(szFilename != nullptr);
 
-        if ((fp = fopen(szFilename, "w")) != nullptr) {
-            RMDBGLOG((LOCALDBG, "-- can write file!\n"));
-            fclose(fp);
-            unlink(szFilename);
-            result = RM_OK;
+        if (strlen(szFilename) > 0) {
+            if ((fp = fopen(szFilename, "w")) != nullptr) {
+                RMDBGLOG((LOCALDBG, "-- can write file!\n"));
+                fclose(fp);
+                unlink(szFilename);
+                bRes = true;
+            } else {
+                RMDBGLOG((LOCALDBG, "Unable to open file %s!\n", strerror(errno)));
+            }
         } else {
-            RMDBGLOG((LOCALDBG, "Unable to open file %s!\n", strerror(errno)));
+            RMDBGLOG((LOCALDBG, "No filename specified!\n"));
         }
 
-        return result;
+        return bRes;
     }
 }

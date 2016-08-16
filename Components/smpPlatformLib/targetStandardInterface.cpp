@@ -13,7 +13,9 @@
 #include "gbus_fifo.h"
 #include "gbus_fifo_eraser.h"
 #include "gbus_packet_fifo.h"
+#include "gbus_packet_fifo_eraser.h"
 #include "file_utils.h"
+#include "string_utils.h"
 
 #ifdef _DEBUG
 #define LOCALDBG    ENABLE
@@ -31,6 +33,8 @@ typedef std::lock_guard<std::mutex>     mutex_guard;
 
 targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
 :   targetInterfaceBase(pEngine),
+    bValid(false),
+    ifState(IF_UNINITIALIZED),
     pChroma(nullptr),
     pLuma(nullptr),
     yuvfp(nullptr),
@@ -58,9 +62,27 @@ targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
 targetStandardInterface::~targetStandardInterface()
 {
     // dtor
-    stop_threads();
+    if (ifState == IF_PLAYING) {
+        stop();
+    }
 }
 
+/**
+ *  Play the stream...
+ */
+
+bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
+                                          const std::string& sOutputYUVName,
+                                          const std::string& sProfile)
+{
+    RMuint32 nProfile = VideoProfileMPEG2;
+    RMDBGLOG((LOCALDBG, "%s(%s, %s, %s)\n", __PRETTY_FUNCTION__,
+              sInputStreamName.c_str(), sOutputYUVName.c_str(),
+              sProfile.c_str()));
+    nProfile = get_profile_id_from_string(sProfile);
+
+    return play_stream(sInputStreamName, sOutputYUVName, nProfile);
+}
 
 /**
  *  Play the stream...
@@ -73,26 +95,57 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
     mutex_guard guard(contextMutex);    // obtain the context mutex...
     bool        bRes = false;
 
-    RMDBGLOG((LOCALDBG, "%s(%s, %s)\n", __PRETTY_FUNCTION__,
-              sInputStreamName.c_str(), sOutputYUVName.c_str()));
+    RMDBGLOG((LOCALDBG, "%s(%s, %s, %d)\n", __PRETTY_FUNCTION__,
+              sInputStreamName.c_str(), sOutputYUVName.c_str(), profile));
 
-    if (file_utils::file_exists(sInputStreamName) &&
-        file_utils::can_write_file(sOutputYUVName))
-    {
+    if (ifState == IF_PLAYING) {
+        RMDBGLOG((LOCALDBG, "Interface already playing media!\n"));
+        return false;
+    }
+
+    /* Check if the output YUV file was specified and can be opened! */
+    if (!sOutputYUVName.empty()) {
+        if (file_utils::can_write_file(sOutputYUVName)) {
+            outputYUVName   = sOutputYUVName;
+        } else {
+            RMDBGLOG((LOCALDBG, "Unable to create YUV output file!\n"));
+        }
+    }
+
+    if (file_utils::file_exists(sInputStreamName)) {
         /* copy the names into the class storage. */
         inputStreamName = sInputStreamName;
-        outputYUVName   = sOutputYUVName;
         decoderProfile  = profile;
 
         init_video_engine();
         open_video_decoder();
 
         launch_threads();
+        ifState = IF_PLAYING;
     } else {
         RMDBGLOG((LOCALDBG, "-- input/output error!\n"));
     }
 
+    RMDBGLOG((LOCALDBG, "-- exiting play_stream()\n"));
+
     return bRes;
+}
+
+/**
+ *  Stop playback.
+ */
+
+bool targetStandardInterface::stop() {
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    if (ifState == IF_PLAYING) {
+        stop_threads();
+        ifState = IF_INITIALIZED;
+    }
+
+    return true;
 }
 
 /**
@@ -114,6 +167,7 @@ void targetStandardInterface::init_parameters()
     luma_nb_comp_per_sample     = 1;
     chroma_nb_comp_per_sample   = 2;
     decoderProfile              = VideoProfileMPEG2;
+    UserDataSize                = 0;
 
     set_tile_dimensions( m_pEngine[0]->get_engine()->get_parent()->get_parent()->get_chip_id() );
 
@@ -162,6 +216,7 @@ RMstatus targetStandardInterface::init_video_engine()
 /**
  *
  */
+#define RMTILE_SIZE_SHIFT 0xd
 
 RMstatus targetStandardInterface::open_video_decoder()
 {
@@ -198,6 +253,9 @@ RMstatus targetStandardInterface::open_video_decoder()
                            m_pEngine[0]->get_engine()->get_pmBase(),
                            0,
                            pvtdb);
+
+//    RMuint32 tempVal = RM_NEXT_TILE_ALIGN(pAlloc->dramPtr());
+//    dramPtr = tempVal;
     dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM|targetAllocator::ALLOC_TILEALIGN, DecoderDataSize);
 
     err = video_set_data_context_buffer(pIF, pvti, dramPtr,
@@ -252,6 +310,33 @@ RMstatus targetStandardInterface::open_video_decoder()
     for ( i =0; i < NumOfPictures + 1; i++)
     {
         pIF->get_gbusptr()->gbus_write_uint32(dramPtr + (4* i), 0);
+    }
+
+    video_get_irq_info(pIF, pvti, &event_table_pointer);
+
+    dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM, UserDataSize);
+
+    /* initialize user data fifo - the container and data are in DRAM */
+    err = video_get_user_data_fifo(pIF, pvtdb, &user_data_fifo);
+    err = video_open_user_data_fifo(pIF, pvtdb, dramPtr, UserDataSize);
+
+    if (UserDataSize > 0)
+    {
+        /* initialize the internal user_data input and helper fifo  */
+//        gbus_fifo_eraser_open(pContext->pgbus, unprotected_ptr, pContext->UserDataSize, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_in_fifo));
+//        unprotected_ptr += pContext->UserDataSize;
+//        gbus_entry_fifo_eraser_open(pContext->pgbus, unprotected_ptr, pContext->UserDataSize / 16, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_info_fifo));
+//        unprotected_ptr += (pContext->UserDataSize / 16)  * (2*sizeof(RMuint32));
+    }
+    else
+    {
+        RMuint32 gbusAddr;
+
+        gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(), pvtdb, "video_task_data_base", "user_data_in_fifo");
+        /* if user data is not required initialize the start address to 0 for the internal user_data input and helper fifo  */
+        gbus_fifo_eraser_open(pIF->get_gbusptr(), 0, 0, gbusAddr);
+        gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(), pvtdb, "video_task_data_base", "user_data_info_fifo");
+        gbus_entry_fifo_eraser_open(pIF->get_gbusptr(), 0, 0, gbusAddr);
     }
 
 #if 0
@@ -440,6 +525,8 @@ void* targetStandardInterface::fifoFillThreadFunc()
 
                 if (sizeLeft==0)
                     break;
+
+                usleep(50000);
             }
 
             if (terminateThreads == true) {
@@ -483,48 +570,49 @@ void* targetStandardInterface::fifoEmptyThreadFunc()
 
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
-    if ((yuvfp = fopen(outputYUVName.c_str(), "w")) != nullptr) {
-        while (terminateThreads == false) {
-            gbus_fifo_get_pointer(pIF->get_gbusptr(), (struct gbus_fifo*)display_fifo,
-                                  &fifo_base, &fifo_size, &rd, &wr);
+    if (!outputYUVName.empty()) {
+        RMDBGLOG((LOCALDBG, "Opening YUV file %s...\n", outputYUVName.c_str()));
+        yuvfp = fopen(outputYUVName.c_str(), "w");
+    } else {
+        RMDBGLOG((LOCALDBG, "No YUV capture file specified!\n"));
+    }
 
-            if ( wr >= rd ){
-                /* fullness in one chunck */
-                size = wr - rd;
-            } else if (wr != rd) {
-                /* fullness in two chuncks because of circular fifo. */
-                size = fifo_size - rd + wr;
-            }
+    while (terminateThreads == false) {
+        gbus_fifo_get_pointer(pIF->get_gbusptr(), (struct gbus_fifo*)display_fifo,
+                              &fifo_base, &fifo_size, &rd, &wr);
 
-            while (size && (terminateThreads == false)) {
-                picture_address = pIF->get_gbusptr()->gbus_read_uint32( fifo_base + (rd*entry_size) );
-
-            //    process_picture( picture_address );
-
-                // advance read pointer
-                rd = (rd + 1) % fifo_size;
-                size--;
-                // release pictures
-    //            pIF->get_gbusptr()->gbus_write_uint32((RMuint32) &(((struct VideoMicrocodePicture *)picture_address)->picture_display_status), 0);
-                struct_utils::write_structure_member(pIF, picture_address, "VideoMicrocodePicture", "picture_display_status", 0);
-                total_frames++;
-
-                // update FIFO read pointer
-                //pIF->get_gbusptr()->gbus_write_uint32((RMuint32) &(fifo->rd), rd);
-                gbus_fifo_incr_read_ptr(pIF->get_gbusptr(), (struct gbus_fifo*)display_fifo, 1);
-            }
-
-            usleep(50000);
+        if ( wr >= rd ){
+            /* fullness in one chunck */
+            size = wr - rd;
+        } else if (wr != rd) {
+            /* fullness in two chuncks because of circular fifo. */
+            size = fifo_size - rd + wr;
         }
 
-        fclose(yuvfp);
-        yuvfp = nullptr;
-    } else {
-        RMDBGLOG((LOCALDBG, "ERROR: Unable to open output YUV file!\n"));
+        while (size && (terminateThreads == false)) {
+            picture_address = pIF->get_gbusptr()->gbus_read_uint32( fifo_base + (rd*entry_size) );
+
+        //    process_picture( picture_address );
+
+            // advance read pointer
+            rd = (rd + 1) % fifo_size;
+            size--;
+            // release pictures
+//            pIF->get_gbusptr()->gbus_write_uint32((RMuint32) &(((struct VideoMicrocodePicture *)picture_address)->picture_display_status), 0);
+            struct_utils::write_structure_member(pIF, picture_address, "VideoMicrocodePicture", "picture_display_status", 0);
+            total_frames++;
+
+            // update FIFO read pointer
+            //pIF->get_gbusptr()->gbus_write_uint32((RMuint32) &(fifo->rd), rd);
+            gbus_fifo_incr_read_ptr(pIF->get_gbusptr(), (struct gbus_fifo*)display_fifo, 1);
+        }
+
+        usleep(50000);
     }
 
     RMDBGLOG((LOCALDBG, "-- exiting fifoEmptyThread()\n"));
 
+    usleep(5000);
     fifoEmptyRunning = false;
 
     return (void*)nullptr;
@@ -609,6 +697,61 @@ RMuint32 targetStandardInterface::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
     return sizeLeft;
 #endif // 1
 }
+
+
+/**
+ *  Table which relates abbreviation string to codec ID.
+ */
+
+struct targetStandardInterface::profileEntry targetStandardInterface::profileTable[] = {
+    { "mpeg2",  VideoProfileMPEG2, },
+    { "mpeg4",  VideoProfileMPEG4, },
+    { "h264",   VideoProfileH264, },
+    { "h265",   VideoProfileH265, },
+    { "hevc",   VideoProfileH265, },
+    { "divx",   VideoProfileDIVX3, },
+    { "spu",    VideoProfileDVDSpu, },
+    { "vc1",    VideoProfileVC1, },
+
+    { "", 0, },
+};
+
+/**
+ *
+ */
+
+RMint32 targetStandardInterface::get_profile_id_from_string(const std::string& sCodecID)
+{
+    struct profileEntry *pCurEntry = profileTable;
+
+    while (pCurEntry->sIdent.size() > 0) {
+        if (string_utils::caseInsensitiveStringCompare(pCurEntry->sIdent, sCodecID)) {
+            return pCurEntry->nProfile;
+        }
+        pCurEntry++;    // Advance to next profile entry...
+    }
+
+    return -1;
+}
+
+/**
+ *
+ */
+
+std::string targetStandardInterface::get_profile_string_from_id(RMint32 codec_id)
+{
+    struct profileEntry *pCurEntry = profileTable;
+
+    while (pCurEntry->sIdent.size() > 0) {
+        if (pCurEntry->nProfile == codec_id) {
+            return pCurEntry->sIdent;
+        }
+        pCurEntry++;    // Advance to next profile entry...
+    }
+
+    return "Undefined";
+}
+
 
 #if 0
 
@@ -758,4 +901,5 @@ over:
     return err;
 }
 #endif
+
 

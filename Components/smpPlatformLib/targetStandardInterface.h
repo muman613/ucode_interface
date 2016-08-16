@@ -110,12 +110,24 @@ typedef enum _SOC_ARCH {
 class targetStandardInterface : public targetInterfaceBase
 {
 public:
+
+    enum if_state {
+        IF_UNINITIALIZED,
+        IF_INITIALIZED,
+        IF_PLAYING,
+    };
+
     targetStandardInterface(TARGET_ENGINE_PTR pEngine);
     virtual ~targetStandardInterface();
 
     bool                    play_stream(const std::string& sInputStreamName,
                                         const std::string& sOutputYUVName,
                                         RMuint32 profile = VideoProfileMPEG2);
+    bool                    play_stream(const std::string& sInputStreamName,
+                                        const std::string& sOutputYUVName,
+                                        const std::string& sProfile);
+    bool                    stop();
+
 protected:
     struct MicrocodeInbandParams {
         RMuint32 ref_cnt;
@@ -138,6 +150,7 @@ protected:
     void                    set_tile_dimensions(RMuint32 tsw, RMuint32 tsh);
 
     bool                    bValid;
+    if_state                ifState;
 
     SOC_ARCH                soc_arch;
     RMuint32	            DecoderDataSize;
@@ -195,6 +208,15 @@ private:
 
     RMuint32                write_data_in_circular_bts_fifo(RMuint8 *pBuf,
                                                             RMuint32 sizeToSend);
+
+    static struct profileEntry {
+        std::string     sIdent;
+        int             nProfile;
+    } profileTable[];
+
+    RMint32                 get_profile_id_from_string(const std::string& sCodecID);
+    std::string             get_profile_string_from_id(RMint32 codec_id);
+
 #ifdef  USE_PTHREADS
     pthread_t                   fifoFillThread;         ///< Thread used to send stream data to input fifo...
     pthread_t                   fifoEmptyThread;        ///< Thread used to extract pictures from display fifo...
@@ -212,9 +234,9 @@ private:
 #if (__cplusplus >= 201103L)
     std::thread                 fifoFillThread;         ///< Thread used to send stream data to input fifo...
     std::thread                 fifoEmptyThread;
-    mutable std::atomic_bool    fifoFillRunning;
-    mutable std::atomic_bool    fifoEmptyRunning;
-    mutable std::atomic_bool    terminateThreads;
+    volatile mutable std::atomic_bool    fifoFillRunning;
+    volatile mutable std::atomic_bool    fifoEmptyRunning;
+    volatile mutable std::atomic_bool    terminateThreads;
     mutable std::mutex          contextMutex;
 //  std::mutex              displayMutex;
 #else  // (__cplusplus >= 201103L)
