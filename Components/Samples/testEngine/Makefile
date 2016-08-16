@@ -14,7 +14,7 @@ MAKEFILE := $(call where-am-i)
 ARCH?=$(shell arch)
 TARGET_TYPE=exe
 
-CPP_SOURCES=main.cpp
+CPP_SOURCES=main.cpp utils.cpp
 
 ifdef SHARED
 TARGET_EXE=testEngine_shared

@@ -4,9 +4,11 @@
 #include <string.h>
 #include <stdarg.h>
 #include <getopt.h>
+#include <unistd.h>
 #include "dbgutils.h"
 #include "targetEngine.h"
 #include "targetStandardInterface.h"
+#include "utils.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //  optionPack stores options used by the test application.
@@ -26,6 +28,7 @@ public:
     std::string                 chipID;
     std::string                 inputStream;
     std::string                 outputYUV;
+    std::string                 profile;
     int                         engineNo;
     targetEngine::ucodeType     type;
 
@@ -76,13 +79,15 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
     static struct option long_options[] = {
         { "chip",   required_argument, 0, 'c', },
         { "stream", required_argument, 0, 's', },
-        { "yuv",    optional_argument, 0, 'y', },
+        { "decoder",required_argument, 0, 'd', },
+        { "yuv",    required_argument, 0, 'y', },
         { "engine", optional_argument, 0, 'e', },
         { "mode",   optional_argument, 0, 'm', },
+
         { 0, 0, 0, 0, },
     };
 
-    while ((c=getopt_long(argc, argv, "c:s:y:e:m:", long_options, &option_index)) != -1) {
+    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:", long_options, &option_index)) != -1) {
         switch (c) {
         case 'c':
             if (optarg != nullptr)
@@ -91,6 +96,10 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
         case 's':
             if (optarg != nullptr)
                 options.inputStream = optarg;
+            break;
+        case 'd':
+            if (optarg != nullptr)
+                options.profile = optarg;
             break;
         case 'y':
             if (optarg != nullptr)
@@ -135,6 +144,8 @@ int main(int argc, char * argv[])
 
     D(open_log_files("messages.txt", "errors.txt"));
 
+    set_terminal_mode();
+
     if (parse_cmdline_arguments( argc, argv, opts )) {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -166,9 +177,30 @@ int main(int argc, char * argv[])
 
                     pStdIF = CREATE_NEW_INTERFACE( pTarget );
                     if (pStdIF) {
-                        std::cout << "Interface was creted, playing stream..." << std::endl;
+                        bool bDone = false;
+
+                        std::cout << "Interface was created, playing stream..." << std::endl;
                         pStdIF->play_stream(opts.inputStream,
-                                            opts.outputYUV);
+                                            opts.outputYUV,
+                                            opts.profile);
+
+                        std::cout << "waiting for user input!" << std::endl;
+
+                        while (!bDone) {
+                            int ch = getkey();
+
+                            if (ch != EOF) {
+                                if (ch == 'q' || ch == 'Q') {
+                                    std::cout << "User hit quit... Please wait!" << std::endl;
+                                    bDone = true;
+                                    break;
+                                }
+                            }
+
+                            usleep(5000);
+                        }
+
+                        pStdIF->stop();
                     }
                 }
             } else {
@@ -180,6 +212,7 @@ int main(int argc, char * argv[])
     }
 
     D(debug("-- exiting test application!\n"));
+    reset_terminal_mode();
 
     return 0;
 }
