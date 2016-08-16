@@ -657,7 +657,7 @@ static RMstatus open_video_decoder(CONTEXT_PTR pContext)
     err = video_get_user_data_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, &pContext->user_data_fifo);
     err = video_open_user_data_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->UserDataSize);
     unprotected_ptr += pContext->UserDataSize;
-    if (pContext->UserDataSize)
+    if (pContext->UserDataSize > 0)
     {
         /* initialize the internal user_data input and helper fifo  */
         gbus_fifo_eraser_open(pContext->pgbus, unprotected_ptr, pContext->UserDataSize, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_in_fifo));
@@ -772,7 +772,7 @@ static RMstatus set_video_codec(CONTEXT_PTR ctx)
 }
 
 /**
-, *  Write data into the bitstream FIFO.
+ *  Write data into the bitstream FIFO.
  *
  *  Function to write data into a circular FIFO including wrap-around condition.
  */
