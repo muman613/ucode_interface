@@ -23,6 +23,8 @@ if [ -t 1 ]; then
 	clear
 fi
 
+NPROC=$( nproc )
+
 LINK_ARRAY=( 'STATIC=1' )
 
 if [ -f buildoptions ]; then
@@ -42,7 +44,7 @@ for link in ${LINK_ARRAY[@]}; do
 					touch_files "${TOUCH_FILES[@]}"
 				fi
 			fi
-			make 2>&1 ${arch} ${dbg} ${link}
+			make 2>&1 ${arch} ${dbg} ${link} -j ${NPROC}
 		done
 	done
 done
