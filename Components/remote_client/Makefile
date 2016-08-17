@@ -7,7 +7,7 @@ ARCH?=$(shell arch)
 
 ifdef DEBUG
 LIBNAME=libremote_d
-DEFINES+=-DGBUS_LOGGER=1
+#DEFINES+=-DGBUS_LOGGER=1
 else
 LIBNAME=libremote
 endif

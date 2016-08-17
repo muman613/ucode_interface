@@ -29,10 +29,12 @@ CPP_SOURCES = 	targetAllocator.cpp												\
 				string_utils.cpp												\
 				struct_utils.cpp												\
 				file_utils.cpp													\
-				gbus_utils.cpp
+				gbus_utils.cpp													\
+				misc_utils.cpp
 
 INCLUDES=-I../.. -I.. -I ../gbusfifolib -I../remote_client
-DEFINES=-DRMFEATURE_VIDEO_INTERFACE_VERSION=2 -DGBUS_LOGGER=1
+#DEFINES=-DRMFEATURE_VIDEO_INTERFACE_VERSION=2 -DGBUS_LOGGER=1
+DEFINES=-DRMFEATURE_VIDEO_INTERFACE_VERSION=2
 LIBXML2_CFLAGS=$(shell xml2-config --cflags)
 LIBXML2_LDFLAGS=$(shell xml2-config --libs)
 
