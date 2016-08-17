@@ -6,6 +6,7 @@
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"
 #include "targetEngine.h"
+#include "targetStandardInterface.h"
 
 namespace video_utils {
 
@@ -82,8 +83,66 @@ RMstatus video_open_inband_fifo(
 	RMuint32 pvtdb,
 	RMuint32 start,
 	RMuint32 size);
+
+RMstatus video_set_inband_param_addr(
+    controlInterface* pIF,
+    RMuint32 pvtdb,
+    RMuint32 inband_param_addr);
+
+RMstatus video_get_display_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 *display_fifo);
+
+RMstatus video_get_irq_info(
+	controlInterface* pIF,
+	RMuint32          pvti,
+	RMuint32*         pevent_table_pointer);
+
+RMstatus video_get_user_data_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 *fifo);
+
+RMstatus video_open_user_data_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size);
+
+RMstatus video_open_error_code_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size);
+
+RMstatus video_set_extra_pictures(
+	controlInterface*   pIF,
+	RMuint32            pvti,
+	RMint32             extra_buffer_count);
+
+RMstatus video_set_command(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	enum VideoCommand command);
+
+RMstatus video_get_status(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	enum VideoStatus *status);
+
+RMstatus video_set_profile(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	RMuint32 profile);
+
+RMuint32 offset_address(SOC_ARCH soc_arch,
+                        RMuint32 tile_width_l2, RMuint32 tile_height_l2,
+                        RMuint32 x, RMuint32 y,
+                        RMuint32 geometry, RMuint32 nb_comp,
+                        RMuint32 ta2la_switch);
 }
 
 
-#endif // __VIDEO_UTILS_H__
 
+#endif // __VIDEO_UTILS_H__

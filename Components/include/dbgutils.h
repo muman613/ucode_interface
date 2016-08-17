@@ -12,6 +12,14 @@
 
 //#undef _DEBUG
 
+////////////////////////////////////////////////////////////////////////////////
+//	If _DEBUG is defined then debugging commands are enabled.
+//
+//	DEBUG_LEVEL can be set to 1, 2, or 3. Each level enables another Dx macro.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+
 #ifdef _DEBUG
 
 #define UNUSED(x) (x)
@@ -37,7 +45,9 @@
 
 extern void debug(const char* sFmt, ...);
 
-#else	// _ENABLE_DEBUG
+#define BREAKPOINT	__asm__("int $3")
+
+#else	// _DEBUG
 
 #define D(x) /* (x) */
 #define D1(x) /* (x) */
@@ -47,21 +57,10 @@ extern void debug(const char* sFmt, ...);
 
 inline void debug(const char* /* sFmt */, ...) {
 
+#define BREAKPOINT
+
 }
 
-#endif	// _ENABLE_DEBUG
-
-
-class dbgMgr {
-public:
-    dbgMgr(bool bLog);
-    virtual ~dbgMgr();
-
-#ifdef  _DEBUG
-    void        enable_dbg_out();
-    void        disable_dbg_out();
-    void        toggle_dbg_out();
-#endif
-};
+#endif	// _DEBUG
 
 #endif	// __DBGUTILS_H__

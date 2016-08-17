@@ -142,4 +142,12 @@ typedef targetEngine*                   TARGET_ENGINE_PTR;
 #define DSP_STOP                0x01
 #define DSP_RESET               0x03
 
+inline TARGET_ENGINE_PTR CREATE_NEW_ENGINE(std::string chip,
+                                           std::string blockID,
+                                           int engineNo = 0,
+                                           targetEngine::ucodeType type = targetEngine::UCODE_RELEASE)
+{
+    return std::make_shared<targetEngine>(chip, blockID, engineNo, type);
+}
+
 #endif // __TARGET_ENGINE_H__

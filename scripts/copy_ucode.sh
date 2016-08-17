@@ -65,6 +65,10 @@ get_buildtype () {
 	echo "$BUILDSPEC"
 }
 
+###
+#	Make all destination directories if they don't already exist.
+###
+
 make_dest_dirs () {
 	ROOT="$1/ucode"
 	CHIPS=( "8758" "8760" )
@@ -88,7 +92,7 @@ make_dest_dirs () {
 }
 
 ###
-#
+#	Copy all files from the source to the dest...
 ###
 
 do_copy_files () {
@@ -143,6 +147,10 @@ do_copy_files () {
 	echo "Copying video_interface.hh..."
 	cp 2>&1 > /dev/null "${SRCPATH}/video_interface.hh" "${DEST}/.."
 }
+
+###
+#	Start of main shell script
+###
 
 RUAPATH=$(get_ruapath)
 if [ -z ${RUAPATH} ]; then

@@ -11,7 +11,12 @@
 
 #include <vector>
 #include <string>
-#include <tre/regex.h>
+
+#if (__cplusplus >= 201103L)
+    #include <regex>
+#else
+    #include <tre/regex.h>
+#endif
 
 /* forward declarations */
 class member_definition;
@@ -43,8 +48,14 @@ typedef std::pair<int,void*>        flagPair;
 typedef std::vector<flagPair>       flagStack;
 typedef std::string                 STRING;
 
+#if (__cplusplus >= 201103L)
+typedef std::regex                  REGEX_TYPE;
+#else  // (__cplusplus >= 201103L)
+typedef regex_t                     REGEX_TYPE;
+#endif // (__cplusplus >= 201103L)
+
 /**
-    Class to contain structure member information
+ *  Class to contain structure member information
  */
 
 class member_definition {
@@ -54,24 +65,11 @@ class member_definition {
         member_definition(const member_definition& copy);
         ~member_definition();
 
-        const STRING& name() const {
-            return member_name;
-        }
-        const STRING& type() const {
-            return member_type;
-        }
-
-        size_t offset() const {
-            return member_offset;
-        }
-
-        bool is_array() const {
-            return (member_flags & flag_array)?true:false;
-        }
-
-        size_t maxindex() const {
-            return member_maxindex;
-        }
+        const STRING&       name() const;
+        const STRING&       type() const;
+        size_t              offset() const;
+        bool                is_array() const;
+        size_t              maxindex() const;
 
     private:
 
@@ -89,11 +87,12 @@ class member_definition {
         size_t          member_maxindex;
 };
 
-typedef std::vector<member_definition> MEMBER_VECTOR;
-
+typedef std::vector<member_definition>                  MEMBER_VECTOR;
+typedef std::vector<member_definition>::iterator        MEMBER_VECTOR_ITERATOR;
+typedef std::vector<member_definition>::const_iterator  MEMBER_VECTOR_CITERATOR;
 
 /**
-    Class to contain structure defintion
+ *  Class to contain structure defintion.
  */
 
 class structure_definition {
@@ -101,48 +100,36 @@ class structure_definition {
         structure_definition(structure_database* db, const char* name);
         ~structure_definition();
 
-        const STRING& name() const {
-            return struct_name;
-        }
+        const STRING&   name() const;
+        int             member_count() const;
+        size_t          size() const;
 
-        /// Get the # of members in this structure
-        int member_count() const {
-            return members.size();
-        }
-
-        /// Get the size of the structure...
-        size_t size() const {
-            return last_offset;
-        }
-
-        const member_definition* operator[](int index) const {
-            if ((size_t)index < members.size()) {
-                return (const member_definition*)&members[index];
-            } else {
-                return (const member_definition*)0L;
-            }
-        }
-
-        void add_member(const char* name, const char* type, size_t offset = 0);
-        void add_member_size(const char* name, const char* type, size_t size);
-        void add_array_member(const char* name, const char* type, int index, size_t offset = 0);
-        void add_union_member(const char* name, const char* type, size_t offset = 0);
+        const member_definition* operator[](size_t index) const;
+        const member_definition* operator[](std::string sMemberName) const;
 
         const member_definition* member(const char* member) const;
         const member_definition* member(int index) const;
 
     protected:
+        friend class structure_database;
+
 //      size_t  get_type_size(const char* type);
+        void add_member(const char* name, const char* type, size_t offset = 0);
+        void add_member_size(const char* name, const char* type, size_t size);
+        void add_array_member(const char* name, const char* type, int index, size_t offset = 0);
+        void add_union_member(const char* name, const char* type, size_t offset = 0);
 
     private:
         structure_database*     struct_db;
-        STRING              struct_name;
+        STRING                  struct_name;
         MEMBER_VECTOR           members;
         size_t                  last_offset;
 
 };
 
-typedef std::vector<structure_definition*>  STRUCTURE_VECTOR;
+typedef std::vector<structure_definition*>                  STRUCTURE_VECTOR;
+typedef std::vector<structure_definition*>::iterator        STRUCTURE_VECTOR_ITERATOR;
+typedef std::vector<structure_definition*>::const_iterator  STRUCTURE_VECTOR_CITERATOR;
 
 //==============================================================================
 //==============================================================================
@@ -152,38 +139,25 @@ class union_definition {
         union_definition(structure_database* db, const char* name);
         ~union_definition();
 
-        const STRING& name() const {
-            return struct_name;
-        }
-
-        int member_count() const {
-            return members.size();
-        }
-
-        size_t size() const {
-            return last_offset;
-        }
-
-        const member_definition* operator[](int index) const {
-            if ((size_t)index < members.size()) {
-                return (const member_definition*)&members[index];
-            } else {
-                return (const member_definition*)0L;
-            }
-        }
-
-        void add_member(const char* name, const char* type, size_t offset = 0);
-        void add_array_member(const char* name, const char* type, int index, size_t offset = 0);
+        const STRING&               name() const;
+        int                         member_count() const;
+        size_t                      size() const;
+        const member_definition*    operator[](int index) const;
 
         const member_definition* member(const char* member) const;
         const member_definition* member(int index) const;
 
     protected:
+        friend class structure_database;
+
+        void add_member(const char* name, const char* type, size_t offset = 0);
+        void add_array_member(const char* name, const char* type, int index, size_t offset = 0);
+
 //      size_t  get_type_size(const char* type);
 
     private:
         structure_database*     struct_db;
-        STRING              struct_name;
+        STRING                  struct_name;
         MEMBER_VECTOR           members;
         size_t                  last_offset;
 
@@ -192,7 +166,7 @@ class union_definition {
 typedef std::vector<union_definition*>  UNION_VECTOR;
 
 /**
-    Class to store structure database in.
+ *  Class to store structure database in.
  */
 
 class structure_database {
@@ -210,13 +184,8 @@ class structure_database {
         structure_definition*       new_structure(const char* name);
         union_definition*           new_union(const char* name);
 
-        const structure_definition* operator[](int index) const {
-            if ((size_t)index < structure_vector.size()) {
-                return (const structure_definition*)structure_vector[index];
-            } else {
-                return (const structure_definition*)0L;
-            }
-        }
+        const structure_definition* operator[](size_t index) const;
+        const structure_definition* operator[](std::string sStructName) const;
 
         const structure_definition* get_structure(const char* struct_name);
         const union_definition*     get_union(const char* union_name);
@@ -248,20 +217,23 @@ class structure_database {
         STRUCTURE_VECTOR        structure_vector;
         UNION_VECTOR            union_vector;
 
-        regex_t                 exp_startstruct, exp_endstruct,
+        REGEX_TYPE              exp_startstruct, exp_endstruct,
                                 exp_membstruct, exp_array_membstruct,
                                 exp_membenum, exp_array_member, exp_member;
 
-        regex_t                 exp_memb_unnamed_struct;
-        regex_t                 exp_start_namedunion;
-        regex_t                 exp_end_unnamed_struct;
-        regex_t                 exp_memb_unnamed_union;
-        regex_t                 exp_memb_union;
+        REGEX_TYPE              exp_memb_unnamed_struct;
+        REGEX_TYPE              exp_start_namedunion;
+        REGEX_TYPE              exp_end_unnamed_struct;
+        REGEX_TYPE              exp_memb_unnamed_union;
+        REGEX_TYPE              exp_memb_union;
 
         flagStack               flagSt;
 
+        /*! Push state on flag stack. */
         void                    push_state(int flag, void* data);
+        /*! Pop state from flag stack. */
         void                    pop_state(int* flag = 0,void** data = 0L);
+        /*! Peek the value stored in the current level of the flag stack. */
         int                     peek_state(void** data = 0L);
 
         void                    get_next_unnamed_struct(STRING& name);
@@ -273,9 +245,13 @@ class structure_database {
         void                    release_regexp_parser();
         unsigned int            calculate_array_size(const char* szSize);
 
-        std::vector<regex_t*>   m_reList;   /// vector of regular expressions
 
+#if (__cplusplus >= 201103L)
+        bool                    add_regexp(const char* sRegex, std::regex& expression);
+#else  // (__cplusplus >= 201103L)
         bool                    add_regexp(const char* sRegex, regex_t* expression);
+        std::vector<regex_t*>   m_reList;   /// vector of regular expressions
+#endif // (__cplusplus >= 201103L)
 
         STRING             m_sError;
 };

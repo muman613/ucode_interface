@@ -104,7 +104,7 @@ static inline void print_timestamp(FILE *stream)
 	m = time_ms / (1000*60) - 60*h;
 	s = time_ms / 1000 - 60*m - 3600*h;
 	ms = time_ms - 1000*s- (60*1000)*m - (3600*1000)*h;
-	fprintf(stream, "%02lu:%02lu:%02lu.%03lu ", h, m, s, ms);
+	fprintf(stream, "%02lu:%02lu:%02lu.%03lu ", (unsigned long)h, (unsigned long)m, (unsigned long)s, (unsigned long)ms);
 	fflush(stream);
 #endif
 	return;
@@ -127,7 +127,7 @@ void RMDBGLOG_implementation(RMbool active,const RMascii *filename,RMint32 line,
 	if (active && (verbose_stderr != 0)) {
 		va_list ap;
 
-		snprintf((char *)str,RMDBG_MAX_STRING,"[%s:%ld] ", (char *)filename,line);
+		snprintf((char *)str,RMDBG_MAX_STRING,"[%s:%ld] ", (char *)filename, (unsigned long)line);
 
 		va_start(ap, text);
 		vsnprintf((char *)(str+strlen(str)), RMDBG_MAX_STRING-strlen(str), text, ap);
@@ -190,9 +190,9 @@ void RMNOTIFY_implementation(void *cookie, RMstatus status, const RMascii *filen
 	va_list ap;
 
 	if (RMFAILED(status)) {
-		snprintf((char *)str, RMDBG_MAX_STRING, "%s[%s:%ld] ERROR(%s): ", SET_ERROR, (char *)filename, line, RMstatusToString(status));
+		snprintf((char *)str, RMDBG_MAX_STRING, "%s[%s:%ld] ERROR(%s): ", SET_ERROR, (char *)filename, (unsigned long)line, RMstatusToString(status));
 	} else {
-		snprintf((char *)str, RMDBG_MAX_STRING, "[%s:%ld] ", (char *)filename, line);
+		snprintf((char *)str, RMDBG_MAX_STRING, "[%s:%ld] ", (char *)filename, (unsigned long)line);
 	}
 
 	va_start(ap, text);

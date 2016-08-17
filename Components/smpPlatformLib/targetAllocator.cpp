@@ -166,5 +166,5 @@ RMuint32 targetAllocator::dramPtr() const
 void targetAllocator::set_tile_size(int w, int h)
 {
     RMDBGLOG((LOCALDBG, "%s(%d, %d)\n", __PRETTY_FUNCTION__, w, h));
-   // m_tilesize = w + h;
+    m_tilesize = w + h;
 }

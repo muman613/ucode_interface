@@ -18,7 +18,7 @@ LIBTRE_CFLAGS=-I../../include
 LIBTRE_LIB=../../libs/Linux/$(ARCH)/libtre.a
 
 STRUCT_CFLAGS=-I../../structure_control
-CFLAGS=$(LIBTRE_CFLAGS) $(STRUCT_CFLAGS)
+CFLAGS=$(LIBTRE_CFLAGS) $(STRUCT_CFLAGS) -std=c++11
 LIBS=$(STRUCT_LIB) $(LIBTRE_LIB)
 
 include ../../../Build/buildsys.mk

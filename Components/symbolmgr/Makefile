@@ -2,7 +2,12 @@
 where-am-i = $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 MAKEFILE := $(call where-am-i)
 
+ifdef SHARED
+TARGET_TYPE=dynlib
+else
 TARGET_TYPE=statlib
+endif
+
 ARCH?=$(shell arch)
 
 
@@ -17,7 +22,8 @@ CPP_SOURCES=	symbolmgr.cpp
 LIBXML2_CFLAGS=$(shell xml2-config --cflags)
 LIBXML2_LDFLAGS=$(shell xml2-config --libs)
 
-CFLAGS=$(LIBXML2_CFLAGS)
+INCLUDES=-I../include
+CFLAGS=$(LIBXML2_CFLAGS) -std=c++11
 LDFLAGS=$(LIBXML2_LDFLAGS)
 
 LIB_DIR=../libs/Linux/$(ARCH)

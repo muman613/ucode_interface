@@ -74,8 +74,8 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add directory="../../smpProbe" />
-			<Add directory="../../lib/include" />
+			<Add option="-std=c++11" />
+			<Add directory="../include" />
 		</Compiler>
 		<Unit filename="sc_lexer.h" />
 		<Unit filename="sc_lexer.l">

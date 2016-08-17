@@ -7,6 +7,7 @@ ARCH?=$(shell arch)
 
 ifdef DEBUG
 LIBNAME=libremote_d
+#DEFINES+=-DGBUS_LOGGER=1
 else
 LIBNAME=libremote
 endif
@@ -18,7 +19,7 @@ CPP_SOURCES=	llad.cpp sock.cpp gbus.cpp
 
 INCLUDES=-I../..
 
-CFLAGS=$(INCLUDES) -std=c++11
+CFLAGS=$(DEFINES) -std=c++11
 LDFLAGS=$(LIBXML2_LDFLAGS)
 
 LIB_DIR=../libs/Linux/$(ARCH)

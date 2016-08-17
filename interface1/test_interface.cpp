@@ -61,6 +61,8 @@ struct profileEntry profileTable[] = {
     { "h264",   VideoProfileH264, },
     { "h265",   VideoProfileH265, },
     { "hevc",   VideoProfileH265, },
+    { "divx",   VideoProfileDIVX3, },
+    { "spu",    VideoProfileDVDSpu, },
     { 0L, 0, },
 };
 
@@ -390,7 +392,7 @@ static RMstatus load_video_ucode(CONTEXT* pCtx, RMuint32 engineID)
         /* open file */
         ifp = fopen(szBinName, "r");
         if (ifp) {
-            fread(pBinData, 1, binSize, ifp);
+            size_t bytesread __attribute__((unused)) = fread(pBinData, 1, binSize, ifp);
 
             ucode_get_microcode_size(pBinData, binSize, &dram_low_offset, &dram_high_offset);
 
@@ -540,6 +542,8 @@ static RMstatus init_video_engine (CONTEXT* pContext)
     RMuint32 memBase = pContext->memBaseAddress;
     RMuint32 Address, Size;
 
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
     video_get_scheduler_memory(pContext->pgbus, memBase, &Address, &Size);
 
     if ((Address == 0) && Size) {
@@ -643,6 +647,8 @@ static RMstatus open_video_decoder (CONTEXT* pContext)
     video_open_inband_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->InbandFIFOCount);
     unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandCommand);
     pContext->inband_params_address = unprotected_ptr;
+    RMDBGLOG((LOCALDBG, "inband_params_address = %08X\n", pContext->inband_params_address));
+
     unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandParams);
     /* allocate and clear inband_params */
     {
@@ -1100,10 +1106,10 @@ static RMstatus process_picture(CONTEXT* ctx, RMuint32 picture_address)
             char sYFname[128], sUVFname[128];
             FILE *yFP = 0, *uvFP = 0;
 
-            RMDBGLOG((LOCALDBG, "Saving frame %ld .Y & .UV to /tmp/\n", frame_count));
+            RMDBGLOG((LOCALDBG, "Saving frame %ld .Y & .UV to /tmp/\n", (long int)frame_count));
 
-            snprintf(sYFname, 128, "/tmp/frame%03ld-tiled.Y", frame_count);
-            snprintf(sUVFname, 128, "/tmp/frame%03ld-tiled.UV", frame_count);
+            snprintf(sYFname, 128, "/tmp/frame%03ld-tiled.Y", (long int)frame_count);
+            snprintf(sUVFname, 128, "/tmp/frame%03ld-tiled.UV", (long int)frame_count);
 
             yFP = fopen(sYFname, "wb");
             uvFP = fopen(sUVFname, "wb");

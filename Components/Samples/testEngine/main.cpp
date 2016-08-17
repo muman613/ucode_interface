@@ -3,8 +3,36 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <getopt.h>
+#include <unistd.h>
+#include "dbgutils.h"
 #include "targetEngine.h"
 #include "targetStandardInterface.h"
+#include "utils.h"
+
+////////////////////////////////////////////////////////////////////////////////
+//  optionPack stores options used by the test application.
+////////////////////////////////////////////////////////////////////////////////
+
+class optionPack {
+public:
+//    enum ucodeType {
+//        UCODE_RELEASE,
+//        UCODE_DEBUG,
+//    };
+    optionPack()
+    : engineNo(0),
+      type(targetEngine::UCODE_RELEASE)
+    {
+    }
+    std::string                 chipID;
+    std::string                 inputStream;
+    std::string                 outputYUV;
+    std::string                 profile;
+    int                         engineNo;
+    targetEngine::ucodeType     type;
+
+};
 
 #ifdef _DEBUG
 void debug(const char* sFmt, ...) {
@@ -17,6 +45,10 @@ void debug(const char* sFmt, ...) {
 }
 #endif // _DEBUG
 
+
+/**
+ *  Display information about the target.
+ */
 
 void display_target_info(TARGET_ENGINE_PTR pEng)
 {
@@ -37,6 +69,94 @@ void display_target_info(TARGET_ENGINE_PTR pEng)
     }
 }
 
+/**
+ *  Parse commandline parameters.
+ */
+
+bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
+    bool            bRes =  false;
+    int             c, option_index = 0;
+    static struct option long_options[] = {
+        { "chip",   required_argument, 0, 'c', },
+        { "stream", required_argument, 0, 's', },
+        { "decoder",required_argument, 0, 'd', },
+        { "yuv",    required_argument, 0, 'y', },
+        { "engine", optional_argument, 0, 'e', },
+        { "mode",   optional_argument, 0, 'm', },
+
+        { 0, 0, 0, 0, },
+    };
+
+    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:", long_options, &option_index)) != -1) {
+        switch (c) {
+        case 'c':
+            if (optarg != nullptr)
+                options.chipID = optarg;
+            break;
+        case 's':
+            if (optarg != nullptr)
+                options.inputStream = optarg;
+            break;
+        case 'd':
+            if (optarg != nullptr)
+                options.profile = optarg;
+            break;
+        case 'y':
+            if (optarg != nullptr)
+                options.outputYUV = optarg;
+            break;
+        case 'e':
+            if (optarg != nullptr)
+                options.engineNo = atoi(optarg);
+            break;
+        case 'm':
+            {
+                std::string sMode;
+                if (optarg != nullptr) {
+                    sMode = optarg;
+
+                    if ((sMode == "d") || (sMode == "r")) {
+                        options.type = (sMode == "d")?targetEngine::UCODE_DEBUG:targetEngine::UCODE_RELEASE;
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    bRes = (!options.chipID.empty() && !options.inputStream.empty());
+
+    return bRes;
+}
+
+/**
+ *  Display frame count...
+ */
+
+void display_stats(const targetStandardInterface::outputStats& stats)
+{
+    char buffer[128];
+    static size_t lastSize = 0;
+
+    if (stats.frame_count > 0) {
+        snprintf(buffer, 128, "Frame # : %d save %d X %d frame to %s (%2.3f sec/frame)",
+                 stats.frame_count,
+                 stats.pic_width,
+                 stats.pic_height,
+                 stats.sYUVFile.c_str(),
+                 stats.save_time);
+        if (lastSize != 0) {
+            for (size_t i = 0 ; i < lastSize ; i++)
+                fputc('\b', stdout);
+        }
+
+        fputs(buffer, stdout);
+        fflush(stdout);
+        lastSize = strlen(buffer);
+    }
+}
 
 /**
  *  Main entry point
@@ -45,39 +165,88 @@ void display_target_info(TARGET_ENGINE_PTR pEng)
 int main(int argc, char * argv[])
 {
     TARGET_ENGINE_PTR   pTarget;
+    optionPack          opts;
 
-#ifdef _DEBUG
-    open_log_files("messages.txt", "errors.txt");
-#endif // _DEBUG
+    D(open_log_files("messages.txt", "errors.txt"));
 
-    pTarget = std::make_shared<targetEngine>("8758", "Video");
+    set_terminal_mode();
 
-    if (pTarget && pTarget->is_valid()) {
+    if (parse_cmdline_arguments( argc, argv, opts )) {
 
-        std::cout << "Target is opened!" << std::endl;
+////////////////////////////////////////////////////////////////////////////////
+//	Create the target engine, this time a 8758 Video engine.
+////////////////////////////////////////////////////////////////////////////////
 
-        if (pTarget->connect()) {
-            std::cout << "Target is connected!" << std::endl;
+        pTarget = CREATE_NEW_ENGINE( opts.chipID, "Video",
+                                     opts.engineNo, opts.type );
+//      pTarget = std::make_shared<targetEngine>("8758", "Video");
 
-            display_target_info( pTarget );
+        if (pTarget && pTarget->is_valid()) {
 
-            if (pTarget->load_ucode()) {
+            std::cout << "Target was created, attempting to connect!" << std::endl;
 
-                std::cout << "Microcode loaded!" << std::endl;
+            if (pTarget->connect()) {
+                std::cout << "Target is connected, loading microcode!" << std::endl;
 
-                TARGET_STD_IF pStdIF;
+                display_target_info( pTarget );
 
-                pStdIF = std::make_shared<targetStandardInterface>(pTarget);
+                if (pTarget->load_ucode()) {
 
-                pStdIF->init_video_engine();
-                pStdIF->open_video_decoder();
+                    std::cout << "Microcode loaded!" << std::endl;
+
+                    TARGET_STD_IF pStdIF;
+
+////////////////////////////////////////////////////////////////////////////////
+//	Create the interface object and pass it the engine to run on.
+////////////////////////////////////////////////////////////////////////////////
+
+                    pStdIF = CREATE_NEW_INTERFACE( pTarget );
+                    if (pStdIF) {
+                        bool bDone = false;
+                        targetStandardInterface::outputStats stats;
+
+#if defined(_DEBUG) && defined(DUMP_TILED)
+                        pStdIF->enable_dump();
+#endif // defined(_DEBUG) && defined(DUMP_TILED)
+
+                        std::cout << "Interface was created, playing stream..." << std::endl;
+                        pStdIF->play_stream(opts.inputStream,
+                                            opts.outputYUV,
+                                            opts.profile);
+
+                        std::cout << "waiting for user input!" << std::endl;
+
+                        while (!bDone) {
+                            int ch = getkey();
+
+                            if (ch != EOF) {
+                                if (ch == 'q' || ch == 'Q') {
+                                    putc('\n', stdout);
+                                    std::cout << "User hit quit... Please wait!" << std::endl;
+                                    bDone = true;
+                                    break;
+                                }
+                            }
+
+                            if (pStdIF->get_output_stats(stats)) {
+                                display_stats(stats);
+                            }
+                            usleep(5000);
+                        }
+
+                        pStdIF->stop();
+                    }
+                }
+            } else {
+                std::cout << "UNABLE TO CONNECT TO TARGET!" << std::endl;
             }
 
-//            pTarget->test_function();
+            pTarget.reset();
         }
-
-        pTarget.reset();
     }
+
+    D(debug("-- exiting test application!\n"));
+    reset_terminal_mode();
 
     return 0;
 }

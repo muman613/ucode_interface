@@ -347,6 +347,20 @@ void launch_viewer(CONTEXT* pCtx)
     }
 }
 #endif // ENABLE_CURSES
+
+bool get_environment_string(const std::string sVarName, std::string& sValue) {
+    const char* szValue = nullptr;
+
+    if ((szValue = getenv(sVarName.c_str())) != 0) {
+        sValue = szValue;
+    } else {
+        sValue.clear();
+    }
+
+    return (sValue.empty()?false:true);
+}
+
+
 #ifdef _DEBUG
 
 /* This debug stub is used for static libraries which use muman style debug */

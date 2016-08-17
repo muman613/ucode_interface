@@ -11,12 +11,18 @@
 #include "string_utils.h"
 
 #ifdef _DEBUG
-#define LOCALDBG ENABLE
+#define LOCALDBG DISABLE
 #else
 #define LOCALDBG DISABLE
 #endif // _DEBUG
 
 namespace struct_utils {
+
+RMuint32 resolve_offset(controlInterface* pIF, RMuint32 memBase,
+                        std::string sStructure, std::string sMembers)
+{
+    return resolve_offset(pIF->get_structdb(), memBase, sStructure, sMembers);
+}
 
 RMuint32 resolve_offset(structure_database* pDB, RMuint32 memBase,
                         std::string sStructure, std::string sMembers)
@@ -87,11 +93,38 @@ catch (std::runtime_error& except) {
 }
 }
 
+/**
+ *
+ */
+
+bool read_structure_member(controlInterface* pIF,
+                            RMuint32 memBase,
+                            std::string sStructure,
+                            std::string sMembers,
+                            RMuint32* value)
+{
+try {
+    RMuint32 gBusAddress = resolve_offset( pIF->get_structdb(), memBase, sStructure, sMembers);
+
+    *value = pIF->get_gbusptr()->gbus_read_uint32( gBusAddress );
+
+    return true;
+}
+catch (std::runtime_error& except) {
+    RMDBGLOG((LOCALDBG, "Caught exception %s!\n", except.what()));
+    return false;
+}
+}
+
+/**
+ *
+ */
+
 RMuint32 get_structure_size(controlInterface* pIF, std::string sStructure) {
     RMuint32 structSize = 0L;
     assert(pIF != nullptr);
 
-    RMDBGLOG((LOCALDBG, "%s(%s)", __PRETTY_FUNCTION__, sStructure.c_str()));
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, sStructure.c_str()));
 
     structSize = (RMuint32)pIF->get_structdb()->get_structure( sStructure.c_str() )->size();
 

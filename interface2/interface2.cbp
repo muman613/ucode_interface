@@ -43,6 +43,7 @@
 			<Add option="-DRMCHIP_REVISION=1" />
 			<Add option="-DRMFEATURE_VIDEO_INTERFACE_VERSION=2" />
 			<Add option="-DENABLE_CURSES=1" />
+			<Add option="-D_FILE_OFFSET_BITS=64" />
 			<Add directory=".." />
 			<Add directory="../gbuslib" />
 			<Add directory="../llad" />

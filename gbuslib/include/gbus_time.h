@@ -1,8 +1,3 @@
-/*****************************************
- Copyright © 2001-2003  
- Sigma Designs, Inc. All Rights Reserved
- Proprietary and Confidential
- *****************************************/
 /**
   @file   gbus_time.h
   @brief  

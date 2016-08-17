@@ -19,6 +19,8 @@
 
 namespace video_utils {
 
+using namespace struct_utils;
+
 #define RESOLVE_SYMBOL(sym)                                                     \
     (*pSymMgr)[(sym)]
 
@@ -546,5 +548,268 @@ RMstatus video_open_inband_fifo(
 
 	return RM_OK;
 }
+
+/**
+ *
+ */
+
+RMstatus video_set_inband_param_addr(
+    controlInterface* pIF,
+    RMuint32 pvtdb,
+    RMuint32 inband_param_addr)
+{
+try {
+    RMuint32 gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                     pvtdb,
+                                                     "video_task_data_base",
+                                                     "Inband_Params_Address");
+
+    pIF->get_gbusptr()->gbus_write_uint32( gbusAddr, inband_param_addr );
+
+    return RM_OK;
+}
+catch (std::runtime_error& err) {
+    RMDBGLOG((LOCALDBG, "ERROR: video_set_inband_param_addr() failed!\n"));
+    return RM_ERROR;
+}
+}
+
+/* get display data fifo container */
+RMstatus video_get_display_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 *display_fifo)
+{
+    try {
+        RMuint32 gbusAddr = 0;
+
+        gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                pvtdb,
+                                                "video_task_data_base",
+                                                "display_fifo");
+        *display_fifo = gbusAddr;
+        RMDBGLOG((LOCALDBG, "video_get_display_fifo = %lx\n", *display_fifo));
+
+        return RM_OK;
+    }
+    catch (std::runtime_error& err) {
+        RMDBGLOG((LOCALDBG, "ERROR: video_get_display_fifo() failed!\n"));
+        return RM_ERROR;
+    }
+}
+
+RMstatus video_get_irq_info(
+	controlInterface* pIF,
+	RMuint32          pvti,
+	RMuint32*         pevent_table_pointer)
+{
+    try {
+        RMuint32 gbusAddr = 0;
+
+        gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                pvti,
+                                                "video_task_interface",
+                                                "EventTablePointer");
+        *pevent_table_pointer = gbusAddr;
+        RMDBGLOG((LOCALDBG, "video_get_irq_info = %lx\n", *pevent_table_pointer));
+
+        return RM_OK;
+    }
+    catch (std::runtime_error& err) {
+        RMDBGLOG((LOCALDBG, "ERROR: video_get_irq_info() failed!\n"));
+        return RM_ERROR;
+    }
+}
+
+/**
+ *  get user data fifo container
+ */
+
+RMstatus video_get_user_data_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 *fifo)
+{
+    try {
+        RMuint32 gbusAddr = 0;
+
+        gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                pvtdb,
+                                                "video_task_data_base",
+                                                "user_data_fifo");
+
+        RMDBGLOG((LOCALDBG, "video_get_user_data_fifo: fifo=%lx\n", gbusAddr));
+        *fifo = gbusAddr;
+
+        return RM_OK;
+    }
+    catch (std::runtime_error& err) {
+        RMDBGLOG((LOCALDBG, "ERROR: video_get_user_data_fifo() failed!\n"));
+        return RM_ERROR;
+    }
+}
+
+/**
+ *  initialize user data fifo container, allocated in DRAM,  size in entries
+ */
+
+RMstatus video_open_user_data_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size)
+{
+    RMuint32 gbusAddr = struct_utils::resolve_offset(pIF->get_structdb(),
+                                                pvtdb,
+                                                "video_task_data_base",
+                                                "user_data_fifo");
+
+	RMDBGLOG((LOCALDBG, "video_open_user_data_fifo: fifo= %lx start= %lx size= %lx\n",
+		gbusAddr, start, size));
+
+	if (size == 0)
+		start = 0;
+
+	/* allocated size for this container is gbus_fifo_eraser - but the eraser is used only by microcode */
+	gbus_fifo_open(pIF->get_gbusptr(), start, size, (RMuint32) gbusAddr);
+
+	return RM_OK;
+}
+
+RMstatus video_open_error_code_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size)
+{
+	RMuint32 i;
+    RMuint32 gbusAddr = resolve_offset(pIF->get_structdb(),
+                                       pvtdb,
+                                       "video_task_data_base",
+                                       "error_code_fifo");
+    RMuint32 errFifoSize;
+
+    errFifoSize  = get_structure_size(pIF,
+                                      "EMhwlibVideoDecoder_DecodeError");
+
+	RMDBGLOG((LOCALDBG, "video_open_error_code_fifo: fifo= %lx start= %lx size= %lx\n",
+             gbusAddr, start, size));
+
+	gbus_entry_fifo_open(pIF->get_gbusptr(), start, size, gbusAddr);
+
+	/* initialize the error codes */
+	for (i=0; i< size*errFifoSize/sizeof(RMuint32); i++)
+		pIF->get_gbusptr()->gbus_write_uint32(start+4*i, 0);
+
+	return RM_OK;
+}
+
+RMstatus video_set_extra_pictures(
+	controlInterface*   pIF,
+	RMuint32            pvti,
+	RMint32             extra_buffer_count)
+{
+	if (extra_buffer_count >= 0) {
+        write_structure_member(pIF, pvti, "video_task_interface", "ExtraPictureBufferCount", extra_buffer_count);
+        write_structure_member(pIF, pvti, "video_task_interface", "DisplayPictureBufferCount", 2);
+//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->ExtraPictureBufferCount), extra_buffer_count);
+//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->DisplayPictureBufferCount), 2);
+	} else if (extra_buffer_count >= -2) {
+        write_structure_member(pIF, pvti, "video_task_interface", "ExtraPictureBufferCount", 0);
+        write_structure_member(pIF, pvti, "video_task_interface", "DisplayPictureBufferCount", 2 + extra_buffer_count);
+//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->ExtraPictureBufferCount), 0);
+//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->DisplayPictureBufferCount), 2 + extra_buffer_count);
+	} else {
+		RMDBGLOG((ENABLE, "video_set_extra_pictures error: %ld\n", extra_buffer_count));
+		return RM_ERROR;
+	}
+
+	return RM_OK;
+}
+
+/* set video command: play, stop, iframe */
+RMstatus video_set_command(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	enum VideoCommand command)
+{
+    struct_utils::write_structure_member(pIF, pvti,
+                                         "video_task_interface", "Command",
+                                         (RMuint32)command);
+	return RM_OK;
+}
+
+/* get current video state. State reflects the previous command. */
+RMstatus video_get_status(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	enum VideoStatus *status)
+{
+
+    struct_utils::read_structure_member(pIF, pvti,
+                                         "video_task_interface", "Status",
+                                         (RMuint32*)status);
+
+//	*status = (VideoStatus)gbus_read_uint32(pGBus, (RMuint32) &(pvti->Status));
+//	RMDBGLOG((DISABLE, "video_get_status addr=0x%lx status=0x%lx\n", (RMuint32) &(pvti->Status), *status));
+
+	return RM_OK;
+}
+
+/**
+ *  set video profile: mpeg2, 4, wmv, ..
+ */
+
+RMstatus video_set_profile(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	RMuint32 profile)
+{
+//	RMDBGLOG((LOCALDBG, "video_set_profile addr=0x%lx profile=0x%lx\n", (RMuint32) &(pvti->Profile), profile));
+//	gbus_write_uint32(pGBus, (RMuint32) &(pvti->Profile), profile);
+    struct_utils::write_structure_member(pIF, pvti, "video_task_interface", "Profile", profile);
+
+	return RM_OK;
+}
+
+static RMuint32 get_la_from_ta(RMuint32 ta)
+{
+    return ((ta >> 12) << 12) | (((ta >> 8) & 1) << 11) | (((ta >> 9) & 7) << 8) | (ta & 0xff);
+}
+
+static RMuint32 offset_address_calypso(RMuint32 tile_width_l2, RMuint32 tile_height_l2,
+                        RMuint32 x, RMuint32 y, RMuint32 stride, RMuint32 nb_comp)
+{
+    return    (((x * nb_comp) &~ ((1 << tile_width_l2) - 1)) * (12 * stride + 2))
+                + (y << tile_width_l2)
+                + ((x * nb_comp) & ((1 << tile_width_l2) - 1));
+}
+
+static RMuint32 offset_address_tango(RMuint32 tile_width_l2, RMuint32 tile_height_l2,
+                              RMuint32 x, RMuint32 y, RMuint32 tiled_buffer_width, RMuint32 nb_comp)
+{
+    return    (y >> tile_height_l2) * (tiled_buffer_width << (tile_width_l2 + tile_height_l2))
+              + ((y & ((1 << tile_height_l2) - 1)) << tile_width_l2)
+              + (((x * nb_comp) >> tile_width_l2) << (tile_width_l2 + tile_height_l2))
+              + ((x * nb_comp) & ((1 << tile_width_l2) - 1));
+}
+
+RMuint32 offset_address(SOC_ARCH soc_arch, RMuint32 tile_width_l2, RMuint32 tile_height_l2,
+                        RMuint32 x, RMuint32 y, RMuint32 geometry, RMuint32 nb_comp, RMuint32 ta2la_switch)
+{
+    if (soc_arch == SOC_TANGO)  // tango chip, geometry is tiled buffer width here
+        return offset_address_tango(tile_width_l2, tile_height_l2, x, y, geometry, nb_comp);
+    else if (soc_arch == SOC_PMAN) {
+        return y * geometry + x * nb_comp;
+    } else { // calypso chip, geometry is stride here
+        RMuint32 offset_tiled_address;
+        offset_tiled_address = offset_address_calypso(tile_width_l2, tile_height_l2, x, y, geometry, nb_comp);
+        if (ta2la_switch == 1)
+            return get_la_from_ta(offset_tiled_address);
+        else
+            return offset_tiled_address;
+    }
+}
+
 
 }
