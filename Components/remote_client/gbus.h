@@ -2,9 +2,14 @@
 #define __GBUS_H__
 
 #include <string>
+#include <vector>
 
 #define ALLOW_OS_CODE
 #include "rmdef/rmdef.h"
+
+#if defined(_DEBUG) && defined(GBUS_LOGGER)
+    #define ENABLE_GBUS_LOGGER
+#endif // defined
 
 /** Forward declarations */
 class llad;
@@ -46,12 +51,26 @@ public:
 
     const LLAD_PTR  get_llad();
 
+#ifdef ENABLE_GBUS_LOGGER
+    FILE*           gbus_log_getfp() const;
+    void            gbus_log_mark(std::string sMessage);
+    void            gbus_log_add_bp(RMuint32 bpAddress);
+#endif // ENABLE_GBUS_LOGGER
+
 protected:
     bool                valid;
     LLAD_PTR            pLlad;
     rc_sockets::sock*   sd;
     pthread_mutex_t     gbus_lock;
+
+#ifdef ENABLE_GBUS_LOGGER
+    void                    check_bp(RMuint32 address);
+    FILE*                   gbusLogFp;
+    std::vector<RMuint32>   gbusBPvec;
+#endif // ENABLE_GBUS_LOGGER
 };
+
+#define GBUS_LOGGER_FILENAME "/tmp/gbuslog_te.txt"
 
 /**
  *

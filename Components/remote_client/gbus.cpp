@@ -11,19 +11,11 @@
 #include "rmdef/rmmacros_c.h"
 #include "llad_protocol.h"
 
-#if defined(_DEBUG) && defined(GBUS_LOGGER)
-#define ENABLE_GBUS_LOGGER
-#endif // defined
-
 #if 0
 #define LOCALDBG     ENABLE
 #else
 #define LOCALDBG     DISABLE
 #endif // 0
-
-#ifdef ENABLE_GBUS_LOGGER
-static FILE* gbusLogFp = nullptr;
-#endif // ENABLE_GBUS_LOGGER
 
 using namespace rc_sockets;
 
@@ -38,8 +30,8 @@ gbus::gbus()
 {
     // ctor
 #ifdef ENABLE_GBUS_LOGGER
-    gbusLogFp = fopen("/tmp/gbuslog_te.txt", "w");
-    fprintf(gbusLogFp, "gbus_open()\n");
+    gbusLogFp = fopen(GBUS_LOGGER_FILENAME, "w");
+//  fprintf(gbusLogFp, "gbus_open()\n");
 #endif // ENABLE_GBUS_LOGGER
 }
 
@@ -53,7 +45,7 @@ gbus::gbus(LLAD_PTR llad)
     sd(0)
 {
 #ifdef ENABLE_GBUS_LOGGER
-    gbusLogFp = fopen("/tmp/gbuslog_te.txt", "w");
+    gbusLogFp = fopen(GBUS_LOGGER_FILENAME, "w");
 //  fprintf(gbusLogFp, "gbus_open()\n");
 #endif // ENABLE_GBUS_LOGGER
     valid = open(llad);
@@ -165,6 +157,7 @@ RMuint8 gbus::gbus_read_uint8(RMuint32 byte_address)
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_read_uint8(0x%08X) = 0x%02X\n", byte_address, val);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -190,6 +183,7 @@ RMuint16 gbus::gbus_read_uint16(RMuint32 byte_address)
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_read_uint16(0x%08X) = 0x%04X\n", byte_address, val);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -214,6 +208,7 @@ RMuint32 gbus::gbus_read_uint32(RMuint32 byte_address)
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_read_uint32(0x%08X) = 0x%08X\n", byte_address, val);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -233,6 +228,7 @@ void gbus::gbus_write_uint8(RMuint32 byte_address, RMuint8 data)
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_write_uint8(0x%08X, 0x%02x)\n", byte_address, data);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -251,6 +247,7 @@ void gbus::gbus_write_uint16(RMuint32 byte_address, RMuint16 data)
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_write_uint16(0x%08X, 0x%04x)\n", byte_address, data);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -269,6 +266,7 @@ void gbus::gbus_write_uint32(RMuint32 byte_address, RMuint32 data)
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_write_uint32(0x%08X, 0x%08x)\n", byte_address, data);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -289,6 +287,7 @@ void gbus::gbus_read_data8(RMuint32 byte_address, RMuint8 *data, RMuint32 count)
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_read_data8(0x%08X, %d)\n", byte_address, count);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -315,6 +314,7 @@ void gbus::gbus_read_data16(RMuint32 byte_address, RMuint16 *data, RMuint32 coun
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_read_data16(0x%08X, %d)\n", byte_address, count);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -358,6 +358,7 @@ void gbus::gbus_read_data32(RMuint32 byte_address, RMuint32 *data, RMuint32 coun
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_read_data32(0x%08X, %d)\n", byte_address, count);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -378,6 +379,7 @@ void gbus::gbus_write_data8(RMuint32 byte_address, RMuint8 *data, RMuint32 count
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_write_data8(0x%08X, %d)\n", byte_address, count);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -409,6 +411,7 @@ void gbus::gbus_write_data16(RMuint32 byte_address, RMuint16 *data, RMuint32 cou
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_write_data16(0x%08X, %d)\n", byte_address, count);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
@@ -440,8 +443,47 @@ void gbus::gbus_write_data32(RMuint32 byte_address, RMuint32 *data, RMuint32 cou
 
 #ifdef ENABLE_GBUS_LOGGER
     fprintf(gbusLogFp, "gbus_write_data32(0x%08X, %d)\n", byte_address, count);
+    check_bp(byte_address);
 #endif // ENABLE_GBUS_LOGGER
 
 	pthread_mutex_unlock(&gbus_lock);
 }
 
+#ifdef ENABLE_GBUS_LOGGER
+
+FILE* gbus::gbus_log_getfp() const {
+    return gbusLogFp;
+}
+
+/**
+ *  Display a marker in the gbus log...
+ */
+
+void  gbus::gbus_log_mark(std::string sMessage) {
+	pthread_mutex_lock(&gbus_lock);
+    fprintf(gbusLogFp, "%s", "----");
+    fprintf(gbusLogFp, "%s", sMessage.c_str());
+    std::string sLines( 80 - 4 - sMessage.length(), '-');
+    fprintf(gbusLogFp, "%s\n", sLines.c_str());
+	pthread_mutex_unlock(&gbus_lock);
+
+    return;
+}
+
+void  gbus::gbus_log_add_bp(RMuint32 bpAddress) {
+    RMDBGLOG((LOCALDBG, "%s(0x%08X)", __PRETTY_FUNCTION__, bpAddress));
+    gbusBPvec.push_back(bpAddress);
+}
+
+#define BREAKPOINT	__asm__("int $3")
+
+void gbus::check_bp(RMuint32 address) {
+    for (size_t i = 0 ; i < gbusBPvec.size() ; i++) {
+        if (gbusBPvec[i] == address) {
+            BREAKPOINT;
+        }
+    }
+
+    return;
+}
+#endif // ENABLE_GBUS_LOGGER
