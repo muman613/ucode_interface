@@ -120,6 +120,27 @@ public:
     targetStandardInterface(TARGET_ENGINE_PTR pEngine);
     virtual ~targetStandardInterface();
 
+
+    struct inputStats {
+        std::string     sInputFile;
+        size_t          bytesRead;
+    };
+
+    struct outputStats {
+        std::string     sYUVFile;
+        RMuint32        pic_address;
+        RMuint32        pic_luma_buffer;
+        RMuint32        pic_chroma_buffer;
+        RMuint32        pic_width;
+        RMuint32        pic_height;
+        RMuint32        frame_count;
+        double          save_time;
+    };
+
+    void                    enable_dump(const std::string& sPath = "/tmp/");
+    void                    disable_dump();
+    bool                    get_dump_info(std::string& sPath);
+
     bool                    play_stream(const std::string& sInputStreamName,
                                         const std::string& sOutputYUVName,
                                         RMuint32 profile = VideoProfileMPEG2);
@@ -127,6 +148,9 @@ public:
                                         const std::string& sOutputYUVName,
                                         const std::string& sProfile);
     bool                    stop();
+
+    bool                    get_output_stats(outputStats& stats) const;
+    bool                    get_input_stats(inputStats& stats) const;
 
 protected:
     struct MicrocodeInbandParams {
@@ -203,11 +227,16 @@ protected:
     RMuint32                picture_w;
     RMuint32                picture_h;
     RMuint32                picture_count;
+    RMuint32                picbuf_address;
+
+    double                  save_time;
 
     std::string             inputStreamName;
     std::string             outputYUVName;
 	FILE*                   yuvfp;                      ///< Output yuv file handle.
-    RMuint32                total_frames;
+    RMuint32                total_frames;               ///< Frame Count.
+    bool                    dump_y_uv;                  ///< If true dump each tiled buffer to Y & UV file.
+    std::string             dumpPath;
 
 private:
     bool                    launch_threads();
@@ -236,6 +265,16 @@ private:
     RMint32                 get_profile_id_from_string(const std::string& sCodecID);
     std::string             get_profile_string_from_id(RMint32 codec_id);
 
+    void                    get_dump_filenames(RMuint32 frame_no,
+                                               std::string& sYFilename,
+                                               std::string& sUVFilename);
+
+    /*! Save untiled frame to output file */
+    void                    save_frame(RMuint32 frame_count,
+                                       EMhwlibWindow* luma_position_in_buffer,
+                                       RMuint32 luma_ttl_wd,
+                                       EMhwlibWindow* chroma_position_in_buffer,
+                                       RMuint32 chroma_ttl_wd);
 #ifdef  USE_PTHREADS
     pthread_t                   fifoFillThread;         ///< Thread used to send stream data to input fifo...
     pthread_t                   fifoEmptyThread;        ///< Thread used to extract pictures from display fifo...
@@ -251,12 +290,12 @@ private:
     static void*                _fifoEmptyThreadFunc(targetStandardInterface* pThis);
 #else
 #if (__cplusplus >= 201103L)
-    std::thread                 fifoFillThread;         ///< Thread used to send stream data to input fifo...
-    std::thread                 fifoEmptyThread;
-    volatile mutable std::atomic_bool    fifoFillRunning;
-    volatile mutable std::atomic_bool    fifoEmptyRunning;
-    volatile mutable std::atomic_bool    terminateThreads;
-    mutable std::mutex          contextMutex;
+    std::thread                          fifoFillThread;    ///< Thread used to send stream data to input fifo...
+    std::thread                          fifoEmptyThread;   ///< Thread used to extract pictures to output file.
+    volatile mutable std::atomic_bool    fifoFillRunning;   ///< Flag set when the fill thread is running.
+    volatile mutable std::atomic_bool    fifoEmptyRunning;  ///< Flag set when the empty thread is running.
+    volatile mutable std::atomic_bool    terminateThreads;  ///< Flag used to signal threads shut-down.
+    mutable std::mutex                   contextMutex;      ///< Mutex for access to class context variables.
 //  std::mutex              displayMutex;
 #else  // (__cplusplus >= 201103L)
 #pragma GCC error "std::thread not available"

@@ -136,6 +136,11 @@ RMstatus video_set_profile(
 	RMuint32 pvti,
 	RMuint32 profile);
 
+RMuint32 offset_address(SOC_ARCH soc_arch,
+                        RMuint32 tile_width_l2, RMuint32 tile_height_l2,
+                        RMuint32 x, RMuint32 y,
+                        RMuint32 geometry, RMuint32 nb_comp,
+                        RMuint32 ta2la_switch);
 }
 
 

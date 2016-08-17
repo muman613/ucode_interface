@@ -772,4 +772,44 @@ RMstatus video_set_profile(
 	return RM_OK;
 }
 
+static RMuint32 get_la_from_ta(RMuint32 ta)
+{
+    return ((ta >> 12) << 12) | (((ta >> 8) & 1) << 11) | (((ta >> 9) & 7) << 8) | (ta & 0xff);
+}
+
+static RMuint32 offset_address_calypso(RMuint32 tile_width_l2, RMuint32 tile_height_l2,
+                        RMuint32 x, RMuint32 y, RMuint32 stride, RMuint32 nb_comp)
+{
+    return    (((x * nb_comp) &~ ((1 << tile_width_l2) - 1)) * (12 * stride + 2))
+                + (y << tile_width_l2)
+                + ((x * nb_comp) & ((1 << tile_width_l2) - 1));
+}
+
+static RMuint32 offset_address_tango(RMuint32 tile_width_l2, RMuint32 tile_height_l2,
+                              RMuint32 x, RMuint32 y, RMuint32 tiled_buffer_width, RMuint32 nb_comp)
+{
+    return    (y >> tile_height_l2) * (tiled_buffer_width << (tile_width_l2 + tile_height_l2))
+              + ((y & ((1 << tile_height_l2) - 1)) << tile_width_l2)
+              + (((x * nb_comp) >> tile_width_l2) << (tile_width_l2 + tile_height_l2))
+              + ((x * nb_comp) & ((1 << tile_width_l2) - 1));
+}
+
+RMuint32 offset_address(SOC_ARCH soc_arch, RMuint32 tile_width_l2, RMuint32 tile_height_l2,
+                        RMuint32 x, RMuint32 y, RMuint32 geometry, RMuint32 nb_comp, RMuint32 ta2la_switch)
+{
+    if (soc_arch == SOC_TANGO)  // tango chip, geometry is tiled buffer width here
+        return offset_address_tango(tile_width_l2, tile_height_l2, x, y, geometry, nb_comp);
+    else if (soc_arch == SOC_PMAN) {
+        return y * geometry + x * nb_comp;
+    } else { // calypso chip, geometry is stride here
+        RMuint32 offset_tiled_address;
+        offset_tiled_address = offset_address_calypso(tile_width_l2, tile_height_l2, x, y, geometry, nb_comp);
+        if (ta2la_switch == 1)
+            return get_la_from_ta(offset_tiled_address);
+        else
+            return offset_tiled_address;
+    }
+}
+
+
 }

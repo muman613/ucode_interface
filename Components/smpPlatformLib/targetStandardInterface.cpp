@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <iomanip>
 #define ALLOW_OS_CODE
 #include "targetEngine.h"
 #include "targetInterfaceBase.h"
@@ -18,6 +19,7 @@
 #include "string_utils.h"
 #include "gbus.h"
 #include "gbus_utils.h"
+#include "misc_utils.h"
 
 #ifdef _DEBUG
 #define LOCALDBG    ENABLE
@@ -43,8 +45,11 @@ targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
     ifState(IF_UNINITIALIZED),
     pChroma(nullptr),
     pLuma(nullptr),
+    picture_count(0),
+    save_time(0.0),
     yuvfp(nullptr),
     total_frames(0),
+    dump_y_uv(false),
     fifoFillRunning(false),
     fifoEmptyRunning(false),
     terminateThreads(false)
@@ -73,6 +78,57 @@ targetStandardInterface::~targetStandardInterface()
     }
 }
 
+/*
+    void                    enable_dump(const std::string& sPath = "/tmp/");
+    void                    disable_dump();
+    bool                    get_dump_info(std::string& sPath);
+*/
+/**
+ *  Set dump flag and path...
+ */
+
+void targetStandardInterface::enable_dump(const std::string& sPath)
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, sPath.c_str()));
+
+    dump_y_uv = true;
+    dumpPath  = sPath;
+
+    if (!dumpPath.empty() && *dumpPath.rbegin() != '/')
+        dumpPath += '/';
+
+    return;
+}
+
+/**
+ *  Clear dump flag...
+ */
+
+void targetStandardInterface::disable_dump()
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__));
+
+    dump_y_uv = false;
+
+    return;
+}
+
+/**
+ *  Return dump flag...
+ */
+
+bool targetStandardInterface::get_dump_info(std::string& sPath)
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__));
+
+    sPath = dumpPath;
+
+    return dump_y_uv;
+}
+
 /**
  *  Play the stream...
  */
@@ -85,7 +141,11 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
     RMDBGLOG((LOCALDBG, "%s(%s, %s, %s)\n", __PRETTY_FUNCTION__,
               sInputStreamName.c_str(), sOutputYUVName.c_str(),
               sProfile.c_str()));
-    nProfile = get_profile_id_from_string(sProfile);
+
+    if ((nProfile = get_profile_id_from_string(sProfile)) == (RMuint32)-1) {
+        RMDBGLOG((LOCALDBG, "-- invalid profile [%s]!\n", sProfile.c_str()));
+        return false;
+    }
 
     return play_stream(sInputStreamName, sOutputYUVName, nProfile);
 }
@@ -125,14 +185,12 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
 
         init_video_engine();
         open_video_decoder();
-
         set_video_codec();
         send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
-
         launch_threads();
         ifState = IF_PLAYING;
     } else {
-        RMDBGLOG((LOCALDBG, "-- input/output error!\n"));
+        RMDBGLOG((LOCALDBG, "ERROR: Unable to find input file!\n"));
     }
 
     RMDBGLOG((LOCALDBG, "-- exiting play_stream()\n"));
@@ -207,7 +265,9 @@ RMstatus targetStandardInterface::init_video_engine()
         video_set_scheduler_memory(pIF, memBase, Address, Size);
         Size += 4;
         m_pAlloc[0]->alloc(targetAllocator::ALLOC_DRAM, Size);
+#ifdef _DEBUG
         m_pAlloc[0]->dump(std::cerr);
+#endif // _DEBUG
 //        pContext->uiDRAMPtr += Size;
     }
 
@@ -596,13 +656,12 @@ void* targetStandardInterface::fifoEmptyThreadFunc()
             // advance read pointer
             rd = (rd + 1) % fifo_size;
             size--;
+
             // release pictures
-//            pIF->get_gbusptr()->gbus_write_uint32((RMuint32) &(((struct VideoMicrocodePicture *)picture_address)->picture_display_status), 0);
             struct_utils::write_structure_member(pIF, picture_address, "VideoMicrocodePicture", "picture_display_status", 0);
             total_frames++;
 
             // update FIFO read pointer
-            //pIF->get_gbusptr()->gbus_write_uint32((RMuint32) &(fifo->rd), rd);
             gbus_fifo_incr_read_ptr(pIF->get_gbusptr(), (struct gbus_fifo*)display_fifo, 1);
         }
 
@@ -799,9 +858,9 @@ RMstatus targetStandardInterface::set_video_codec()
 {
     controlInterface*   pIF    = dynamic_cast<controlInterface*>(m_pEngine[0].get());
 
-#ifdef _DEBUG
+#ifdef ENABLE_GBUS_LOGGER
     pIF->get_gbusptr()->gbus_log_mark("entering set_video_codec");
-#endif // _DEBUG
+#endif // ENABLE_GBUS_LOGGER
 
     send_video_command( VideoCommandUninit,  VideoStatusUninit );
 
@@ -809,9 +868,9 @@ RMstatus targetStandardInterface::set_video_codec()
 
     send_video_command( VideoCommandInit,    VideoStatusStop );
 
-#ifdef _DEBUG
+#ifdef ENABLE_GBUS_LOGGER
     pIF->get_gbusptr()->gbus_log_mark("exiting set_video_codec");
-#endif // _DEBUG
+#endif // ENABLE_GBUS_LOGGER
 
     return RM_OK;
 }
@@ -845,9 +904,9 @@ RMstatus targetStandardInterface::send_video_command(enum VideoCommand cmd,
 //        break;
 //    }
 
-#ifdef _DEBUG
+#ifdef ENABLE_GBUS_LOGGER
     pIF->get_gbusptr()->gbus_log_mark("entering send_video_command");
-#endif // _DEBUG
+#endif // ENABLE_GBUS_LOGGER
 
     video_set_command(pIF, pvti, cmd );
 
@@ -871,9 +930,9 @@ RMstatus targetStandardInterface::send_video_command(enum VideoCommand cmd,
         //usleep(1000);
     }
 
-#ifdef _DEBUG
+#ifdef ENABLE_GBUS_LOGGER
     pIF->get_gbusptr()->gbus_log_mark("exiting send_video_command");
-#endif // _DEBUG
+#endif // ENABLE_GBUS_LOGGER
 
     return result;
 }
@@ -909,6 +968,7 @@ RMuint32 targetStandardInterface::READ_PICTURE_BUFFER_MEMBER(controlInterface* p
 
 RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
 {
+    mutex_guard         guard(contextMutex);    // obtain the context mutex...
     controlInterface*   pIF    = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     RMstatus            result = RM_ERROR;
     RMuint32            frame_count = 0;
@@ -924,9 +984,9 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
                         chroma_size_tile = 0;
     EMhwlibWindow       luma_position_in_buffer,
                         chroma_position_in_buffer;
-    RMuint8             *pLuma = nullptr,
-                        *pChroma = nullptr;
-//  union VideoMicrocodePictureDisplayData pic_data_type;
+    struct timespec     ts1, ts2, ts3 = { 0, 0 };
+
+    clock_gettime(CLOCK_REALTIME, &ts1);
 
     frame_count    = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "frame_count");
     luma_address   = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "luma_address");
@@ -963,132 +1023,196 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
            chroma_position_in_buffer.y, chroma_position_in_buffer.width, chroma_position_in_buffer.height, chroma_size_tile));
 #endif // ENABLE_EXTRA_DEBUG_INFO
 
-    picture_w       = luma_position_in_buffer.width;
-    picture_h       = luma_position_in_buffer.height;
-    picture_count   = frame_count;
-
-#if 0
-//    frame_count     = READ_PICTURE_BUFFER(pgbus, picture_address, frame_count);
-//    luma_address    = READ_PICTURE_BUFFER(pgbus, picture_address, luma_address);
-//    chroma_address  = READ_PICTURE_BUFFER(pgbus, picture_address, chroma_address);
-//    luma_ttl_wd     = READ_PICTURE_BUFFER(pgbus, picture_address, luma_total_width);
-//    chroma_ttl_wd   = READ_PICTURE_BUFFER(pgbus, picture_address, chroma_total_width);
-//  pic_data_type   = (union VideoMicrocodePictureDisplayData)READ_PICTURE_BUFFER(pgbus, picture_address, picture_display_data);
-
-//    READ_PICTURE_BUFFER_STRUCT(pgbus, picture_address, luma_position_in_buffer,
-//                               luma_position_in_buffer, struct EMhwlibWindow);
-//    READ_PICTURE_BUFFER_STRUCT(pgbus, picture_address, chroma_position_in_buffer,
-//                               chroma_position_in_buffer, struct EMhwlibWindow);
-
-//    /* calculate luma buffer size */
-//    luma_buf_width  = ((luma_position_in_buffer.width + ctx->pvc_tw - 1)/ctx->pvc_tw) * ctx->pvc_tw;
-//    luma_buf_height = ((luma_position_in_buffer.height + ctx->pvc_th - 1)/ctx->pvc_th) * ctx->pvc_th;
-//    luma_size_tile = (luma_buf_width * luma_buf_height);
-//
-//    /* calculate chroma buffer size */
-//    chroma_buf_width  = ((chroma_position_in_buffer.width + ctx->pvc_tw - 1)/ctx->pvc_tw) * ctx->pvc_tw;
-//    chroma_buf_height = ((chroma_position_in_buffer.height + ctx->pvc_th - 1)/ctx->pvc_th) * ctx->pvc_th;
-//    chroma_size_tile = (chroma_buf_width * chroma_buf_height) * 2;
-//
-//    result          = RM_OK;
-
-//    /* Save width & height */
-//    ctx->picture_w = luma_position_in_buffer.width;
-//    ctx->picture_h = luma_position_in_buffer.height;
-//    ctx->picture_count = frame_count;
-
-#ifdef ENABLE_CURSES
-    lock_context( ctx->pUIContext );
-
-    SET_DISPLAY_CONTEXT(ctx, frameCnt, frame_count);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.uiPicAddress, picture_address);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiBufAddress, luma_address);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiTotalWidth, luma_ttl_wd);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiBufWidth, luma_buf_width);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiBufHeight, luma_buf_height);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiPosX, luma_position_in_buffer.x);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiPosY, luma_position_in_buffer.y);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiPosWidth, luma_position_in_buffer.width);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiPosHeight, luma_position_in_buffer.height);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiSizeTile, luma_size_tile);
-
-    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiBufAddress, chroma_address);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiTotalWidth, chroma_ttl_wd);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiBufWidth, chroma_buf_width);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiBufHeight, chroma_buf_height);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiPosX, chroma_position_in_buffer.x);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiPosY, chroma_position_in_buffer.y);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiPosWidth, chroma_position_in_buffer.width);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiPosHeight, chroma_position_in_buffer.height);
-    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiSizeTile, chroma_size_tile);
-
-    unlock_context( ctx->pUIContext );
-#else
-#ifdef  DISPLAY_PICTURE_INFO
-    printf("frame %ld luma_buffer @ 0x%08lx width 0x%08lx chroma_buffer @ 0x%08lx width 0x%08lx\n",
-           frame_count, luma_address, luma_ttl_wd, chroma_address, chroma_ttl_wd);
-//  printf("picture_data_type = %ld format = %d bits_per_pixel = %d\n", pic_data_type.value, pic_data_type.bits.pixel_format, pic_data_type.bits.bits_per_pixel);
-    printf("luma tiled dimensions ( %ld x %ld ) chroma tiled dimensions ( %ld x %ld )\n", luma_buf_width,
-           luma_buf_height, chroma_buf_width, chroma_buf_height);
-    printf("==> luma position   x %ld y %ld w %ld h %ld size_tile %ld\n", luma_position_in_buffer.x,
-           luma_position_in_buffer.y, luma_position_in_buffer.width, luma_position_in_buffer.height, luma_size_tile);
-    printf("==> chroma position x %ld y %ld w %ld h %ld size_tile %ld\n", chroma_position_in_buffer.x,
-           chroma_position_in_buffer.y, chroma_position_in_buffer.width, chroma_position_in_buffer.height, chroma_size_tile);
-    fflush(stdout);
-#endif
-#endif // ENABLE_CURSES
-
-    RMDBGLOG((ENABLE, "Picture Buffer @ 0x%08lx\n", picture_address));
-    RMDBGLOG((ENABLE, "Luma Buffer    @ 0x%08lx %ld bytes\n", luma_address, luma_size_tile));
-    RMDBGLOG((ENABLE, "Chroma Buffer  @ 0x%08lx %ld bytes\n", chroma_address, chroma_size_tile));
-
-    /* If saving frames to file... */
-    if (ctx->yuvfp != 0) {
-        if (ctx->pLuma == 0) {
-            ctx->pLuma = (RMuint8*)malloc(luma_size_tile);
+    if (yuvfp != nullptr) {
+        if (pLuma == nullptr) {
+            pLuma = (RMuint8*)malloc(luma_size_tile);
         }
 
-        if (ctx->pChroma == 0) {
-            ctx->pChroma = (RMuint8*)malloc(chroma_size_tile);
+        if (pChroma == nullptr) {
+            pChroma = (RMuint8*)malloc(chroma_size_tile);
         }
 
-        pLuma   = ctx->pLuma;
-        pChroma = ctx->pChroma;
+//        pLuma   = ctx->pLuma;
+//        pChroma = ctx->pChroma;
 
-        gbus_read_data8(pgbus, luma_address,   pLuma,   luma_size_tile);
-        gbus_read_data8(pgbus, chroma_address, pChroma, chroma_size_tile);
+        pIF->get_gbusptr()->gbus_read_data8(luma_address,   pLuma,   luma_size_tile);
+        pIF->get_gbusptr()->gbus_read_data8(chroma_address, pChroma, chroma_size_tile);
 
-        if (ctx->dump_y_uv == TRUE) {
-            char sYFname[128], sUVFname[128];
-            FILE *yFP = 0, *uvFP = 0;
+//        gbus_read_data8(pgbus, luma_address,   pLuma,   luma_size_tile);
+//        gbus_read_data8(pgbus, chroma_address, pChroma, chroma_size_tile);
 
-            RMDBGLOG((LOCALDBG, "Saving frame %ld .Y & .UV to /tmp/\n", frame_count));
+        if (dump_y_uv == true) {
+            std::string sYFname,
+                        sUVFname;
+            FILE        *yFP = 0,
+                        *uvFP = 0;
 
-            snprintf(sYFname, 128, "/tmp/frame%03ld-tiled.Y", (long int)frame_count);
-            snprintf(sUVFname, 128, "/tmp/frame%03ld-tiled.UV", (long int)frame_count);
+            get_dump_filenames(frame_count, sYFname, sUVFname);
 
-            yFP = fopen(sYFname, "wb");
-            uvFP = fopen(sUVFname, "wb");
+            RMDBGLOG((LOCALDBG, "Saving frame %ld .Y & .UV to %s.\n", frame_count,
+                      dumpPath.c_str()));
+
+            yFP  = fopen(sYFname.c_str(), "wb");
+            uvFP = fopen(sUVFname.c_str(), "wb");
+
             if ((yFP != 0) && (uvFP != 0)) {
                 fwrite(pLuma,   1, luma_size_tile,   yFP);
                 fwrite(pChroma, 1, chroma_size_tile, uvFP);
             }
+
             fclose(uvFP);
             fclose(yFP);
         }
 
-        save_frame(ctx, frame_count,
-                    &luma_position_in_buffer, luma_ttl_wd,
-                    &chroma_position_in_buffer, chroma_ttl_wd);
+        save_frame(frame_count, &luma_position_in_buffer, luma_ttl_wd,
+                   &chroma_position_in_buffer, chroma_ttl_wd);
 
         result = RM_OK;
     }
 
-    /* Save width & height */
-    ctx->picture_w = luma_position_in_buffer.width;
-    ctx->picture_h = luma_position_in_buffer.height;
-    ctx->picture_count = frame_count;
-#endif // 0
+    picture_w       = luma_position_in_buffer.width;
+    picture_h       = luma_position_in_buffer.height;
+    picture_count   = frame_count;
+    picbuf_address  = picture_address;
+
+    clock_gettime(CLOCK_REALTIME, &ts2);
+
+    ts3         = difftimespec( ts1, ts2 );
+    save_time   = get_ts_seconds(ts3);
 
     return result;
+}
+
+/**
+ *  Generate filenames for Y & UV dump files.
+ */
+
+void  targetStandardInterface::get_dump_filenames(RMuint32 frame_no,
+                                                  std::string& sYFilename,
+                                                  std::string& sUVFilename)
+{
+    std::ostringstream  os;
+
+    os << dumpPath << "frame" << std::setfill('0') << std::setw(4) << frame_no << "-tiled.Y";
+    sYFilename = os.str();
+    os.clear();
+    os.str("");
+    os << dumpPath << "frame" << std::setfill('0') << std::setw(4) << frame_no << "-tiled.UV";
+    sUVFilename = os.str();
+
+    return;
+}
+
+/**
+ *  Save picture buffer in YUV output file.
+ */
+
+void targetStandardInterface::save_frame(RMuint32 frame_count,
+                                        EMhwlibWindow* luma_position_in_buffer, RMuint32 luma_ttl_wd,
+                                        EMhwlibWindow* chroma_position_in_buffer, RMuint32 chroma_ttl_wd)
+{
+    RMuint32 luma_x     = luma_position_in_buffer->x;
+//  RMuint32 luma_y     = luma_position_in_buffer->y;
+    RMuint32 luma_w     = luma_position_in_buffer->width;
+    RMuint32 luma_h     = luma_position_in_buffer->height;
+    RMuint32 chroma_x   = chroma_position_in_buffer->x;
+//  RMuint32 chroma_y   = chroma_position_in_buffer->y;
+    RMuint32 chroma_w   = chroma_position_in_buffer->width;
+    RMuint32 chroma_h   = chroma_position_in_buffer->height;
+//	RMuint32 chromasize = 0;
+//	RMuint8	 *data      = 0L;
+//	RMuint8	 *ptr       = 0L;
+    RMuint32 x,y;
+    RMuint32 x_min, x_max, y_min, y_max;
+    RMuint32 luma_tile_cnt, chroma_tile_cnt;
+    RMuint8  *uPtr      = 0L,
+             *vPtr      = 0L;
+    RMuint32 i;
+
+//#ifndef ENABLE_CURSES
+//    printf("Saving frame %ld (luma %ld x %ld) (chroma %ld x %ld)...\n", frame_count,
+//           luma_w, luma_h, chroma_w, chroma_h);
+//    fflush(stdout);
+//#endif // ENABLE_CURSES
+
+    luma_w   = luma_w   * luma_nb_comp_per_sample;
+    chroma_w = chroma_w * chroma_nb_comp_per_sample;
+
+    luma_tile_cnt   = (luma_ttl_wd + (1 << tile_width_l2) - 1) / (1<<tile_width_l2);
+    chroma_tile_cnt = (chroma_ttl_wd + (1 << tile_width_l2) - 1) / ( 1<<tile_width_l2);
+
+    y_min = 0;
+    y_max = luma_h;
+    x_min = luma_x;
+    x_max = luma_w+luma_x;
+
+    for (y = y_min ; y < y_max ; y++) {
+        for (x = x_min ; x < x_max ; x++) {
+            RMuint8*    pData = pLuma + offset_address(soc_arch,
+                                                       tile_width_l2,
+                                                       tile_height_l2,
+                                                       x, y,
+                                                       luma_tile_cnt, 1, 1);
+            fwrite(pData, 1, 1, yuvfp);
+        }
+    }
+
+    y_min = 0;
+    y_max = chroma_h;
+    x_min = chroma_x * 2;
+    x_max = chroma_w + (chroma_x * 2);
+
+    uPtr = (RMuint8*)malloc( (chroma_w * chroma_h) / 2);
+    vPtr = (RMuint8*)malloc( (chroma_w * chroma_h) / 2);
+
+    i = 0;
+    for (y = y_min ; y < y_max ; y++) {
+        for (x = x_min ; x < x_max ; x += 2, i++) {
+            RMuint8*    pData = pChroma + offset_address(soc_arch,
+                                                         tile_width_l2,
+                                                         tile_height_l2,
+                                                         x, y,
+                                                         chroma_tile_cnt, 1, 1);
+            uPtr[i] = pData[0];
+            vPtr[i] = pData[1];
+        }
+    }
+
+    fwrite(uPtr, (chroma_w * chroma_h)/2, 1, yuvfp);
+    fwrite(vPtr, (chroma_w * chroma_h)/2, 1, yuvfp);
+
+    free( vPtr );
+    free( uPtr );
+}
+
+/**
+ *  Return the current frame counter...
+ */
+
+bool targetStandardInterface::get_output_stats(outputStats& stats) const
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+
+    stats.sYUVFile          = outputYUVName;
+    stats.pic_address       = picbuf_address;
+    stats.pic_width         = picture_w;
+    stats.pic_height        = picture_h;
+    stats.save_time         = save_time;
+    stats.frame_count       = picture_count;
+
+    return true;
+}
+
+/**
+ *
+ */
+
+bool targetStandardInterface::get_input_stats(inputStats& stats) const
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+
+    stats.sInputFile        = inputStreamName;
+    stats.bytesRead         = 0;
+
+    return true;
 }
