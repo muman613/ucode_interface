@@ -131,7 +131,32 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
     return bRes;
 }
 
+/**
+ *  Display frame count...
+ */
 
+void display_stats(const targetStandardInterface::outputStats& stats)
+{
+    char buffer[128];
+    static size_t lastSize = 0;
+
+    if (stats.frame_count > 0) {
+        snprintf(buffer, 128, "Frame # : %d save %d X %d frame to %s (%2.3f sec/frame)",
+                 stats.frame_count,
+                 stats.pic_width,
+                 stats.pic_height,
+                 stats.sYUVFile.c_str(),
+                 stats.save_time);
+        if (lastSize != 0) {
+            for (size_t i = 0 ; i < lastSize ; i++)
+                fputc('\b', stdout);
+        }
+
+        fputs(buffer, stdout);
+        fflush(stdout);
+        lastSize = strlen(buffer);
+    }
+}
 
 /**
  *  Main entry point
@@ -178,6 +203,11 @@ int main(int argc, char * argv[])
                     pStdIF = CREATE_NEW_INTERFACE( pTarget );
                     if (pStdIF) {
                         bool bDone = false;
+                        targetStandardInterface::outputStats stats;
+
+#if defined(_DEBUG) && defined(DUMP_TILED)
+                        pStdIF->enable_dump();
+#endif // defined(_DEBUG) && defined(DUMP_TILED)
 
                         std::cout << "Interface was created, playing stream..." << std::endl;
                         pStdIF->play_stream(opts.inputStream,
@@ -191,12 +221,16 @@ int main(int argc, char * argv[])
 
                             if (ch != EOF) {
                                 if (ch == 'q' || ch == 'Q') {
+                                    putc('\n', stdout);
                                     std::cout << "User hit quit... Please wait!" << std::endl;
                                     bDone = true;
                                     break;
                                 }
                             }
 
+                            if (pStdIF->get_output_stats(stats)) {
+                                display_stats(stats);
+                            }
                             usleep(5000);
                         }
 

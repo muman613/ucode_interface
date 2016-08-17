@@ -56,6 +56,7 @@ void set_terminal_mode()
     tcsetattr(fileno(stdin), TCSANOW, &new_term_attr);
 
     fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
+    printf("\e[?25l"); /* hide the cursor */
 
     return;
 }
@@ -65,6 +66,7 @@ void reset_terminal_mode()
     /* restore the original terminal attributes */
     tcsetattr(fileno(stdin), TCSANOW, &orig_term_attr);
     fcntl(fileno(stdin), F_SETFL, ~O_NONBLOCK);
+    printf("\e[?25h"); /* show the cursor */
 }
 
 int getkey()
