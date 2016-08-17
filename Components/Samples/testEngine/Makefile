@@ -67,9 +67,10 @@ GBUSFIFO_CFLAGS=-I../../gbusfifolib/
 LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)
 LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
 
+DEFINES=-DGBUS_LOGGER=1
 INCLUDES=-I../.. -I../../.. -I ../../include $(PLATLIB_CFLAGS) $(GBUSFIFO_CFLAGS)
 
-CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) -std=c++11
+CFLAGS=$(DEFINES) $(LIBXML_CFLAGS) -std=c++11
 LIBS=$(PLATLIB_LIBS) $(PLATDB_LIBS) $(RCLIENT_LIBS) $(SYMMGR_LIBS)				\
      $(STRUCT_LIBS) $(RESOLV_LIBS) $(LIBXML_LIBS) $(GBUSFIFO_LIBS) -lpthread
 

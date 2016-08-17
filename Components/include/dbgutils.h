@@ -45,6 +45,8 @@
 
 extern void debug(const char* sFmt, ...);
 
+#define BREAKPOINT	__asm__("int $3")
+
 #else	// _DEBUG
 
 #define D(x) /* (x) */
@@ -54,6 +56,8 @@ extern void debug(const char* sFmt, ...);
 #define UNUSED(x) /* (x) */
 
 inline void debug(const char* /* sFmt */, ...) {
+
+#define BREAKPOINT
 
 }
 
