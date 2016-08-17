@@ -35,8 +35,8 @@ else
 SYMMGR_LIB=../Components/libs/Linux/x86/libsymbolmgr.a
 endif
 			  
-#DEFINES=$(RMCFLAGS) -include options.h -D_FILE_OFFSET_BITS=64 -DGBUS_LOGGER=1
-DEFINES=$(RMCFLAGS) -include options.h -D_FILE_OFFSET_BITS=64
+DEFINES=$(RMCFLAGS) -include options.h -D_FILE_OFFSET_BITS=64 -DGBUS_LOGGER=1
+#DEFINES=$(RMCFLAGS) -include options.h -D_FILE_OFFSET_BITS=64
 CFLAGS =-std=c++11 $(DEFINES) $(DBG_FLAGS) $(INCLUDE_FLAGS) -Wall
 LDFLAGS=-pthread -lpanelw -lncursesw $(SYMMGR_LIB)
 

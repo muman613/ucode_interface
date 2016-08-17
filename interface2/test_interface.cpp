@@ -43,10 +43,19 @@
 #define LOCALDBG DISABLE
 #endif // 1
 
+#if defined(_DEBUG) && defined(GBUS_LOGGER)
+#define ENABLE_GBUS_LOGGER
+#endif // defined
+
 #define DISPLAY_PICTURE_INFO    1
 #define VERBOSE_MESSAGES        1
 
 #define ARCH SOC_CALYPSO
+
+#ifdef ENABLE_GBUS_LOGGER
+    extern FILE* gbus_log_getfp();
+    extern void  gbus_log_mark(std::string sMessage);
+#endif // ENABLE_GBUS_LOGGER
 
 struct profileEntry {
     const char*     szIdent;
@@ -546,6 +555,10 @@ static RMstatus open_video_decoder(CONTEXT_PTR pContext)
     RMuint32 		video_bts_fifo;
     RMuint32		video_pts_fifo;
 
+#ifdef ENABLE_GBUS_LOGGER
+    gbus_log_mark("entering open_video_decoder");
+#endif // ENABLE_GBUS_LOGGER
+
     unprotected_ptr = (pContext->uiDRAMPtr & 0xfffffffc) + 4;
 
     /* init video_task_data_base*/
@@ -682,6 +695,9 @@ static RMstatus open_video_decoder(CONTEXT_PTR pContext)
 
 
 over:
+#ifdef ENABLE_GBUS_LOGGER
+    gbus_log_mark("exiting open_video_decoder");
+#endif // ENABLE_GBUS_LOGGER
 
     return err;
 }
@@ -699,6 +715,10 @@ static RMstatus send_video_command(CONTEXT_PTR ctx, enum VideoCommand cmd, enum 
     RMstatus            result = RM_ERROR;
     enum VideoStatus    VideoDecoderStatus;
     RMuint32            started;
+
+#ifdef _DEBUG
+    gbus_log_mark("entering send_video_command");
+#endif // _DEBUG
 
 #ifdef  ENABLE_CURSES
     APP_STATE appState;
@@ -751,6 +771,10 @@ static RMstatus send_video_command(CONTEXT_PTR ctx, enum VideoCommand cmd, enum 
         //usleep(1000);
     }
 
+#ifdef _DEBUG
+    gbus_log_mark("exiting send_video_command");
+#endif // _DEBUG
+
     return result;
 }
 
@@ -762,11 +786,19 @@ static RMstatus send_video_command(CONTEXT_PTR ctx, enum VideoCommand cmd, enum 
 
 static RMstatus set_video_codec(CONTEXT_PTR ctx)
 {
+#ifdef _DEBUG
+    gbus_log_mark("entering set_video_codec");
+#endif // _DEBUG
+
     send_video_command( ctx, VideoCommandUninit,  VideoStatusUninit );
 
     video_set_profile( ctx->pgbus, (struct video_task_interface*)ctx->pvti, ctx->decoderProfile );
 
     send_video_command( ctx, VideoCommandInit,    VideoStatusStop );
+
+#ifdef _DEBUG
+    gbus_log_mark("exiting set_video_codec");
+#endif // _DEBUG
 
     return RM_OK;
 }
@@ -780,15 +812,16 @@ static RMstatus set_video_codec(CONTEXT_PTR ctx)
 static RMuint32 write_data_in_circular_bts_fifo(CONTEXT* ctx, RMuint8 *pBuf, RMuint32 sizeToSend)
 {
     struct gbus*        pgbus = ctx->pgbus;
-	struct gbus_fifo*   fifo;
+	struct gbus_fifo*   fifo = (struct gbus_fifo*)ctx->bts_fifo;
 	RMuint32            rd, wr, fifo_base, fifo_size;
 	RMuint32            size, sizeLeft;
 
-	fifo = (struct gbus_fifo *)ctx->bts_fifo;
-	fifo_base = gbus_read_uint32(pgbus, (RMuint32) &(fifo->base));
-	fifo_size = gbus_read_uint32(pgbus, (RMuint32) &(fifo->size));
-	rd = gbus_read_uint32(pgbus, (RMuint32) &(fifo->rd));
-	wr = gbus_read_uint32(pgbus, (RMuint32) &(fifo->wr));
+    gbus_fifo_get_pointer(pgbus, fifo, &fifo_base, &fifo_size, &rd, &wr);
+//	fifo = (struct gbus_fifo *)ctx->bts_fifo;
+//	fifo_base = gbus_read_uint32(pgbus, (RMuint32) &(fifo->base));
+//	fifo_size = gbus_read_uint32(pgbus, (RMuint32) &(fifo->size));
+//	rd = gbus_read_uint32(pgbus, (RMuint32) &(fifo->rd));
+//	wr = gbus_read_uint32(pgbus, (RMuint32) &(fifo->wr));
 
 #ifdef ENABLE_CURSES
     lock_context( (UI_CONTEXT*)ctx->pUIContext );
@@ -831,8 +864,9 @@ static RMuint32 write_data_in_circular_bts_fifo(CONTEXT* ctx, RMuint8 *pBuf, RMu
 			gbus_write_data8(pgbus, fifo_base, pBuf+size, sizeLeft);
 	}
 	sizeLeft = 0;
-	wr = (wr + sizeToSend) % fifo_size;
-	gbus_write_uint32(pgbus, (RMuint32) &(fifo->wr), wr);
+    gbus_fifo_incr_write_ptr(pgbus, (struct gbus_fifo*)ctx->bts_fifo, sizeToSend);
+//	wr = (wr + sizeToSend) % fifo_size;
+//	gbus_write_uint32(pgbus, (RMuint32) &(fifo->wr), wr);
 
 #ifndef ENABLE_CURSES
 #ifdef BTS_FIFO_DEBUG

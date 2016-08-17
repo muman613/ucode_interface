@@ -10,12 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <string>
 
 #ifndef __WIN32__
 	#include <sys/ioctl.h>
 	#include <unistd.h>
 #endif
-
+#include "test_interface.h"
 
 #define LOCALDBG DISABLE
 
@@ -392,3 +393,23 @@ void gbus_invalidate_cache_region(struct gbus *h, RMuint32 virtual_address, RMui
 	return;
 }
 
+#ifdef ENABLE_GBUS_LOGGER
+
+FILE* gbus_log_getfp() {
+    return gbusLogFp;
+}
+
+/**
+ *  Send a mark message to the gbuslog...
+ */
+
+void gbus_log_mark(std::string sMessage) {
+    std::string     sLines( 80 - 4 - sMessage.length(), '-');
+
+    fprintf(gbusLogFp, "%s", "----");
+    fprintf(gbusLogFp, "%s", sMessage.c_str());
+    fprintf(gbusLogFp, "%s\n", sLines.c_str());
+
+    return;
+}
+#endif // ENABLE_GBUS_LOGGER

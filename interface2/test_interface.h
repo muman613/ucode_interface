@@ -202,4 +202,12 @@ typedef std::shared_ptr<CONTEXT>    CONTEXT_PTR;
 
 #endif // ENABLE_ENV_VARS
 
+#ifdef _DEBUG
+    #define BREAKPOINT	__asm__("int $3")
+#else
+    #define BREAKPOINT
+#endif
+
+
+
 #endif // __TEST_INTERFACE_H__
