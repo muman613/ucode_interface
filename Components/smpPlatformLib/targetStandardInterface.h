@@ -134,6 +134,13 @@ protected:
         RMuint32 params[COMMAND_PARAMS_RMUINT32_SIZE];
     };
 
+    struct EMhwlibWindow {
+            RMuint32 x;
+            RMuint32 y;
+            RMuint32 width;
+            RMuint32 height;
+    };
+
     struct MicrocodeInbandCommand {
         RMuint32 flags_tag;      // INBAND_COMMAND_GET_TAG() is the macro to find the tag
         RMuint32 byte_counter;   // byte counter - see EMhwlibInbandOffset
@@ -149,6 +156,9 @@ protected:
     bool                    set_tile_dimensions(std::string sChip);
     void                    set_tile_dimensions(RMuint32 tsw, RMuint32 tsh);
 
+    RMstatus                set_video_codec();
+    RMstatus                send_video_command(enum VideoCommand cmd,
+                                               enum VideoStatus stat);
     bool                    bValid;
     if_state                ifState;
 
@@ -209,6 +219,15 @@ private:
     RMuint32                write_data_in_circular_bts_fifo(RMuint8 *pBuf,
                                                             RMuint32 sizeToSend);
 
+    RMstatus                process_picture(RMuint32 picture_address);
+
+    void                    READ_PICTURE_BUFFER_RECT(controlInterface* pIF,
+                                                     RMuint32 address,
+                                                     std::string sField,
+                                                     struct EMhwlibWindow* pDest);
+    RMuint32                READ_PICTURE_BUFFER_MEMBER(controlInterface* pIF,
+                                                       RMuint32 address,
+                                                       const std::string& member);
     static struct profileEntry {
         std::string     sIdent;
         int             nProfile;

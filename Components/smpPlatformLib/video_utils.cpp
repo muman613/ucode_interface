@@ -19,6 +19,8 @@
 
 namespace video_utils {
 
+using namespace struct_utils;
+
 #define RESOLVE_SYMBOL(sym)                                                     \
     (*pSymMgr)[(sym)]
 
@@ -647,7 +649,10 @@ RMstatus video_get_user_data_fifo(
     }
 }
 
-/* initialize user data fifo container, allocated in DRAM,  size in entries */
+/**
+ *  initialize user data fifo container, allocated in DRAM,  size in entries
+ */
+
 RMstatus video_open_user_data_fifo(
 	controlInterface* pIF,
 	RMuint32 pvtdb,
@@ -658,13 +663,111 @@ RMstatus video_open_user_data_fifo(
                                                 pvtdb,
                                                 "video_task_data_base",
                                                 "user_data_fifo");
-//	RMDBGLOG((LOCALDBG, "video_open_user_data_fifo: fifo= %lx start= %lx size= %lx\n",
-//		(RMuint32) &(pvtdb->user_data_fifo), start, size));
+
+	RMDBGLOG((LOCALDBG, "video_open_user_data_fifo: fifo= %lx start= %lx size= %lx\n",
+		gbusAddr, start, size));
+
 	if (size == 0)
 		start = 0;
 
 	/* allocated size for this container is gbus_fifo_eraser - but the eraser is used only by microcode */
 	gbus_fifo_open(pIF->get_gbusptr(), start, size, (RMuint32) gbusAddr);
+
+	return RM_OK;
+}
+
+RMstatus video_open_error_code_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size)
+{
+	RMuint32 i;
+    RMuint32 gbusAddr = resolve_offset(pIF->get_structdb(),
+                                       pvtdb,
+                                       "video_task_data_base",
+                                       "error_code_fifo");
+    RMuint32 errFifoSize;
+
+    errFifoSize  = get_structure_size(pIF,
+                                      "EMhwlibVideoDecoder_DecodeError");
+
+	RMDBGLOG((LOCALDBG, "video_open_error_code_fifo: fifo= %lx start= %lx size= %lx\n",
+             gbusAddr, start, size));
+
+	gbus_entry_fifo_open(pIF->get_gbusptr(), start, size, gbusAddr);
+
+	/* initialize the error codes */
+	for (i=0; i< size*errFifoSize/sizeof(RMuint32); i++)
+		pIF->get_gbusptr()->gbus_write_uint32(start+4*i, 0);
+
+	return RM_OK;
+}
+
+RMstatus video_set_extra_pictures(
+	controlInterface*   pIF,
+	RMuint32            pvti,
+	RMint32             extra_buffer_count)
+{
+	if (extra_buffer_count >= 0) {
+        write_structure_member(pIF, pvti, "video_task_interface", "ExtraPictureBufferCount", extra_buffer_count);
+        write_structure_member(pIF, pvti, "video_task_interface", "DisplayPictureBufferCount", 2);
+//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->ExtraPictureBufferCount), extra_buffer_count);
+//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->DisplayPictureBufferCount), 2);
+	} else if (extra_buffer_count >= -2) {
+        write_structure_member(pIF, pvti, "video_task_interface", "ExtraPictureBufferCount", 0);
+        write_structure_member(pIF, pvti, "video_task_interface", "DisplayPictureBufferCount", 2 + extra_buffer_count);
+//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->ExtraPictureBufferCount), 0);
+//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->DisplayPictureBufferCount), 2 + extra_buffer_count);
+	} else {
+		RMDBGLOG((ENABLE, "video_set_extra_pictures error: %ld\n", extra_buffer_count));
+		return RM_ERROR;
+	}
+
+	return RM_OK;
+}
+
+/* set video command: play, stop, iframe */
+RMstatus video_set_command(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	enum VideoCommand command)
+{
+    struct_utils::write_structure_member(pIF, pvti,
+                                         "video_task_interface", "Command",
+                                         (RMuint32)command);
+	return RM_OK;
+}
+
+/* get current video state. State reflects the previous command. */
+RMstatus video_get_status(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	enum VideoStatus *status)
+{
+
+    struct_utils::read_structure_member(pIF, pvti,
+                                         "video_task_interface", "Status",
+                                         (RMuint32*)status);
+
+//	*status = (VideoStatus)gbus_read_uint32(pGBus, (RMuint32) &(pvti->Status));
+//	RMDBGLOG((DISABLE, "video_get_status addr=0x%lx status=0x%lx\n", (RMuint32) &(pvti->Status), *status));
+
+	return RM_OK;
+}
+
+/**
+ *  set video profile: mpeg2, 4, wmv, ..
+ */
+
+RMstatus video_set_profile(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	RMuint32 profile)
+{
+//	RMDBGLOG((LOCALDBG, "video_set_profile addr=0x%lx profile=0x%lx\n", (RMuint32) &(pvti->Profile), profile));
+//	gbus_write_uint32(pGBus, (RMuint32) &(pvti->Profile), profile);
+    struct_utils::write_structure_member(pIF, pvti, "video_task_interface", "Profile", profile);
 
 	return RM_OK;
 }

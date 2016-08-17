@@ -16,12 +16,18 @@
 #include "gbus_packet_fifo_eraser.h"
 #include "file_utils.h"
 #include "string_utils.h"
+#include "gbus.h"
+#include "gbus_utils.h"
 
 #ifdef _DEBUG
 #define LOCALDBG    ENABLE
 #else
 #define LOCALDBG    DISABLE
 #endif // _DEBUG
+
+#define ENABLE_EXTRA_DEBUG_INFO 1
+
+#define COMMAND_TIMEOUT         0xffffffff
 
 using namespace video_utils;
 
@@ -120,6 +126,9 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
         init_video_engine();
         open_video_decoder();
 
+        set_video_codec();
+        send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
+
         launch_threads();
         ifState = IF_PLAYING;
     } else {
@@ -168,6 +177,7 @@ void targetStandardInterface::init_parameters()
     chroma_nb_comp_per_sample   = 2;
     decoderProfile              = VideoProfileMPEG2;
     UserDataSize                = 0;
+    ExtraPictureBufferCount     = 0;
 
     set_tile_dimensions( m_pEngine[0]->get_engine()->get_parent()->get_parent()->get_chip_id() );
 
@@ -209,7 +219,7 @@ RMstatus targetStandardInterface::init_video_engine()
     nStructSize = pStructDB->get_structure( (str) )->size();                    \
     (var)       = pAlloc->alloc(targetAllocator::ALLOC_DRAM, nStructSize);      \
                                                                                 \
-    for (i = 0 ; i < nStructSize ; i++) {                                       \
+    for (i = 0 ; i < nStructSize/4 ; i++) {                                     \
         m_pEngine[0]->get_gbusptr()->gbus_write_uint32((var) + 4 * i, 0);       \
     }
 
@@ -234,6 +244,10 @@ RMstatus targetStandardInterface::open_video_decoder()
 
     assert(pStructDB != nullptr);
     assert(pIF != nullptr);
+
+#ifdef ENABLE_GBUS_LOGGER
+    pIF->get_gbusptr()->gbus_log_mark("entering open_video_decoder");
+#endif // ENABLE_GBUS_LOGGER
 
     pAlloc->alloc(targetAllocator::ALLOC_DRAM, 4);
 
@@ -273,6 +287,8 @@ RMstatus targetStandardInterface::open_video_decoder()
     gbus_fifo_eraser_open( pIF->get_gbusptr(), dramPtr, BitstreamFIFOSize, video_bts_fifo );
     err = video_set_bts_fifo_pointer( pIF, pvtdb, video_bts_fifo );
 
+    bts_fifo = video_bts_fifo;
+
     dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM, (RMuint32)(PtsFIFOCount * VPTS_FIFO_ENTRY_SIZE));
 
     err = video_get_pts_fifo(pIF, pvtdb, &video_pts_fifo);
@@ -287,28 +303,21 @@ RMstatus targetStandardInterface::open_video_decoder()
     inband_params_address = dramPtr;
 
     RMDBGLOG((LOCALDBG, "inband_params_address = %08X\n", inband_params_address));
-
+    for (i = 0 ; i < InbandFIFOCount * sizeof(struct MicrocodeInbandParams)/sizeof(RMuint32) ; i++)
     {
-        RMuint32 i;
-
-        for (i = 0 ; i < InbandFIFOCount * sizeof(struct MicrocodeInbandParams)/sizeof(RMuint32) ; i++)
-        {
-            pIF->get_gbusptr()->gbus_write_uint32( inband_params_address + (4*i), 0);
-        }
+        pIF->get_gbusptr()->gbus_write_uint32( inband_params_address + (4*i), 0);
     }
 
     video_set_inband_param_addr(pIF, pvtdb, inband_params_address);
 
-    err = video_get_display_fifo(pIF, pvtdb, &display_fifo);
-
     dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM, (sizeof(RMuint32) * (NumOfPictures + 1)));
+    err = video_get_display_fifo(pIF, pvtdb, &display_fifo);
 
     //gbus_entry_fifo_open(pContext->pgbus, unprotected_ptr, pContext->NumOfPictures + 1, pContext->display_fifo);
     gbus_entry_fifo_open( pIF->get_gbusptr(), dramPtr, (NumOfPictures + 1), display_fifo );
 
-        //clear the pointers to picture buffers
-    for ( i =0; i < NumOfPictures + 1; i++)
-    {
+    //clear the pointers to picture buffers
+    for ( i =0; i < NumOfPictures + 1; i++) {
         pIF->get_gbusptr()->gbus_write_uint32(dramPtr + (4* i), 0);
     }
 
@@ -327,6 +336,7 @@ RMstatus targetStandardInterface::open_video_decoder()
 //        unprotected_ptr += pContext->UserDataSize;
 //        gbus_entry_fifo_eraser_open(pContext->pgbus, unprotected_ptr, pContext->UserDataSize / 16, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_info_fifo));
 //        unprotected_ptr += (pContext->UserDataSize / 16)  * (2*sizeof(RMuint32));
+        dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM, (UserDataSize/16) * (2*sizeof(RMuint32)));
     }
     else
     {
@@ -339,30 +349,19 @@ RMstatus targetStandardInterface::open_video_decoder()
         gbus_entry_fifo_eraser_open(pIF->get_gbusptr(), 0, 0, gbusAddr);
     }
 
-#if 0
-#if (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
-    /* Implement picture buffer variables here */
-    err = video_set_data_context_buffer(pContext->pgbus, (struct video_task_interface *)pContext->pvti,
-                                        RM_NEXT_TILE_ALIGN(unprotected_ptr), pContext->DecoderDataSize, pContext->DecoderContextSize);
-    unprotected_ptr = RM_NEXT_TILE_ALIGN(unprotected_ptr) + pContext->DecoderDataSize;
+    dramPtr =  pAlloc->alloc(targetAllocator::ALLOC_DRAM, DECODE_ERROR_ENTRIES *
+                              struct_utils::get_structure_size(pIF, "EMhwlibVideoDecoder_DecodeError"));
+//    err = video_open_error_code_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, DECODE_ERROR_ENTRIES);//pValueIn->ErrorCodeCount);
+    err = video_open_error_code_fifo(pIF, pvtdb, dramPtr, DECODE_ERROR_ENTRIES);
 
-    if (RMFAILED(err))
-    {
-        RMDBGLOG((ENABLE, "video_set_data_context_buffer failed!\n"));
-        goto over;
-    }
-#else
-    err = video_set_data_context_buffer(pContext->pgbus, (struct video_task_interface *)pContext->pvti,
-                                        RM_NEXT_TILE_ALIGN(unprotected_ptr), pContext->DecoderDataSize, pContext->DecoderContextSize);
-    unprotected_ptr = RM_NEXT_TILE_ALIGN(unprotected_ptr) + pContext->DecoderDataSize;
+//    unprotected_ptr += DECODE_ERROR_ENTRIES * sizeof(struct EMhwlibVideoDecoder_DecodeError);
+    dramPtr =  pAlloc->alloc(targetAllocator::ALLOC_DRAM, 0);
+  //  video_set_extra_pictures(pContext->pgbus, (struct video_task_interface *)pContext->pvti, pContext->ExtraPictureBufferCount);
+    video_set_extra_pictures(pIF, pvti, ExtraPictureBufferCount);
 
-    if (RMFAILED(err))
-    {
-        RMDBGLOG((ENABLE, "video_set_data_context_buffer failed!\n"));
-        goto over;
-    }
-#endif
-#endif // 1
+#ifdef ENABLE_GBUS_LOGGER
+    pIF->get_gbusptr()->gbus_log_mark("exiting open_video_decoder");
+#endif // ENABLE_GBUS_LOGGER
 
     return nStatus;
 }
@@ -592,7 +591,7 @@ void* targetStandardInterface::fifoEmptyThreadFunc()
         while (size && (terminateThreads == false)) {
             picture_address = pIF->get_gbusptr()->gbus_read_uint32( fifo_base + (rd*entry_size) );
 
-        //    process_picture( picture_address );
+            process_picture( picture_address );
 
             // advance read pointer
             rd = (rd + 1) % fifo_size;
@@ -628,8 +627,48 @@ RMuint32 targetStandardInterface::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
                                                                   RMuint32 sizeToSend)
 {
 #if 1
+    controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+    GBUS_PTR                pGbus       = pIF->get_gbusptr();
+	RMuint32                rd, wr,
+                            fifo_base, fifo_size;
+	RMuint32                size, sizeLeft;
+
     RMDBGLOG((LOCALDBG, "%s(%p, %d)\n", __PRETTY_FUNCTION__, pBuf, sizeToSend));
-    return 0;
+
+    gbus_fifo_get_pointer(pGbus, (struct gbus_fifo*)bts_fifo, &fifo_base,
+                          &fifo_size, &rd, &wr);
+
+    RMDBGLOG((LOCALDBG, "FIFO @ 0x%08lX START 0x%08lX SIZE 0x%08lX RD = 0x%08lX WR = 0x%08lX\n",
+            (unsigned long)bts_fifo, fifo_base, fifo_size, rd, wr));
+
+	if ( rd > wr ) {
+		/* emptiness in one chunk */
+		RMuint32 empty;
+		empty = rd - wr - 1;
+		if (empty < sizeToSend)
+			return sizeToSend;
+
+		pGbus->gbus_write_data8(fifo_base + wr, pBuf, sizeToSend);
+	} else { // rd <= wr
+		/* emptiness in two chunks because of circular fifo. */
+		RMuint32 empty;
+		empty = fifo_size - wr + rd - 1;
+		if (empty < sizeToSend)
+			return sizeToSend;
+		//first chunk
+		size = RMmin(fifo_size - wr, sizeToSend);
+		pGbus->gbus_write_data8(fifo_base + wr, pBuf, size);
+
+		//second chunk
+		sizeLeft = sizeToSend - size;
+		if (sizeLeft)
+			pGbus->gbus_write_data8(fifo_base, pBuf+size, sizeLeft);
+	}
+
+	sizeLeft = 0;
+	gbus_fifo_incr_write_ptr(pGbus, (struct gbus_fifo*)bts_fifo, sizeToSend);
+
+    return sizeLeft;
 #else
     struct gbus*        pgbus = ctx->pgbus;
 	struct gbus_fifo*   fifo;
@@ -666,8 +705,7 @@ RMuint32 targetStandardInterface::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
 			return sizeToSend;
 
 		gbus_write_data8(pgbus, fifo_base + wr, pBuf, sizeToSend);
-	}
-	else { // rd <= wr
+	} else { // rd <= wr
 		/* emptiness in two chunks because of circular fifo. */
 		RMuint32 empty;
 		empty = fifo_size - wr + rd - 1;
@@ -682,6 +720,7 @@ RMuint32 targetStandardInterface::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
 		if (sizeLeft)
 			gbus_write_data8(pgbus, fifo_base, pBuf+size, sizeLeft);
 	}
+
 	sizeLeft = 0;
 	wr = (wr + sizeToSend) % fifo_size;
 	gbus_write_uint32(pgbus, (RMuint32) &(fifo->wr), wr);
@@ -752,154 +791,304 @@ std::string targetStandardInterface::get_profile_string_from_id(RMint32 codec_id
     return "Undefined";
 }
 
+/**
+ *
+ */
+
+RMstatus targetStandardInterface::set_video_codec()
+{
+    controlInterface*   pIF    = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+
+#ifdef _DEBUG
+    pIF->get_gbusptr()->gbus_log_mark("entering set_video_codec");
+#endif // _DEBUG
+
+    send_video_command( VideoCommandUninit,  VideoStatusUninit );
+
+    video_set_profile(pIF, pvti, decoderProfile );
+
+    send_video_command( VideoCommandInit,    VideoStatusStop );
+
+#ifdef _DEBUG
+    pIF->get_gbusptr()->gbus_log_mark("exiting set_video_codec");
+#endif // _DEBUG
+
+    return RM_OK;
+}
+
+
+RMstatus targetStandardInterface::send_video_command(enum VideoCommand cmd,
+                                                     enum VideoStatus stat)
+{
+    RMstatus            result = RM_ERROR;
+    controlInterface*   pIF    = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+    enum VideoStatus    VideoDecoderStatus;
+    RMuint32            started;
+
+//    APP_STATE appState;
+//
+//    switch (cmd) {
+//    case VideoCommandUninit:
+//        appState = APP_SENDING_UNINIT;
+//        break;
+//    case VideoCommandInit:
+//        appState = APP_SENDING_INIT;
+//        break;
+//    case VideoCommandPlayFwd:
+//        appState = APP_SENDING_PLAY;
+//        break;
+//    case VideoCommandStop:
+//        appState = APP_SENDING_STOP;
+//        break;
+//    default:
+//        appState = APP_STATE_UNKNOWN;
+//        break;
+//    }
+
+#ifdef _DEBUG
+    pIF->get_gbusptr()->gbus_log_mark("entering send_video_command");
+#endif // _DEBUG
+
+    video_set_command(pIF, pvti, cmd );
+
+    started = gbus_utils::gbus_time_us(pIF->get_gbusptr());
+
+    while (1) {
+        video_get_status(pIF, pvti, &VideoDecoderStatus);
+
+        //printf("-- status %d\n", (int) VideoDecoderStatus);
+
+        if (VideoDecoderStatus == stat) {
+            result = RM_OK;
+            break;
+        }
+
+        if (gbus_utils::gbus_time_delta(started, gbus_utils::gbus_time_us(pIF->get_gbusptr())) > COMMAND_TIMEOUT) {
+            RMDBGLOG((DISABLE, "-- TIMEOUT (command not received) --\n"));
+            result = RM_PENDING;
+            break;
+        }
+        //usleep(1000);
+    }
+
+#ifdef _DEBUG
+    pIF->get_gbusptr()->gbus_log_mark("exiting send_video_command");
+#endif // _DEBUG
+
+    return result;
+}
+
+/**
+ *  Retrieve the rectangle from the picture buffer.
+ */
+
+void targetStandardInterface::READ_PICTURE_BUFFER_RECT(controlInterface* pIF, RMuint32 address, std::string sField, struct targetStandardInterface::EMhwlibWindow* pDest) {
+    RMuint32 gbusAddr   = 0;
+    RMuint32 nSize      = 0;
+
+    gbusAddr = struct_utils::resolve_offset(pIF, address, "VideoMicrocodePicture", sField);
+    nSize = struct_utils::get_structure_size(pIF, "EMhwlibWindow");
+    pIF->get_gbusptr()->gbus_read_data8(gbusAddr, (RMuint8*)pDest, nSize);
+
+    return;
+}
+
+/**
+ *  Retrieve a field from the picture buffer structure.
+ */
+
+RMuint32 targetStandardInterface::READ_PICTURE_BUFFER_MEMBER(controlInterface* pIF, RMuint32 address, const std::string& member) {
+    RMuint32    value = 0L;
+    struct_utils::read_structure_member(pIF, address, "VideoMicrocodePicture", member, &value);
+    return value;
+}
+
+/**
+ *  Extract picture from display FIFO.
+ */
+
+RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
+{
+    controlInterface*   pIF    = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+    RMstatus            result = RM_ERROR;
+    RMuint32            frame_count = 0;
+    RMuint32            luma_address = 0,
+                        chroma_address = 0;
+    RMuint32            luma_ttl_wd = 0,
+                        chroma_ttl_wd = 0;
+    RMuint32            luma_buf_width   = 0,
+                        luma_buf_height  = 0,
+                        chroma_buf_width = 0,
+                        chroma_buf_height = 0;
+    RMuint32            luma_size_tile = 0,
+                        chroma_size_tile = 0;
+    EMhwlibWindow       luma_position_in_buffer,
+                        chroma_position_in_buffer;
+    RMuint8             *pLuma = nullptr,
+                        *pChroma = nullptr;
+//  union VideoMicrocodePictureDisplayData pic_data_type;
+
+    frame_count    = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "frame_count");
+    luma_address   = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "luma_address");
+    chroma_address = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "chroma_address");
+    luma_ttl_wd    = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "luma_total_width");
+    chroma_ttl_wd  = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "chroma_total_width");
+
+    READ_PICTURE_BUFFER_RECT(pIF, picture_address, "luma_position_in_buffer", &luma_position_in_buffer);
+    READ_PICTURE_BUFFER_RECT(pIF, picture_address, "chroma_position_in_buffer", &chroma_position_in_buffer);
+
+    /* calculate luma buffer size */
+    luma_buf_width  = ((luma_position_in_buffer.width + pvc_tw - 1)/pvc_tw) * pvc_tw;
+    luma_buf_height = ((luma_position_in_buffer.height + pvc_th - 1)/pvc_th) * pvc_th;
+    luma_size_tile = (luma_buf_width * luma_buf_height);
+
+    /* calculate chroma buffer size */
+    chroma_buf_width  = ((chroma_position_in_buffer.width + pvc_tw - 1)/pvc_tw) * pvc_tw;
+    chroma_buf_height = ((chroma_position_in_buffer.height + pvc_th - 1)/pvc_th) * pvc_th;
+    chroma_size_tile = (chroma_buf_width * chroma_buf_height) * 2;
+
+    RMDBGLOG((ENABLE, "Picture Buffer @ 0x%08lx\n", picture_address));
+    RMDBGLOG((ENABLE, "Frame Count %d\n", frame_count));
+    RMDBGLOG((ENABLE, "Luma Buffer    @ 0x%08lx %ld bytes\n", luma_address, luma_size_tile));
+    RMDBGLOG((ENABLE, "Chroma Buffer  @ 0x%08lx %ld bytes\n", chroma_address, chroma_size_tile));
+
+#ifdef ENABLE_EXTRA_DEBUG_INFO
+    RMDBGLOG((ENABLE,"frame %ld luma_buffer @ 0x%08lx width 0x%08lx chroma_buffer @ 0x%08lx width 0x%08lx\n",
+           frame_count, luma_address, luma_ttl_wd, chroma_address, chroma_ttl_wd));
+    RMDBGLOG((ENABLE,"luma tiled dimensions ( %ld x %ld ) chroma tiled dimensions ( %ld x %ld )\n", luma_buf_width,
+           luma_buf_height, chroma_buf_width, chroma_buf_height));
+    RMDBGLOG((ENABLE,"==> luma position   x %ld y %ld w %ld h %ld size_tile %ld\n", luma_position_in_buffer.x,
+           luma_position_in_buffer.y, luma_position_in_buffer.width, luma_position_in_buffer.height, luma_size_tile));
+    RMDBGLOG((ENABLE,"==> chroma position x %ld y %ld w %ld h %ld size_tile %ld\n", chroma_position_in_buffer.x,
+           chroma_position_in_buffer.y, chroma_position_in_buffer.width, chroma_position_in_buffer.height, chroma_size_tile));
+#endif // ENABLE_EXTRA_DEBUG_INFO
+
+    picture_w       = luma_position_in_buffer.width;
+    picture_h       = luma_position_in_buffer.height;
+    picture_count   = frame_count;
 
 #if 0
+//    frame_count     = READ_PICTURE_BUFFER(pgbus, picture_address, frame_count);
+//    luma_address    = READ_PICTURE_BUFFER(pgbus, picture_address, luma_address);
+//    chroma_address  = READ_PICTURE_BUFFER(pgbus, picture_address, chroma_address);
+//    luma_ttl_wd     = READ_PICTURE_BUFFER(pgbus, picture_address, luma_total_width);
+//    chroma_ttl_wd   = READ_PICTURE_BUFFER(pgbus, picture_address, chroma_total_width);
+//  pic_data_type   = (union VideoMicrocodePictureDisplayData)READ_PICTURE_BUFFER(pgbus, picture_address, picture_display_data);
 
-static RMstatus open_video_decoder(CONTEXT_PTR pContext)
-{
-    RMuint32		unprotected_ptr = 0;
-    RMuint32		i;
-    RMstatus 		err;
-    RMuint32 		video_bts_fifo;
-    RMuint32		video_pts_fifo;
+//    READ_PICTURE_BUFFER_STRUCT(pgbus, picture_address, luma_position_in_buffer,
+//                               luma_position_in_buffer, struct EMhwlibWindow);
+//    READ_PICTURE_BUFFER_STRUCT(pgbus, picture_address, chroma_position_in_buffer,
+//                               chroma_position_in_buffer, struct EMhwlibWindow);
 
-    unprotected_ptr = (pContext->uiDRAMPtr & 0xfffffffc) + 4;
+//    /* calculate luma buffer size */
+//    luma_buf_width  = ((luma_position_in_buffer.width + ctx->pvc_tw - 1)/ctx->pvc_tw) * ctx->pvc_tw;
+//    luma_buf_height = ((luma_position_in_buffer.height + ctx->pvc_th - 1)/ctx->pvc_th) * ctx->pvc_th;
+//    luma_size_tile = (luma_buf_width * luma_buf_height);
+//
+//    /* calculate chroma buffer size */
+//    chroma_buf_width  = ((chroma_position_in_buffer.width + ctx->pvc_tw - 1)/ctx->pvc_tw) * ctx->pvc_tw;
+//    chroma_buf_height = ((chroma_position_in_buffer.height + ctx->pvc_th - 1)/ctx->pvc_th) * ctx->pvc_th;
+//    chroma_size_tile = (chroma_buf_width * chroma_buf_height) * 2;
+//
+//    result          = RM_OK;
 
-    /* init video_task_data_base*/
-    pContext->pvtdb = unprotected_ptr;
-    for (i=0; i< sizeof(struct video_task_data_base)/4; i++)
-        gbus_write_uint32(pContext->pgbus, unprotected_ptr+(4*i), 0);
-    unprotected_ptr += sizeof(struct video_task_data_base);
+//    /* Save width & height */
+//    ctx->picture_w = luma_position_in_buffer.width;
+//    ctx->picture_h = luma_position_in_buffer.height;
+//    ctx->picture_count = frame_count;
 
-#ifndef ENABLE_CURSES
-//    printf("video_task_data_base @ 0x%08lx\n", pContext->pvtdb);
-//    fflush(stdout);
-#endif // ENABLE_CURSES
+#ifdef ENABLE_CURSES
+    lock_context( ctx->pUIContext );
 
-    /*init video_task_interface*/
-    pContext->pvti = unprotected_ptr;
-    for (i=0; i< sizeof(struct video_task_interface)/4; i++)
-        gbus_write_uint32(pContext->pgbus, unprotected_ptr+(4*i), 0);
-    unprotected_ptr += sizeof(struct video_task_interface);
+    SET_DISPLAY_CONTEXT(ctx, frameCnt, frame_count);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.uiPicAddress, picture_address);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiBufAddress, luma_address);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiTotalWidth, luma_ttl_wd);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiBufWidth, luma_buf_width);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiBufHeight, luma_buf_height);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiPosX, luma_position_in_buffer.x);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiPosY, luma_position_in_buffer.y);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiPosWidth, luma_position_in_buffer.width);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiPosHeight, luma_position_in_buffer.height);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.lumaComp.uiSizeTile, luma_size_tile);
 
-#ifndef ENABLE_CURSES
-//    printf("video_task_interface @ 0x%08lx\n", pContext->pvti);
-//    fflush(stdout);
-#endif // ENABLE_CURSES
+    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiBufAddress, chroma_address);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiTotalWidth, chroma_ttl_wd);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiBufWidth, chroma_buf_width);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiBufHeight, chroma_buf_height);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiPosX, chroma_position_in_buffer.x);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiPosY, chroma_position_in_buffer.y);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiPosWidth, chroma_position_in_buffer.width);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiPosHeight, chroma_position_in_buffer.height);
+    SET_DISPLAY_CONTEXT(ctx, picbuf.chromaComp.uiSizeTile, chroma_size_tile);
 
-    video_set_display_error_threshold(pContext->pgbus, (struct video_task_interface *)pContext->pvti, 0);
-    video_set_anchor_propagation_parms(pContext->pgbus, (struct video_task_interface *)pContext->pvti, 500, 13);
-
-    /* Set pvti pointer in DRAM */
-    video_set_vti_pointer(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, pContext->pvti);
-    /* Set pvtb in DMEM */
-    video_set_vtdb_pointer(pContext->pgbus, MEM_BASE_mpeg_engine_0, 0, pContext->pvtdb);
-
-#if (RMFEATURE_VIDEO_INTERFACE_VERSION==2)
-    /* Implement picture buffer variables here */
-    err = video_set_data_context_buffer(pContext->pgbus, (struct video_task_interface *)pContext->pvti,
-                                        RM_NEXT_TILE_ALIGN(unprotected_ptr), pContext->DecoderDataSize, pContext->DecoderContextSize);
-    unprotected_ptr = RM_NEXT_TILE_ALIGN(unprotected_ptr) + pContext->DecoderDataSize;
-
-    if (RMFAILED(err))
-    {
-        RMDBGLOG((ENABLE, "video_set_data_context_buffer failed!\n"));
-        goto over;
-    }
+    unlock_context( ctx->pUIContext );
 #else
-    err = video_set_data_context_buffer(pContext->pgbus, (struct video_task_interface *)pContext->pvti,
-                                        RM_NEXT_TILE_ALIGN(unprotected_ptr), pContext->DecoderDataSize, pContext->DecoderContextSize);
-    unprotected_ptr = RM_NEXT_TILE_ALIGN(unprotected_ptr) + pContext->DecoderDataSize;
-
-    if (RMFAILED(err))
-    {
-        RMDBGLOG((ENABLE, "video_set_data_context_buffer failed!\n"));
-        goto over;
-    }
+#ifdef  DISPLAY_PICTURE_INFO
+    printf("frame %ld luma_buffer @ 0x%08lx width 0x%08lx chroma_buffer @ 0x%08lx width 0x%08lx\n",
+           frame_count, luma_address, luma_ttl_wd, chroma_address, chroma_ttl_wd);
+//  printf("picture_data_type = %ld format = %d bits_per_pixel = %d\n", pic_data_type.value, pic_data_type.bits.pixel_format, pic_data_type.bits.bits_per_pixel);
+    printf("luma tiled dimensions ( %ld x %ld ) chroma tiled dimensions ( %ld x %ld )\n", luma_buf_width,
+           luma_buf_height, chroma_buf_width, chroma_buf_height);
+    printf("==> luma position   x %ld y %ld w %ld h %ld size_tile %ld\n", luma_position_in_buffer.x,
+           luma_position_in_buffer.y, luma_position_in_buffer.width, luma_position_in_buffer.height, luma_size_tile);
+    printf("==> chroma position x %ld y %ld w %ld h %ld size_tile %ld\n", chroma_position_in_buffer.x,
+           chroma_position_in_buffer.y, chroma_position_in_buffer.width, chroma_position_in_buffer.height, chroma_size_tile);
+    fflush(stdout);
 #endif
+#endif // ENABLE_CURSES
 
-    gbus_write_uint32(pContext->pgbus, (RMuint32)&((struct video_task_interface *)pContext->pvti)->MiscFlags, 1);
+    RMDBGLOG((ENABLE, "Picture Buffer @ 0x%08lx\n", picture_address));
+    RMDBGLOG((ENABLE, "Luma Buffer    @ 0x%08lx %ld bytes\n", luma_address, luma_size_tile));
+    RMDBGLOG((ENABLE, "Chroma Buffer  @ 0x%08lx %ld bytes\n", chroma_address, chroma_size_tile));
 
-    /* use the inside allocated dram output fifo, we don't have to connect to a demux output or program */
-    video_bts_fifo = unprotected_ptr;
-    unprotected_ptr += sizeof(struct gbus_fifo_eraser);
-
-    gbus_fifo_eraser_open(pContext->pgbus, RM_NEXT_PAGE_ALIGN(unprotected_ptr), pContext->BitstreamFIFOSize, video_bts_fifo);
-    err = video_set_bts_fifo_pointer(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, video_bts_fifo);
-    pContext->bts_fifo = video_bts_fifo;
-    unprotected_ptr = RM_NEXT_PAGE_ALIGN(unprotected_ptr) + pContext->BitstreamFIFOSize;
-
-    /* video pts fifo container is in video_task_data_base structure and data is allocated in DRAM */
-    err = video_get_pts_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, &video_pts_fifo);
-    err = video_open_pts_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->PtsFIFOCount);
-    unprotected_ptr += pContext->PtsFIFOCount * VPTS_FIFO_ENTRY_SIZE;
-
-#if 1	// inband fifo
-    /* video inband fifo container is in video_task_data_base structure and data is allocated in DRAM */
-    video_open_inband_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->InbandFIFOCount);
-    unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandCommand);
-    pContext->inband_params_address = unprotected_ptr;
-    unprotected_ptr += pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandParams);
-    /* allocate and clear inband_params */
-    {
-        RMuint32 i;
-        // clear params memory
-        for (i=0; i<pContext->InbandFIFOCount * sizeof(struct MicrocodeInbandParams)/sizeof(RMuint32); i++)
-        {
-            gbus_write_uint32(pContext->pgbus, pContext->inband_params_address + 4*i, 0);
+    /* If saving frames to file... */
+    if (ctx->yuvfp != 0) {
+        if (ctx->pLuma == 0) {
+            ctx->pLuma = (RMuint8*)malloc(luma_size_tile);
         }
-    }
-    gbus_write_uint32(pContext->pgbus, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->Inband_Params_Address), pContext->inband_params_address);
-#endif
-    // the display fifo container is in video decoder interface
-    err = video_get_display_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, &pContext->display_fifo);
 
-    gbus_entry_fifo_open(pContext->pgbus, unprotected_ptr, pContext->NumOfPictures + 1, pContext->display_fifo);
+        if (ctx->pChroma == 0) {
+            ctx->pChroma = (RMuint8*)malloc(chroma_size_tile);
+        }
 
-    //clear the pointers to picture buffers
-    for ( i =0; i < pContext->NumOfPictures + 1; i++)
-    {
-        gbus_write_uint32(pContext->pgbus, unprotected_ptr + (4* i), 0);
-    }
+        pLuma   = ctx->pLuma;
+        pChroma = ctx->pChroma;
 
-    unprotected_ptr += sizeof(RMuint32) * (pContext->NumOfPictures + 1);
+        gbus_read_data8(pgbus, luma_address,   pLuma,   luma_size_tile);
+        gbus_read_data8(pgbus, chroma_address, pChroma, chroma_size_tile);
 
+        if (ctx->dump_y_uv == TRUE) {
+            char sYFname[128], sUVFname[128];
+            FILE *yFP = 0, *uvFP = 0;
 
-    video_get_irq_info(pContext->pgbus, (struct video_task_interface *)pContext->pvti, &pContext->event_table_pointer);
+            RMDBGLOG((LOCALDBG, "Saving frame %ld .Y & .UV to /tmp/\n", frame_count));
 
+            snprintf(sYFname, 128, "/tmp/frame%03ld-tiled.Y", (long int)frame_count);
+            snprintf(sUVFname, 128, "/tmp/frame%03ld-tiled.UV", (long int)frame_count);
 
-    /* initialize user data fifo - the container and data are in DRAM */
-    err = video_get_user_data_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, &pContext->user_data_fifo);
-    err = video_open_user_data_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, pContext->UserDataSize);
-    unprotected_ptr += pContext->UserDataSize;
-    if (pContext->UserDataSize)
-    {
-        /* initialize the internal user_data input and helper fifo  */
-        gbus_fifo_eraser_open(pContext->pgbus, unprotected_ptr, pContext->UserDataSize, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_in_fifo));
-        unprotected_ptr += pContext->UserDataSize;
-        gbus_entry_fifo_eraser_open(pContext->pgbus, unprotected_ptr, pContext->UserDataSize / 16, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_info_fifo));
-        unprotected_ptr += (pContext->UserDataSize / 16)  * (2*sizeof(RMuint32));
-    }
-    else
-    {
-        /* if user data is not required initialize the start address to 0 for the internal user_data input and helper fifo  */
-        gbus_fifo_eraser_open(pContext->pgbus, 0, 0, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_in_fifo));
-        gbus_entry_fifo_eraser_open(pContext->pgbus, 0, 0, (RMuint32) &(((struct video_task_data_base *)pContext->pvtdb)->user_data_info_fifo));
+            yFP = fopen(sYFname, "wb");
+            uvFP = fopen(sUVFname, "wb");
+            if ((yFP != 0) && (uvFP != 0)) {
+                fwrite(pLuma,   1, luma_size_tile,   yFP);
+                fwrite(pChroma, 1, chroma_size_tile, uvFP);
+            }
+            fclose(uvFP);
+            fclose(yFP);
+        }
+
+        save_frame(ctx, frame_count,
+                    &luma_position_in_buffer, luma_ttl_wd,
+                    &chroma_position_in_buffer, chroma_ttl_wd);
+
+        result = RM_OK;
     }
 
-    err = video_open_error_code_fifo(pContext->pgbus, (struct video_task_data_base *)pContext->pvtdb, unprotected_ptr, DECODE_ERROR_ENTRIES);//pValueIn->ErrorCodeCount);
-    unprotected_ptr += DECODE_ERROR_ENTRIES * sizeof(struct EMhwlibVideoDecoder_DecodeError);
+    /* Save width & height */
+    ctx->picture_w = luma_position_in_buffer.width;
+    ctx->picture_h = luma_position_in_buffer.height;
+    ctx->picture_count = frame_count;
+#endif // 0
 
-    video_set_extra_pictures(pContext->pgbus, (struct video_task_interface *)pContext->pvti, pContext->ExtraPictureBufferCount);
-    /* commands sent by application or microcode (from outside) */
-
-    pContext->uiDRAMPtr = unprotected_ptr;
-
-
-over:
-
-    return err;
+    return result;
 }
-#endif
-
-

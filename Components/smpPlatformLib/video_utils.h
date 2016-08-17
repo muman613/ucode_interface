@@ -6,6 +6,7 @@
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"
 #include "targetEngine.h"
+#include "targetStandardInterface.h"
 
 namespace video_utils {
 
@@ -109,8 +110,34 @@ RMstatus video_open_user_data_fifo(
 	RMuint32 start,
 	RMuint32 size);
 
+RMstatus video_open_error_code_fifo(
+	controlInterface* pIF,
+	RMuint32 pvtdb,
+	RMuint32 start,
+	RMuint32 size);
+
+RMstatus video_set_extra_pictures(
+	controlInterface*   pIF,
+	RMuint32            pvti,
+	RMint32             extra_buffer_count);
+
+RMstatus video_set_command(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	enum VideoCommand command);
+
+RMstatus video_get_status(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	enum VideoStatus *status);
+
+RMstatus video_set_profile(
+	controlInterface* pIF,
+	RMuint32 pvti,
+	RMuint32 profile);
+
 }
 
 
-#endif // __VIDEO_UTILS_H__
 
+#endif // __VIDEO_UTILS_H__
