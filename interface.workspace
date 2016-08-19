@@ -20,5 +20,7 @@
 		<Project filename="Components/smpPlatformLib/smpPlatformLib.cbp" />
 		<Project filename="sandbox/namespace/namespace.cbp" />
 		<Project filename="sandbox/sharedptr1/sharedptr1.cbp" />
+		<Project filename="sandbox/typesize/typesize.cbp" />
+		<Project filename="sandbox/trylock/trylock.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>
