@@ -1013,13 +1013,13 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
     READ_PICTURE_BUFFER_RECT(pIF, picture_address, "chroma_position_in_buffer", &chroma_position_in_buffer);
 
     /* calculate luma buffer size */
-    luma_buf_width  = ((luma_position_in_buffer.width + pvc_tw - 1)/pvc_tw) * pvc_tw;
-    luma_buf_height = ((luma_position_in_buffer.height + pvc_th - 1)/pvc_th) * pvc_th;
+    luma_buf_width  = ((luma_position_in_buffer.width + luma_position_in_buffer.x + pvc_tw - 1)/pvc_tw) * pvc_tw;
+    luma_buf_height = ((luma_position_in_buffer.height + luma_position_in_buffer.y + pvc_th - 1)/pvc_th) * pvc_th;
     luma_size_tile = (luma_buf_width * luma_buf_height);
 
     /* calculate chroma buffer size */
-    chroma_buf_width  = ((chroma_position_in_buffer.width + pvc_tw - 1)/pvc_tw) * pvc_tw;
-    chroma_buf_height = ((chroma_position_in_buffer.height + pvc_th - 1)/pvc_th) * pvc_th;
+    chroma_buf_width  = ((chroma_position_in_buffer.width + chroma_position_in_buffer.x + pvc_tw - 1)/pvc_tw) * pvc_tw;
+    chroma_buf_height = ((chroma_position_in_buffer.height + chroma_position_in_buffer.y + pvc_th - 1)/pvc_th) * pvc_th;
     chroma_size_tile = (chroma_buf_width * chroma_buf_height) * 2;
 
     RMDBGLOG((ENABLE, "Picture Buffer @ 0x%08lx\n", picture_address));
@@ -1038,6 +1038,7 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
            chroma_position_in_buffer.y, chroma_position_in_buffer.width, chroma_position_in_buffer.height, chroma_size_tile));
 #endif // ENABLE_EXTRA_DEBUG_INFO
 
+    /* If the output file is open, save the frame to the file... */
     if (yuvfp != nullptr) {
         if (pLuma == nullptr) {
             pLuma = (RMuint8*)malloc(luma_size_tile);
@@ -1047,14 +1048,8 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
             pChroma = (RMuint8*)malloc(chroma_size_tile);
         }
 
-//        pLuma   = ctx->pLuma;
-//        pChroma = ctx->pChroma;
-
         pIF->get_gbusptr()->gbus_read_data8(luma_address,   pLuma,   luma_size_tile);
         pIF->get_gbusptr()->gbus_read_data8(chroma_address, pChroma, chroma_size_tile);
-
-//        gbus_read_data8(pgbus, luma_address,   pLuma,   luma_size_tile);
-//        gbus_read_data8(pgbus, chroma_address, pChroma, chroma_size_tile);
 
         if (dump_y_uv == true) {
             std::string sYFname,
@@ -1134,21 +1129,12 @@ void targetStandardInterface::save_frame(RMuint32 frame_count,
 //  RMuint32 chroma_y   = chroma_position_in_buffer->y;
     RMuint32 chroma_w   = chroma_position_in_buffer->width;
     RMuint32 chroma_h   = chroma_position_in_buffer->height;
-//	RMuint32 chromasize = 0;
-//	RMuint8	 *data      = 0L;
-//	RMuint8	 *ptr       = 0L;
     RMuint32 x,y;
     RMuint32 x_min, x_max, y_min, y_max;
     RMuint32 luma_tile_cnt, chroma_tile_cnt;
     RMuint8  *uPtr      = 0L,
              *vPtr      = 0L;
     RMuint32 i;
-
-//#ifndef ENABLE_CURSES
-//    printf("Saving frame %ld (luma %ld x %ld) (chroma %ld x %ld)...\n", frame_count,
-//           luma_w, luma_h, chroma_w, chroma_h);
-//    fflush(stdout);
-//#endif // ENABLE_CURSES
 
     luma_w   = luma_w   * luma_nb_comp_per_sample;
     chroma_w = chroma_w * chroma_nb_comp_per_sample;

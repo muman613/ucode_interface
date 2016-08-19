@@ -91,23 +91,17 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
                 PlatformBlock       block;
                 size_t              engineCount;
 
-#ifdef _DEBUG
-                fprintf(stderr, "Chip found!\n");
-#endif // _DEBUG
-
                 block       = (*chip[m_sBlockID]);
                 engineCount = block.get_engine_count();
 
                 if ((engineCount > 0) && (engineCount > m_nEngineIndex)) {
-#ifdef _DEBUG
-                    fprintf(stderr, "Block found!\n");
-#endif // _DEBUG
                     m_resetOff = block.get_resetReg();
-
-                    m_engine = (*block[m_nEngineIndex]);
+                    m_engine   = (*block[m_nEngineIndex]);
 
                     if (m_dramBase != m_engine.get_dramBase()) {
-                        RMDBGLOG((LOCALDBG, "-- setting dram base address to 0x%08X\n", m_dramBase ));
+                        RMDBGLOG((LOCALDBG, "-- setting dram base address to 0x%08X\n",
+                                  (m_engine.get_dramBase() + DRAM_OFFSET)));
+                        m_dramBase = m_uiDRAMPtr = (m_engine.get_dramBase() + DRAM_OFFSET);
                         m_engine.set_dramBase( m_dramBase );
                     }
 
@@ -116,20 +110,16 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
 #endif // _DEBUG
 
                     if (m_symMgr.LoadSymbols( m_filePack.sLabelFile )) {
-#ifdef _DEBUG
-                        fprintf(stderr, "%zu symbols loaded!\n", m_symMgr.size());
-#endif // _DEBUG
+                        RMDBGLOG((LOCALDBG, "%zu symbols loaded!\n", m_symMgr.size()));
                         if (m_structDB.open( m_filePack.sInterfaceFile.c_str() )) {
-#ifdef _DEBUG
-                            fprintf(stderr, "%zu structures loaded!\n", m_structDB.size());
-#endif // _DEBUG
+                            RMDBGLOG((LOCALDBG, "%zu structures loaded!\n", m_structDB.size()));
                             bRes = true;
                         }
                     }
                 }
 
             } else {
-                fprintf(stderr, "ERROR: Invalid chip ID [%s]\n", m_sChipID.c_str());
+                RMDBGLOG((LOCALDBG, "ERROR: Invalid chip ID [%s]\n", m_sChipID.c_str()));
             }
 
         }
