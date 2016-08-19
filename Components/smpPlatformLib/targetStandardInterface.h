@@ -104,6 +104,14 @@ typedef enum _SOC_ARCH {
 #define XFER_BUFFERSIZE              65536
 
 /**
+ *  Some specific types...
+ */
+
+typedef std::vector<std::string>            PROFILE_VECTOR;
+typedef std::vector<std::string>::iterator  PROFILE_VECTOR_ITERATOR;
+
+
+/**
  *
  */
 
@@ -143,14 +151,20 @@ public:
 
     bool                    play_stream(const std::string& sInputStreamName,
                                         const std::string& sOutputYUVName,
-                                        RMuint32 profile = VideoProfileMPEG2);
+                                        RMuint32 profile = VideoProfileMPEG2,
+                                        RMuint32 taskID = 0);
     bool                    play_stream(const std::string& sInputStreamName,
                                         const std::string& sOutputYUVName,
-                                        const std::string& sProfile);
+                                        const std::string& sProfile,
+                                        RMuint32 taskID = 0);
     bool                    stop();
 
     bool                    get_output_stats(outputStats& stats) const;
     bool                    get_input_stats(inputStats& stats) const;
+
+    static RMint32          get_profile_id_from_string(const std::string& sCodecID);
+    static std::string      get_profile_string_from_id(RMint32 codec_id);
+    static void             get_profile_vector(PROFILE_VECTOR& pVec);
 
 protected:
     struct MicrocodeInbandParams {
@@ -262,8 +276,8 @@ private:
         int             nProfile;
     } profileTable[];
 
-    RMint32                 get_profile_id_from_string(const std::string& sCodecID);
-    std::string             get_profile_string_from_id(RMint32 codec_id);
+//    RMint32                 get_profile_id_from_string(const std::string& sCodecID);
+//    std::string             get_profile_string_from_id(RMint32 codec_id);
 
     void                    get_dump_filenames(RMuint32 frame_no,
                                                std::string& sYFilename,

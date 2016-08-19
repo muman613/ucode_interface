@@ -6,7 +6,7 @@
 #include "gbus_utils.h"
 
 #ifdef _DEBUG
-#define LOCALDBG ENABLE
+#define LOCALDBG DISABLE
 #else
 #define LOCALDBG DISABLE
 #endif // _DEBUG

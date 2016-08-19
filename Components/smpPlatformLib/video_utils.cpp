@@ -123,8 +123,7 @@ RMstatus video_set_scheduler_memory(
 		pGBus->gbus_write_uint32(start_address, MAX_TASK_COUNT); /* Write # of tasks in tables */
 		pGBus->gbus_write_uint32(scheduler_data_address, (start_address & 0xFFFF));
 		pGBus->gbus_write_uint32(scheduler_data_address + 4, (start_address >> 16));
-	}
-	else {
+	} else {
 		/* set NULL scheduler address - set first the hi part */
 		pGBus->gbus_write_uint32(scheduler_data_address + 4, 0);
 		pGBus->gbus_write_uint32(scheduler_data_address, 0);

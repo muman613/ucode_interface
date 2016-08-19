@@ -74,9 +74,10 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
               sChipID.c_str(), sBlockID.c_str(), nEngineIndex,
               (eType == UCODE_DEBUG)?"Debug":"Release"));
 
-    m_sChipID   = sChipID;
-    m_sBlockID  = sBlockID;
-    m_eType     = eType;
+    m_sChipID       = sChipID;
+    m_sBlockID      = sBlockID;
+    m_eType         = eType;
+    m_nEngineIndex  = nEngineIndex;
 
     if (resolve_files()) {
         if (platDB.LoadDatabase(PLATFORM_DATABASE_FILE, PDB_FILE_PATH)) {
@@ -97,7 +98,7 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
                 block       = (*chip[m_sBlockID]);
                 engineCount = block.get_engine_count();
 
-                if ((engineCount > 0) && (engineCount > nEngineIndex)) {
+                if ((engineCount > 0) && (engineCount > m_nEngineIndex)) {
 #ifdef _DEBUG
                     fprintf(stderr, "Block found!\n");
 #endif // _DEBUG
@@ -165,6 +166,7 @@ bool targetEngine::resolve_files()
     bool bRes = false;
 
     if (m_filePack.resolve_package(m_sChipID,
+                                   m_nEngineIndex,
                                    (m_eType == UCODE_DEBUG)?true:false,
                                    UCODE_PREFIX))
     {

@@ -68,6 +68,11 @@ targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
     m_pAlloc[0]->dump(std::cerr);
 #endif // _DEBUG
 
+    /* Initialize and open the video decoder */
+    init_video_engine();
+    open_video_decoder();
+
+    ifState = IF_INITIALIZED;
 }
 
 targetStandardInterface::~targetStandardInterface()
@@ -78,11 +83,6 @@ targetStandardInterface::~targetStandardInterface()
     }
 }
 
-/*
-    void                    enable_dump(const std::string& sPath = "/tmp/");
-    void                    disable_dump();
-    bool                    get_dump_info(std::string& sPath);
-*/
 /**
  *  Set dump flag and path...
  */
@@ -135,7 +135,8 @@ bool targetStandardInterface::get_dump_info(std::string& sPath)
 
 bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
                                           const std::string& sOutputYUVName,
-                                          const std::string& sProfile)
+                                          const std::string& sProfile,
+                                          RMuint32           taskID)
 {
     RMuint32 nProfile = VideoProfileMPEG2;
     RMDBGLOG((LOCALDBG, "%s(%s, %s, %s)\n", __PRETTY_FUNCTION__,
@@ -147,7 +148,7 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
         return false;
     }
 
-    return play_stream(sInputStreamName, sOutputYUVName, nProfile);
+    return play_stream(sInputStreamName, sOutputYUVName, nProfile, taskID);
 }
 
 /**
@@ -156,13 +157,14 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
 
 bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
                                           const std::string& sOutputYUVName,
-                                          RMuint32 profile)
+                                          RMuint32 profile,
+                                          RMuint32 taskID)
 {
     mutex_guard guard(contextMutex);    // obtain the context mutex...
     bool        bRes = false;
 
-    RMDBGLOG((LOCALDBG, "%s(%s, %s, %d)\n", __PRETTY_FUNCTION__,
-              sInputStreamName.c_str(), sOutputYUVName.c_str(), profile));
+    RMDBGLOG((LOCALDBG, "%s(%s, %s, %d, %d)\n", __PRETTY_FUNCTION__,
+              sInputStreamName.c_str(), sOutputYUVName.c_str(), profile, taskID));
 
     if (ifState == IF_PLAYING) {
         RMDBGLOG((LOCALDBG, "Interface already playing media!\n"));
@@ -183,8 +185,6 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
         inputStreamName = sInputStreamName;
         decoderProfile  = profile;
 
-        init_video_engine();
-        open_video_decoder();
         set_video_codec();
         send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
         launch_threads();
@@ -258,7 +258,7 @@ RMstatus targetStandardInterface::init_video_engine()
 
     pIF = dynamic_cast<controlInterface*>(m_pEngine[0].get());
 
-    video_get_scheduler_memory( pIF, memBase, &Address, &Size);
+    video_get_scheduler_memory( pIF, memBase, &Address, &Size );
 
     if ((Address == 0) && Size) {
         Address = (uiDRAMPtr & 0xfffffffc) + 4; // align by 4
@@ -268,7 +268,6 @@ RMstatus targetStandardInterface::init_video_engine()
 #ifdef _DEBUG
         m_pAlloc[0]->dump(std::cerr);
 #endif // _DEBUG
-//        pContext->uiDRAMPtr += Size;
     }
 
     return RM_OK;
@@ -848,6 +847,22 @@ std::string targetStandardInterface::get_profile_string_from_id(RMint32 codec_id
     }
 
     return "Undefined";
+}
+
+/**
+ *
+ */
+
+void targetStandardInterface::get_profile_vector(PROFILE_VECTOR& pVec)
+{
+    struct profileEntry *pCurEntry = profileTable;
+
+    while (pCurEntry->sIdent.size() > 0) {
+        pVec.push_back(pCurEntry->sIdent);
+        pCurEntry++;    // Advance to next profile entry...
+    }
+
+    return;
 }
 
 /**
