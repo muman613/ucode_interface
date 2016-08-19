@@ -26,7 +26,7 @@
     }
 
 
-bool resolve_package(std::string sChipId, bool bDebug,
+bool resolve_package(std::string sChipId, int engineId, bool bDebug,
                      FILE_PACK& pack, std::string sPrefix)
 {
     std::ostringstream os;
@@ -38,25 +38,47 @@ bool resolve_package(std::string sChipId, bool bDebug,
             sPrefix += "/";
     }
 
-    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << ".bin";
-    pack.sBinFile = os.str();
-    RESET_STREAM(os);
+    if ((sChipId == "8758") && (engineId == 1)) {
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << "_h265.bin";
+        pack.sBinFile = os.str();
+        RESET_STREAM(os);
 
-    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << ".lst";
-    pack.sListFile = os.str();
-    RESET_STREAM(os);
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << "_h265.lst";
+        pack.sListFile = os.str();
+        RESET_STREAM(os);
 
-    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << ".map";
-    pack.sMapFile = os.str();
-    RESET_STREAM(os);
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << "_h265.map";
+        pack.sMapFile = os.str();
+        RESET_STREAM(os);
 
-    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << "_labels.h";
-    pack.sLabelFile = os.str();
-    RESET_STREAM(os);
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << "_h265_labels.h";
+        pack.sLabelFile = os.str();
+        RESET_STREAM(os);
 
-    os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)"/video_interface.hh";
-    pack.sInterfaceFile = os.str();
-    RESET_STREAM(os);
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)"/video_interface.hh";
+        pack.sInterfaceFile = os.str();
+        RESET_STREAM(os);
+    } else {
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << ".bin";
+        pack.sBinFile = os.str();
+        RESET_STREAM(os);
+
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << ".lst";
+        pack.sListFile = os.str();
+        RESET_STREAM(os);
+
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << ".map";
+        pack.sMapFile = os.str();
+        RESET_STREAM(os);
+
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << "_labels.h";
+        pack.sLabelFile = os.str();
+        RESET_STREAM(os);
+
+        os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)"/video_interface.hh";
+        pack.sInterfaceFile = os.str();
+        RESET_STREAM(os);
+    }
 
     return true;
 }
@@ -79,9 +101,9 @@ void FILE_PACK::dump(FILE* oFP) {
     return;
 }
 
-bool FILE_PACK::resolve_package(std::string sChipId, bool bDebug, std::string sPrefix)
+bool FILE_PACK::resolve_package(std::string sChipId, int engineId, bool bDebug, std::string sPrefix)
 {
-    return ::resolve_package(sChipId, bDebug, *this, sPrefix);
+    return ::resolve_package(sChipId, engineId, bDebug, *this, sPrefix);
 }
 
 bool FILE_PACK::isvalid()

@@ -15,13 +15,14 @@ public:
     std::string     sInterfaceFile;
 
     bool            resolve_package(std::string sChildID,
+                                    int engineID,
                                     bool bDebug,
                                     std::string sPrefix = "");
 
     bool            isvalid();
 };
 
-bool resolve_package(std::string sChipId, bool bDebug,
+bool resolve_package(std::string sChipId, int engineId, bool bDebug,
                      FILE_PACK& pack, std::string sPrefix = "");
 
 #endif // __FILERESOLVER_H__
