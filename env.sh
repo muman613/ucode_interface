@@ -9,3 +9,5 @@ alias remakeall="makeall.sh"
 alias build="CLEAN=1 build.sh"
 alias rebuild="build.sh"
 
+ulimit -c unlimited
+
