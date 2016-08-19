@@ -100,11 +100,11 @@ do_copy_files () {
 
 	case ${CHIP} in
 	8758)
-		UCODE_DIR=video_t4/src
+		UCODE_DIRS=( video_t4/src video_t4_h265/src )
 		DEST="${PROJECTROOT}/ucode/8758/"
 		;;
 	8760)
-		UCODE_DIR=video_t5/src
+		UCODE_DIRS=( video_t5/src )
 		DEST="${PROJECTROOT}/ucode/8760/"
 		;;
 	esac
@@ -115,9 +115,8 @@ do_copy_files () {
 		DEST+="release/"
 	fi
 
-	FILESPF=( ".bin" "_debug.bin" "_labels.h" ".lst" ".map" )
-
-	SRCPATH="${RUAPATH}ucode_video/${UCODE_DIR}"
+	FILESPF=( ".bin" "_debug.bin" "_labels.h" ".lst" ".map" "_h265.bin" "_h265_debug.bin" "_h265_labels.h" "_h265.lst" "_h265.map" )
+	SRCPATH="${RUAPATH}ucode_video/${UCODE_DIRS[0]}"
 	UCODEBASE="video_microcode_${FULLCHIP}"
 
 	if [ ! -f "${SRCPATH}/$UCODEBASE.bin" ]; then
@@ -136,14 +135,18 @@ do_copy_files () {
 
 	make_dest_dirs "${PROJECTROOT}"
 
-	for pf in "${FILESPF[@]}"; do
-		SOURCEFILE="${SRCPATH}/${UCODEBASE}${pf}"
-		if [ -f "${SOURCEFILE}" ]; then
-			echo "Copying ${UCODEBASE}${pf}..."
-			cp 2>&1 > /dev/null "${SOURCEFILE}" "${DEST}"
-		fi
+	for ucd in "${UCODE_DIRS[@]}"; do
+		for pf in "${FILESPF[@]}"; do
+			SRCPATH="${RUAPATH}ucode_video/${ucd}"
+			SOURCEFILE="${SRCPATH}/${UCODEBASE}${pf}"
+			if [ -f "${SOURCEFILE}" ]; then
+				echo "Copying ${UCODEBASE}${pf}..."
+#				echo cp "${SOURCEFILE}" "${DEST}"
+				cp 2>&1 > /dev/null "${SOURCEFILE}" "${DEST}"
+			fi
+		done
 	done
-
+	
 	echo "Copying video_interface.hh..."
 	cp 2>&1 > /dev/null "${SRCPATH}/video_interface.hh" "${DEST}/.."
 }
