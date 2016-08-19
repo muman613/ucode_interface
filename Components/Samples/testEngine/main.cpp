@@ -250,6 +250,7 @@ int main(int argc, char * argv[])
                         targetStandardInterface::outputStats stats;
 
 #if defined(_DEBUG) && defined(DUMP_TILED)
+                        std::cout << "Dumping untiled buffers to /tmp/..." << std::endl;
                         pStdIF->enable_dump();
 #endif // defined(_DEBUG) && defined(DUMP_TILED)
 
