@@ -11,6 +11,10 @@
 #include "symbolmgr.h"
 #include "dbgutils.h"
 
+#if (__cplusplus >= 201103L)
+    #include <regex>
+#endif
+
 #define MAX_SYMBOL_LEN 1024
 
 
@@ -81,7 +85,55 @@ bool UcodeSymbolMgr::file_exists(const STRING sFilename)
 
     return result;
 }
+#if       (__cplusplus >= 201103L)
+bool UcodeSymbolMgr::LoadMicrocodeSymbolsFromH(const STRING sLabelHeader,
+                                               Uint32 memBase,
+                                               SYMBOL_MAP& symMap)
+{
+    bool                    result = false;
+    std::ifstream           ifHeader;
+    STRING                  sLine;
+    Uint32                  symbol_address;
 
+    D(debug("%s(%s) pmOffset 0x%08lx\n", __PRETTY_FUNCTION__,
+            sLabelHeader.c_str(), memBase));
+
+    /* Find the file according to search rules */
+    if (file_exists(sLabelHeader) == true) {
+        D(debug("-- found header @ %s\n", sLabelHeader.c_str()));
+
+        ifHeader.open( sLabelHeader.c_str() );
+
+        if (ifHeader.is_open()) {
+            std::regex  re("(#define)\\s+(h265_)?([\\w_]+)\\s+(0x[a-fA-F0-9]+)");
+            std::smatch matches;
+
+            while( ! ifHeader.eof() ) {
+                getline( ifHeader, sLine );
+
+                if (std::regex_match(sLine, matches, re)) {
+                    std::string sDefine  = matches[1].str();
+                    std::string sSymbol  = matches[3].str();
+                    std::string sAddress = matches[4].str();
+
+                    if (sDefine == "#define") {
+                        symbol_address = std::stol(sAddress, nullptr, 16);
+#ifdef  DUMP_SYMBOLS
+                        D(debug("Found symbol %s Value 0x%08x\n", sSymbol.c_str(), symbol_address));
+#endif
+                        symMap[sSymbol] = symbol_address;
+                    }
+                }
+            }
+            result = (symMap.size() > 0)?true:false;
+        } else {
+            D(debug("ERROR: Unable to open header file %s\n", sLabelHeader.c_str()));
+        }
+    }
+
+    return result;
+}
+#else  // (__cplusplus >= 201103L)
 bool UcodeSymbolMgr::LoadMicrocodeSymbolsFromH(const STRING sLabelHeader,
                                                Uint32 memBase,
                                                SYMBOL_MAP& symMap)
@@ -96,9 +148,6 @@ bool UcodeSymbolMgr::LoadMicrocodeSymbolsFromH(const STRING sLabelHeader,
 
     D(debug("%s(%s) pmOffset 0x%08lx\n", __PRETTY_FUNCTION__,
             sLabelHeader.c_str(), memBase));
-
-//    assert(szLabelHeader != 0);
-//    printf("-- loading microcode from header file %s\n", szLabelHeader);
 
     /* Find the file according to search rules */
     if (file_exists(sLabelHeader) == true) {
@@ -131,6 +180,7 @@ bool UcodeSymbolMgr::LoadMicrocodeSymbolsFromH(const STRING sLabelHeader,
 
     return result;
 }
+#endif // (__cplusplus >= 201103L)
 
 /**
  *
