@@ -64,6 +64,8 @@
 			<Option target="Debug" />
 		</Unit>
 		<Unit filename="main.cpp" />
+		<Unit filename="utils.cpp" />
+		<Unit filename="utils.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />

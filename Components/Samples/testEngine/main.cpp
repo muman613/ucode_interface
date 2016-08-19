@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <signal.h>
 #include "dbgutils.h"
 #include "targetEngine.h"
 #include "targetStandardInterface.h"
@@ -21,15 +22,16 @@ public:
 //        UCODE_DEBUG,
 //    };
     optionPack()
-    : engineNo(0),
+    : profile(VideoProfileMPEG2),
+      engineNo(0),
       type(targetEngine::UCODE_RELEASE)
     {
     }
     std::string                 chipID;
     std::string                 inputStream;
     std::string                 outputYUV;
-    std::string                 profile;
-    int                         engineNo;
+    RMuint32                    profile;
+    RMuint32                    engineNo;
     targetEngine::ucodeType     type;
 
 };
@@ -70,6 +72,26 @@ void display_target_info(TARGET_ENGINE_PTR pEng)
 }
 
 /**
+ *  Display help to user who requested it.
+ */
+
+void display_help(const char* cmd) {
+    std::string     sCmd = basename(cmd);
+    PROFILE_VECTOR  pVec;
+
+    targetStandardInterface::get_profile_vector(pVec);
+
+    std::cout << sCmd << " --chip [chipID] --stream [stream path] --decoder [decoder id] --yuv [yuv path] --engine [engine no] --mode [d=debug/r=release]" << std::endl;
+    std::cout << sCmd << " -c [chipID] -s [stream path] -d [decoder id] -y [yuv path] -e [engine no] -m [d=debug/r=release]" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Supported decoders:" << std::endl;
+
+    std::for_each(pVec.begin(), pVec.end(), [](std::string codec) { std::cout << "   " << codec << std::endl; } );
+
+    exit(0);
+}
+/**
  *  Parse commandline parameters.
  */
 
@@ -81,13 +103,14 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
         { "stream", required_argument, 0, 's', },
         { "decoder",required_argument, 0, 'd', },
         { "yuv",    required_argument, 0, 'y', },
-        { "engine", optional_argument, 0, 'e', },
-        { "mode",   optional_argument, 0, 'm', },
+        { "engine", required_argument, 0, 'e', },
+        { "mode",   required_argument, 0, 'm', },
+        { "help",   no_argument,       0, 'h', },
 
         { 0, 0, 0, 0, },
     };
 
-    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:", long_options, &option_index)) != -1) {
+    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:h", long_options, &option_index)) != -1) {
         switch (c) {
         case 'c':
             if (optarg != nullptr)
@@ -98,8 +121,13 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
                 options.inputStream = optarg;
             break;
         case 'd':
-            if (optarg != nullptr)
-                options.profile = optarg;
+            if (optarg != nullptr) {
+                options.profile = targetStandardInterface::get_profile_id_from_string(optarg);
+                if (options.profile == (RMuint32)-1) {
+                    std::cout << "ERROR: Unknown profile " << optarg << " exiting..." << std::endl;
+                    return false;
+                }
+            }
             break;
         case 'y':
             if (optarg != nullptr)
@@ -121,12 +149,23 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
                 }
             }
             break;
+        case 'h':
+            display_help(argv[0]);
+            break;
+
         default:
             break;
         }
     }
 
-    bRes = (!options.chipID.empty() && !options.inputStream.empty());
+    if ((options.chipID == "8758") && (options.profile == VideoProfileH265)) {
+        options.engineNo = 1;
+    }
+
+
+    bRes = (!options.chipID.empty() &&
+            !options.inputStream.empty() &&
+            (options.profile != (RMuint32)-1));
 
     return bRes;
 }
@@ -158,6 +197,11 @@ void display_stats(const targetStandardInterface::outputStats& stats)
     }
 }
 
+void _control_c_handler(int n) {
+    reset_terminal_mode();
+    exit(-10);
+}
+
 /**
  *  Main entry point
  */
@@ -169,9 +213,9 @@ int main(int argc, char * argv[])
 
     D(open_log_files("messages.txt", "errors.txt"));
 
-    set_terminal_mode();
-
     if (parse_cmdline_arguments( argc, argv, opts )) {
+        set_terminal_mode();
+        signal(SIGINT, _control_c_handler);
 
 ////////////////////////////////////////////////////////////////////////////////
 //	Create the target engine, this time a 8758 Video engine.
@@ -209,7 +253,10 @@ int main(int argc, char * argv[])
                         pStdIF->enable_dump();
 #endif // defined(_DEBUG) && defined(DUMP_TILED)
 
-                        std::cout << "Interface was created, playing stream..." << std::endl;
+                        std::cout << "Interface was created, playing " <<
+                            targetStandardInterface::get_profile_string_from_id(opts.profile) <<
+                            " stream..." << std::endl;
+
                         pStdIF->play_stream(opts.inputStream,
                                             opts.outputYUV,
                                             opts.profile);
@@ -243,10 +290,11 @@ int main(int argc, char * argv[])
 
             pTarget.reset();
         }
+
+        reset_terminal_mode();
     }
 
     D(debug("-- exiting test application!\n"));
-    reset_terminal_mode();
 
     return 0;
 }
