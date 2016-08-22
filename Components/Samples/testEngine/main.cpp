@@ -180,8 +180,9 @@ void display_stats(const targetStandardInterface::outputStats& stats)
     static size_t lastSize = 0;
 
     if (stats.frame_count > 0) {
-        snprintf(buffer, 128, "Frame # : %d save %d X %d frame to %s (%2.3f sec/frame)",
+        snprintf(buffer, 128, "Frame # : %d @ 0x%08X save %d X %d frame to %s (%2.3f sec/frame)",
                  stats.frame_count,
+                 stats.pic_address,
                  stats.pic_width,
                  stats.pic_height,
                  stats.sYUVFile.c_str(),
@@ -257,6 +258,10 @@ int main(int argc, char * argv[])
                         std::cout << "Interface was created, playing " <<
                             targetStandardInterface::get_profile_string_from_id(opts.profile) <<
                             " stream..." << std::endl;
+
+////////////////////////////////////////////////////////////////////////////////
+//	Play the media file on the interface...
+////////////////////////////////////////////////////////////////////////////////
 
                         pStdIF->play_stream(opts.inputStream,
                                             opts.outputYUV,
