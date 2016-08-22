@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <iomanip>
+#include <chrono>
 #define ALLOW_OS_CODE
 #include "targetEngine.h"
 #include "targetInterfaceBase.h"
@@ -46,10 +47,14 @@ targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
     pChroma(nullptr),
     pLuma(nullptr),
     picture_count(0),
+    picbuf_address(0),
+    luma_address(0),
+    chroma_address(0),
     save_time(0.0),
     yuvfp(nullptr),
     total_frames(0),
     dump_y_uv(false),
+    total_bytes_read(0),
     fifoFillRunning(false),
     fifoEmptyRunning(false),
     terminateThreads(false)
@@ -71,6 +76,8 @@ targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
     /* Initialize and open the video decoder */
     init_video_engine();
     open_video_decoder();
+
+    update_output_stats();
 
     ifState = IF_INITIALIZED;
 }
@@ -592,6 +599,10 @@ void* targetStandardInterface::fifoFillThreadFunc()
                 break;
             }
 
+            total_bytes_read += bytesRead;
+
+            update_input_stats();
+
             usleep(50000);
         }
 
@@ -662,6 +673,8 @@ void* targetStandardInterface::fifoEmptyThreadFunc()
 
             // update FIFO read pointer
             gbus_fifo_incr_read_ptr(pIF->get_gbusptr(), (struct gbus_fifo*)display_fifo, 1);
+
+            update_output_stats();
         }
 
         usleep(50000);
@@ -684,7 +697,6 @@ void* targetStandardInterface::fifoEmptyThreadFunc()
 RMuint32 targetStandardInterface::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
                                                                   RMuint32 sizeToSend)
 {
-#if 1
     controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     GBUS_PTR                pGbus       = pIF->get_gbusptr();
 	RMuint32                rd, wr,
@@ -727,72 +739,6 @@ RMuint32 targetStandardInterface::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
 	gbus_fifo_incr_write_ptr(pGbus, (struct gbus_fifo*)bts_fifo, sizeToSend);
 
     return sizeLeft;
-#else
-    struct gbus*        pgbus = ctx->pgbus;
-	struct gbus_fifo*   fifo;
-	RMuint32            rd, wr, fifo_base, fifo_size;
-	RMuint32            size, sizeLeft;
-
-	fifo = (struct gbus_fifo *)ctx->bts_fifo;
-	fifo_base = gbus_read_uint32(pgbus, (RMuint32) &(fifo->base));
-	fifo_size = gbus_read_uint32(pgbus, (RMuint32) &(fifo->size));
-	rd = gbus_read_uint32(pgbus, (RMuint32) &(fifo->rd));
-	wr = gbus_read_uint32(pgbus, (RMuint32) &(fifo->wr));
-
-#ifdef ENABLE_CURSES
-    lock_context( (UI_CONTEXT*)ctx->pUIContext );
-
-    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoCont, (RMuint32)fifo );
-    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoPtr, fifo_base);
-    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoSize, fifo_size);
-    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoRdPtr, rd);
-    SET_DISPLAY_CONTEXT( ctx, BtsFifo.uiFifoWrPtr, wr);
-
-    unlock_context( ctx->pUIContext );
-#else
-    printf("FIFO @ 0x%08lX START 0x%08lX SIZE 0x%08lX RD = 0x%08lX WR = 0x%08lX\n",
-            (unsigned long)fifo, fifo_base, fifo_size, rd, wr);
-    fflush(stdout);
-#endif // ENABLE_CURSES
-
-	if ( rd > wr ) {
-		/* emptiness in one chunk */
-		RMuint32 empty;
-		empty = rd - wr - 1;
-		if (empty < sizeToSend)
-			return sizeToSend;
-
-		gbus_write_data8(pgbus, fifo_base + wr, pBuf, sizeToSend);
-	} else { // rd <= wr
-		/* emptiness in two chunks because of circular fifo. */
-		RMuint32 empty;
-		empty = fifo_size - wr + rd - 1;
-		if (empty < sizeToSend)
-			return sizeToSend;
-		//first chunk
-		size = RMmin(fifo_size - wr, sizeToSend);
-		gbus_write_data8(pgbus, fifo_base + wr, pBuf, size);
-
-		//second chunk
-		sizeLeft = sizeToSend - size;
-		if (sizeLeft)
-			gbus_write_data8(pgbus, fifo_base, pBuf+size, sizeLeft);
-	}
-
-	sizeLeft = 0;
-	wr = (wr + sizeToSend) % fifo_size;
-	gbus_write_uint32(pgbus, (RMuint32) &(fifo->wr), wr);
-
-#ifndef ENABLE_CURSES
-#ifdef BTS_FIFO_DEBUG
-	printf("%s %s: fifo=%p st=0x%08lx sz=0x%08lx rd=0x%08lx wr=0x%08lx bc=0x%08lx toSend=0x%lx left=0x%lx\n",
-		__FUNCTION__, send_data ?"play":"pause", fifo, fifo_base, fifo_size, rd, wr, pCtx->dt_byte_counter, sizeToSend, sizeLeft);
-    fflush(stdout);
-#endif // BTS_FIFO_DEBUG
-#endif // ENABLE_CURSES
-
-    return sizeLeft;
-#endif // 1
 }
 
 
@@ -977,6 +923,9 @@ RMuint32 targetStandardInterface::READ_PICTURE_BUFFER_MEMBER(controlInterface* p
     return value;
 }
 
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
+typedef std::chrono::duration<double> time_diff;
+
 /**
  *  Extract picture from display FIFO.
  */
@@ -987,8 +936,6 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
     controlInterface*   pIF    = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     RMstatus            result = RM_ERROR;
     RMuint32            frame_count = 0;
-    RMuint32            luma_address = 0,
-                        chroma_address = 0;
     RMuint32            luma_ttl_wd = 0,
                         chroma_ttl_wd = 0;
     RMuint32            luma_buf_width   = 0,
@@ -999,9 +946,9 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
                         chroma_size_tile = 0;
     EMhwlibWindow       luma_position_in_buffer,
                         chroma_position_in_buffer;
-    struct timespec     ts1, ts2, ts3 = { 0, 0 };
+    time_point          ts1, ts2;
+    time_diff           ts3;
 
-    clock_gettime(CLOCK_REALTIME, &ts1);
 
     frame_count    = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "frame_count");
     luma_address   = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "luma_address");
@@ -1037,6 +984,8 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
     RMDBGLOG((ENABLE,"==> chroma position x %ld y %ld w %ld h %ld size_tile %ld\n", chroma_position_in_buffer.x,
            chroma_position_in_buffer.y, chroma_position_in_buffer.width, chroma_position_in_buffer.height, chroma_size_tile));
 #endif // ENABLE_EXTRA_DEBUG_INFO
+
+    ts1 = std::chrono::high_resolution_clock::now();
 
     /* If the output file is open, save the frame to the file... */
     if (yuvfp != nullptr) {
@@ -1080,15 +1029,15 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
         result = RM_OK;
     }
 
+    ts2 = std::chrono::high_resolution_clock::now();
+
     picture_w       = luma_position_in_buffer.width;
     picture_h       = luma_position_in_buffer.height;
     picture_count   = frame_count;
     picbuf_address  = picture_address;
 
-    clock_gettime(CLOCK_REALTIME, &ts2);
-
-    ts3         = difftimespec( ts1, ts2 );
-    save_time   = get_ts_seconds(ts3);
+    ts3 = ts2 - ts1;
+    save_time = ts3.count();
 
     return result;
 }
@@ -1186,20 +1135,16 @@ void targetStandardInterface::save_frame(RMuint32 frame_count,
     free( uPtr );
 }
 
+
 /**
  *  Return the current frame counter...
  */
 
 bool targetStandardInterface::get_output_stats(outputStats& stats) const
 {
-    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    mutex_guard guard(inputStatMutex);
 
-    stats.sYUVFile          = outputYUVName;
-    stats.pic_address       = picbuf_address;
-    stats.pic_width         = picture_w;
-    stats.pic_height        = picture_h;
-    stats.save_time         = save_time;
-    stats.frame_count       = picture_count;
+    stats = oStats;
 
     return true;
 }
@@ -1210,10 +1155,44 @@ bool targetStandardInterface::get_output_stats(outputStats& stats) const
 
 bool targetStandardInterface::get_input_stats(inputStats& stats) const
 {
-    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    mutex_guard guard(inputStatMutex);
 
-    stats.sInputFile        = inputStreamName;
-    stats.bytesRead         = 0;
+    stats = iStats;
 
     return true;
+}
+
+/**
+ *  Update input statistics block, locking mutex...
+ */
+
+void targetStandardInterface::update_input_stats()
+{
+    mutex_guard guard(inputStatMutex);
+
+    iStats.sInputFile   = inputStreamName;
+    iStats.profile      = decoderProfile;
+    iStats.bytesRead    = total_bytes_read;
+
+    return;
+}
+
+/**
+ *  Update the output statistics block, locking mutex...
+ */
+
+void targetStandardInterface::update_output_stats()
+{
+    mutex_guard guard(outputStatMutex);
+
+    oStats.sYUVFile          = outputYUVName;
+    oStats.pic_address       = picbuf_address;
+    oStats.pic_luma_buffer   = luma_address;
+    oStats.pic_chroma_buffer = chroma_address;
+    oStats.pic_width         = picture_w;
+    oStats.pic_height        = picture_h;
+    oStats.save_time         = save_time;
+    oStats.frame_count       = picture_count;
+
+    return;
 }

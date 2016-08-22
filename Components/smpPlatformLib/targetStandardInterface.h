@@ -120,17 +120,26 @@ class targetStandardInterface : public targetInterfaceBase
 public:
 
     enum if_state {
-        IF_UNINITIALIZED,
-        IF_INITIALIZED,
+        IF_UNINITIALIZED,           ///< Initial state
+        IF_INITIALIZED,             ///< Interface initialized.
+        IF_COMMAND_PENDING,         ///< Set to initializing while
         IF_PLAYING,
     };
 
     targetStandardInterface(TARGET_ENGINE_PTR pEngine);
     virtual ~targetStandardInterface();
 
+    typedef struct _fifo {
+        uint32_t        uiFifoCont;             ///< FIFO container address
+        uint32_t        uiFifoPtr;              ///< FIFO base address
+        uint32_t        uiFifoSize;             ///< FIFO size
+        uint32_t        uiFifoRdPtr;            ///< FIFO read pointer
+        uint32_t        uiFifoWrPtr;            ///< FIFO write pointer
+    } FIFO;
 
     struct inputStats {
         std::string     sInputFile;
+        RMuint32        profile;
         size_t          bytesRead;
     };
 
@@ -242,8 +251,10 @@ protected:
     RMuint32                picture_h;
     RMuint32                picture_count;
     RMuint32                picbuf_address;
+    RMuint32                luma_address;
+    RMuint32                chroma_address;
 
-    double                  save_time;
+    double                  save_time;                  ///< seconds per frame
 
     std::string             inputStreamName;
     std::string             outputYUVName;
@@ -252,11 +263,16 @@ protected:
     bool                    dump_y_uv;                  ///< If true dump each tiled buffer to Y & UV file.
     std::string             dumpPath;
 
-private:
-    bool                    launch_threads();
-    void                    stop_threads();
+    size_t                  total_bytes_read;
 
+private:
+    /*! Launch the threads */
+    bool                    launch_threads();
+    /*! Stop the threads. */
+    void                    stop_threads();
+    /*! The FIFO Fill Thread function. */
     void*                   fifoFillThreadFunc();
+    /*! The FIFO Empty Thread function. */
     void*                   fifoEmptyThreadFunc();
 
     RMuint32                write_data_in_circular_bts_fifo(RMuint8 *pBuf,
@@ -298,6 +314,8 @@ private:
     /* Thread mutex objects */
     pthread_mutex_t             contextMutex;
     pthread_mutex_t             displayMutex;
+    pthread_mutex_t             inputStatMutex;
+    pthread_mutex_t             outputStatMutex;
 
     /** Callback stubs */
     static void*                _fifoFillThreadFunc(targetStandardInterface* pThis);
@@ -310,11 +328,19 @@ private:
     volatile mutable std::atomic_bool    fifoEmptyRunning;  ///< Flag set when the empty thread is running.
     volatile mutable std::atomic_bool    terminateThreads;  ///< Flag used to signal threads shut-down.
     mutable std::mutex                   contextMutex;      ///< Mutex for access to class context variables.
+    mutable std::mutex                   inputStatMutex;
+    mutable std::mutex                   outputStatMutex;
 //  std::mutex              displayMutex;
 #else  // (__cplusplus >= 201103L)
 #pragma GCC error "std::thread not available"
 #endif // (__cplusplus >= 201103L)
 #endif // USE_PTHREADS
+
+    void                        update_input_stats();
+    void                        update_output_stats();
+
+    inputStats                  iStats;
+    outputStats                 oStats;
 };
 
 #define VPTS_FIFO_ENTRY_SIZE	8 /* 8 bytes = PTS on 32 bits and byte counter on 32 bits */
