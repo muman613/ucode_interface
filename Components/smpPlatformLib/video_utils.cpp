@@ -711,13 +711,9 @@ RMstatus video_set_extra_pictures(
 	if (extra_buffer_count >= 0) {
         write_structure_member(pIF, pvti, "video_task_interface", "ExtraPictureBufferCount", extra_buffer_count);
         write_structure_member(pIF, pvti, "video_task_interface", "DisplayPictureBufferCount", 2);
-//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->ExtraPictureBufferCount), extra_buffer_count);
-//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->DisplayPictureBufferCount), 2);
 	} else if (extra_buffer_count >= -2) {
         write_structure_member(pIF, pvti, "video_task_interface", "ExtraPictureBufferCount", 0);
         write_structure_member(pIF, pvti, "video_task_interface", "DisplayPictureBufferCount", 2 + extra_buffer_count);
-//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->ExtraPictureBufferCount), 0);
-//		gbus_write_uint32(pGBus, (RMuint32) &(pvti->DisplayPictureBufferCount), 2 + extra_buffer_count);
 	} else {
 		RMDBGLOG((ENABLE, "video_set_extra_pictures error: %ld\n", extra_buffer_count));
 		return RM_ERROR;

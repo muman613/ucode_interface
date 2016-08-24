@@ -31,7 +31,6 @@ RMstatus ucode_get_microcode_size(
 {
 	RMuint32 p = 0;
 	RMuint32 start_address, end_address, type_descriptor, body_size;
-//	struct gbus *pGBus = (struct gbus *) NULL;
 
 	*low_offset = MaxRMuint32;
 	*high_offset = 0;

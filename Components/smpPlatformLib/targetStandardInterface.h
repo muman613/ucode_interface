@@ -101,34 +101,6 @@ typedef enum _SOC_ARCH {
   SOC_PMAN,
 } SOC_ARCH;
 
-#define XFER_BUFFERSIZE              65536
-
-/**
- *  Some specific types...
- */
-
-typedef std::vector<std::string>            PROFILE_VECTOR;
-typedef std::vector<std::string>::iterator  PROFILE_VECTOR_ITERATOR;
-
-
-/**
- *
- */
-
-class targetStandardInterface : public targetInterfaceBase
-{
-public:
-
-    enum if_state {
-        IF_UNINITIALIZED,           ///< Initial state
-        IF_INITIALIZED,             ///< Interface initialized.
-        IF_COMMAND_PENDING,         ///< Set to initializing while
-        IF_PLAYING,
-    };
-
-    targetStandardInterface(TARGET_ENGINE_PTR pEngine);
-    virtual ~targetStandardInterface();
-
     typedef struct _fifo {
         uint32_t        uiFifoCont;             ///< FIFO container address
         uint32_t        uiFifoPtr;              ///< FIFO base address
@@ -154,28 +126,6 @@ public:
         double          save_time;
     };
 
-    void                    enable_dump(const std::string& sPath = "/tmp/");
-    void                    disable_dump();
-    bool                    get_dump_info(std::string& sPath);
-
-    bool                    play_stream(const std::string& sInputStreamName,
-                                        const std::string& sOutputYUVName,
-                                        RMuint32 profile = VideoProfileMPEG2,
-                                        RMuint32 taskID = 0);
-    bool                    play_stream(const std::string& sInputStreamName,
-                                        const std::string& sOutputYUVName,
-                                        const std::string& sProfile,
-                                        RMuint32 taskID = 0);
-    bool                    stop();
-
-    bool                    get_output_stats(outputStats& stats) const;
-    bool                    get_input_stats(inputStats& stats) const;
-
-    static RMint32          get_profile_id_from_string(const std::string& sCodecID);
-    static std::string      get_profile_string_from_id(RMint32 codec_id);
-    static void             get_profile_vector(PROFILE_VECTOR& pVec);
-
-protected:
     struct MicrocodeInbandParams {
         RMuint32 ref_cnt;
         RMuint32 params[COMMAND_PARAMS_RMUINT32_SIZE];
@@ -196,18 +146,52 @@ protected:
         RMuint32 params_ref_cnt; // 0 if free
     };
 
-    RMstatus                init_video_engine();
-    RMstatus                open_video_decoder();
 
-    void                    init_parameters();
-    bool                    set_tile_dimensions(std::string sChip);
-    void                    set_tile_dimensions(RMuint32 tsw, RMuint32 tsh);
+#define XFER_BUFFERSIZE              65536
 
-    RMstatus                set_video_codec();
-    RMstatus                send_video_command(enum VideoCommand cmd,
-                                               enum VideoStatus stat);
+/**
+ *  Class representing a task in the microcode.
+ */
+
+class targetStandardIFTask {
+public:
+    enum taskState {
+        TASK_UNINITIALIZED,
+        TASK_INITIALIZED,
+        TASK_COMMAND_PENDING,
+        TASK_PLAYING,
+        TASK_STOPPING,
+        TASK_STOPPED,
+    };
+
+    struct targetStdIfParms {
+        std::string             sInputStreamName;
+        std::string             sOutputYUVName;
+        RMuint32                nProfile        = VideoProfileMPEG2;
+        bool                    bDumpUntiled    = false;
+        std::string             sDumpPath       = "/tmp";
+        controlInterface*       pIF             = nullptr;
+        TARGET_ALLOC_PTR        pAlloc;
+    };
+
+    targetStandardIFTask();
+    targetStandardIFTask(targetStdIfParms& parms);
+    virtual ~targetStandardIFTask();
+
+    void                    enable_dump(const std::string& sPath = "/tmp/");
+    void                    disable_dump();
+    bool                    get_dump_info(std::string& sPath);
+
+    friend std::ostream& operator<<(std::ostream& os,const targetStandardIFTask& task);
+
+    bool                    stop();
+
+    taskState               get_state() const;
+    bool                    get_output_stats(outputStats& stats) const;
+    bool                    get_input_stats(inputStats& stats) const;
+
+protected:
     bool                    bValid;
-    if_state                ifState;
 
     SOC_ARCH                soc_arch;
     RMuint32	            DecoderDataSize;
@@ -265,7 +249,20 @@ protected:
 
     size_t                  total_bytes_read;
 
+    typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
+    typedef std::chrono::duration<double>                               time_diff;
+
+    std::atomic<taskState>  task_state;
+
 private:
+    controlInterface*       pIF;
+    TARGET_ALLOC_PTR        pAlloc;
+
+    void                    init_parameters();
+    RMstatus                init_video_engine();
+
+    RMstatus                open_video_decoder();
+
     /*! Launch the threads */
     bool                    launch_threads();
     /*! Stop the threads. */
@@ -280,67 +277,118 @@ private:
 
     RMstatus                process_picture(RMuint32 picture_address);
 
-    void                    READ_PICTURE_BUFFER_RECT(controlInterface* pIF,
-                                                     RMuint32 address,
-                                                     std::string sField,
-                                                     struct EMhwlibWindow* pDest);
-    RMuint32                READ_PICTURE_BUFFER_MEMBER(controlInterface* pIF,
-                                                       RMuint32 address,
-                                                       const std::string& member);
-    static struct profileEntry {
-        std::string     sIdent;
-        int             nProfile;
-    } profileTable[];
-
-//    RMint32                 get_profile_id_from_string(const std::string& sCodecID);
-//    std::string             get_profile_string_from_id(RMint32 codec_id);
-
-    void                    get_dump_filenames(RMuint32 frame_no,
-                                               std::string& sYFilename,
-                                               std::string& sUVFilename);
-
     /*! Save untiled frame to output file */
     void                    save_frame(RMuint32 frame_count,
                                        EMhwlibWindow* luma_position_in_buffer,
                                        RMuint32 luma_ttl_wd,
                                        EMhwlibWindow* chroma_position_in_buffer,
                                        RMuint32 chroma_ttl_wd);
-#ifdef  USE_PTHREADS
-    pthread_t                   fifoFillThread;         ///< Thread used to send stream data to input fifo...
-    pthread_t                   fifoEmptyThread;        ///< Thread used to extract pictures from display fifo...
-    volatile sig_atomic_t       fifoFillRunning;        ///< Thread used to extract pictures from display fifo...
-    volatile sig_atomic_t       fifoEmptyRunning;
-    volatile sig_atomic_t       terminateThreads;
-    /* Thread mutex objects */
-    pthread_mutex_t             contextMutex;
-    pthread_mutex_t             displayMutex;
-    pthread_mutex_t             inputStatMutex;
-    pthread_mutex_t             outputStatMutex;
 
-    /** Callback stubs */
-    static void*                _fifoFillThreadFunc(targetStandardInterface* pThis);
-    static void*                _fifoEmptyThreadFunc(targetStandardInterface* pThis);
-#else
-#if (__cplusplus >= 201103L)
+    void                    READ_PICTURE_BUFFER_RECT(RMuint32 address,
+                                                     std::string sField,
+                                                     struct EMhwlibWindow* pDest);
+    RMuint32                READ_PICTURE_BUFFER_MEMBER(RMuint32 address,
+                                                       const std::string& member);
+
+    bool                    set_tile_dimensions(std::string sChip);
+    void                    set_tile_dimensions(RMuint32 tsw, RMuint32 tsh);
+
+    RMstatus                set_video_codec();
+    RMstatus                send_video_command(enum VideoCommand cmd,
+                                               enum VideoStatus stat);
+
+    void                    get_dump_filenames(RMuint32 frame_no,
+                                               std::string& sYFilename,
+                                               std::string& sUVFilename);
+
     std::thread                          fifoFillThread;    ///< Thread used to send stream data to input fifo...
     std::thread                          fifoEmptyThread;   ///< Thread used to extract pictures to output file.
     volatile mutable std::atomic_bool    fifoFillRunning;   ///< Flag set when the fill thread is running.
     volatile mutable std::atomic_bool    fifoEmptyRunning;  ///< Flag set when the empty thread is running.
     volatile mutable std::atomic_bool    terminateThreads;  ///< Flag used to signal threads shut-down.
-    mutable std::mutex                   contextMutex;      ///< Mutex for access to class context variables.
+//  mutable std::mutex                  contextMutex;      ///< Mutex for access to class context variables.
     mutable std::mutex                   inputStatMutex;
     mutable std::mutex                   outputStatMutex;
-//  std::mutex              displayMutex;
-#else  // (__cplusplus >= 201103L)
-#pragma GCC error "std::thread not available"
-#endif // (__cplusplus >= 201103L)
-#endif // USE_PTHREADS
 
     void                        update_input_stats();
     void                        update_output_stats();
 
     inputStats                  iStats;
     outputStats                 oStats;
+};
+
+typedef std::shared_ptr<targetStandardIFTask>   TASK_PTR;
+typedef std::array<TASK_PTR, MAX_TASK_COUNT>    IFTASKARRAY;
+
+/**
+ *  Some specific types...
+ */
+
+typedef std::vector<std::string>            PROFILE_VECTOR;
+typedef std::vector<std::string>::iterator  PROFILE_VECTOR_ITERATOR;
+
+/**
+ *
+ */
+class targetStandardInterface : public targetInterfaceBase
+{
+public:
+
+    enum if_state {
+        IF_UNINITIALIZED,           ///< Initial state
+        IF_INITIALIZED,             ///< Interface initialized.
+        IF_COMMAND_PENDING,         ///< Set to initializing while
+        IF_PLAYING,
+    };
+
+    targetStandardInterface(TARGET_ENGINE_PTR pEngine);
+    virtual ~targetStandardInterface();
+
+    void                    enable_dump(const std::string& sPath = "/tmp/");
+    void                    disable_dump();
+    bool                    get_dump_info(std::string& sPath);
+
+    bool                    play_stream(const std::string& sInputStreamName,
+                                        const std::string& sOutputYUVName,
+                                        RMuint32 profile = VideoProfileMPEG2,
+                                        RMuint32 taskID = 0);
+    bool                    play_stream(const std::string& sInputStreamName,
+                                        const std::string& sOutputYUVName,
+                                        const std::string& sProfile,
+                                        RMuint32 taskID = 0);
+    bool                    stop();
+
+    static RMint32          get_profile_id_from_string(const std::string& sCodecID);
+    static std::string      get_profile_string_from_id(RMint32 codec_id);
+    static void             get_profile_vector(PROFILE_VECTOR& pVec);
+
+#ifdef _DEBUG
+    void                    debug_state(std::ostream& os = std::cout);
+#endif // _DEBUG
+
+    bool                    get_output_stats(RMuint32 taskID, outputStats& stats) const;
+    bool                    get_input_stats(RMuint32 taskID, inputStats& stats) const;
+
+protected:
+
+    static struct profileEntry {
+        std::string     sIdent;
+        int             nProfile;
+    } profileTable[];
+
+    void                    init_parameters();
+    void                    stop_tasks();
+
+    bool                    bValid;
+
+    std::atomic<if_state>   ifState;
+    IFTASKARRAY             tasks;
+
+    bool                    dump_y_uv;
+    std::string             dumpPath;
+
+private:
+    mutable std::mutex      contextMutex;      ///< Mutex for access to class context variables.
 };
 
 #define VPTS_FIFO_ENTRY_SIZE	8 /* 8 bytes = PTS on 32 bits and byte counter on 32 bits */

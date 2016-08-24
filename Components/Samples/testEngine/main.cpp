@@ -174,7 +174,7 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
  *  Display frame count...
  */
 
-void display_stats(const targetStandardInterface::outputStats& stats)
+void display_stats(const outputStats& stats)
 {
     char buffer[128];
     static size_t lastSize = 0;
@@ -248,7 +248,7 @@ int main(int argc, char * argv[])
                     pStdIF = CREATE_NEW_INTERFACE( pTarget );
                     if (pStdIF) {
                         bool bDone = false;
-                        targetStandardInterface::outputStats stats;
+                        outputStats stats;
 
 #if defined(_DEBUG) && defined(DUMP_TILED)
                         std::cout << "Dumping untiled buffers to /tmp/..." << std::endl;
@@ -269,6 +269,10 @@ int main(int argc, char * argv[])
 
                         std::cout << "waiting for user input!" << std::endl;
 
+#ifdef  _DEBUG
+                        pStdIF->debug_state();
+#endif // _DEBUG
+
                         while (!bDone) {
                             int ch = getkey();
 
@@ -281,13 +285,15 @@ int main(int argc, char * argv[])
                                 }
                             }
 
-                            if (pStdIF->get_output_stats(stats)) {
+                            if (pStdIF->get_output_stats(0, stats)) {
                                 display_stats(stats);
                             }
                             usleep(5000);
                         }
 
                         pStdIF->stop();
+
+                        pStdIF.reset();
                     }
                 }
             } else {

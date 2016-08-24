@@ -32,18 +32,32 @@
 
 #define COMMAND_TIMEOUT         0xffffffff
 
+#define INIT_STRUCT( var, str )                                                 \
+    nStructSize = pStructDB->get_structure( (str) )->size();                    \
+    (var)       = pAlloc->alloc(targetAllocator::ALLOC_DRAM, nStructSize);      \
+                                                                                \
+    for (i = 0 ; i < nStructSize/4 ; i++) {                                     \
+        pIF->get_gbusptr()->gbus_write_uint32((var) + 4 * i, 0);                \
+    }
+
+
 using namespace video_utils;
 
 typedef std::lock_guard<std::mutex>     mutex_guard;
 
-/**
- *  Object represents the standard microcode interface.
- */
 
-targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
-:   targetInterfaceBase(pEngine),
-    bValid(false),
-    ifState(IF_UNINITIALIZED),
+std::ostream& operator<<(std::ostream& os, const targetStandardIFTask& task)
+{
+    os << "Input stream : " << task.inputStreamName <<
+        " Output stream : " << task.outputYUVName <<
+        " Task Database : " << std::hex << "0x" << task.pvtdb <<
+        " Task Interface : " << std::hex << "0x" << task.pvti;
+
+    return os;
+}
+
+targetStandardIFTask::targetStandardIFTask()
+:   bValid(false),
     pChroma(nullptr),
     pLuma(nullptr),
     picture_count(0),
@@ -55,178 +69,88 @@ targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
     total_frames(0),
     dump_y_uv(false),
     total_bytes_read(0),
+    task_state(TASK_UNINITIALIZED),
+    pIF(nullptr),
     fifoFillRunning(false),
     fifoEmptyRunning(false),
     terminateThreads(false)
 {
-    RMuint32 offset = 0;
+    // ctor
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+    update_output_stats();
+
+}
+
+targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
+:   bValid(false),
+    pChroma(nullptr),
+    pLuma(nullptr),
+    picture_count(0),
+    picbuf_address(0),
+    luma_address(0),
+    chroma_address(0),
+    save_time(0.0),
+    yuvfp(nullptr),
+    total_frames(0),
+    dump_y_uv(false),
+    total_bytes_read(0),
+    task_state(TASK_UNINITIALIZED),
+    pIF(nullptr),
+    fifoFillRunning(false),
+    fifoEmptyRunning(false),
+    terminateThreads(false)
+{
     // ctor
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
-    pEngine->get_ucode_offset(nullptr, &offset);
+    pAlloc          = parms.pAlloc;
+    pIF             = parms.pIF;
 
     init_parameters();
 
-    m_pAlloc[0]->alloc(targetAllocator::ALLOC_DRAM, offset);
+    inputStreamName = parms.sInputStreamName;
+    outputYUVName   = parms.sOutputYUVName;
+    decoderProfile  = parms.nProfile;
+    dump_y_uv       = parms.bDumpUntiled;
+    dumpPath        = parms.sDumpPath;
 
-#ifdef _DEBUG
-    m_pAlloc[0]->dump(std::cerr);
-#endif // _DEBUG
-
-    /* Initialize and open the video decoder */
     init_video_engine();
     open_video_decoder();
 
-    update_output_stats();
+    set_video_codec();
+    send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
 
-    ifState = IF_INITIALIZED;
+    task_state = TASK_INITIALIZED;
+
+    update_output_stats();
+    launch_threads();
 }
 
-targetStandardInterface::~targetStandardInterface()
+/**
+ *
+ */
+
+targetStandardIFTask::~targetStandardIFTask()
 {
     // dtor
-    if (ifState == IF_PLAYING) {
-        stop();
-    }
-}
-
-/**
- *  Set dump flag and path...
- */
-
-void targetStandardInterface::enable_dump(const std::string& sPath)
-{
-    mutex_guard guard(contextMutex);    // obtain the context mutex...
-    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, sPath.c_str()));
-
-    dump_y_uv = true;
-    dumpPath  = sPath;
-
-    if (!dumpPath.empty() && *dumpPath.rbegin() != '/')
-        dumpPath += '/';
-
-    return;
-}
-
-/**
- *  Clear dump flag...
- */
-
-void targetStandardInterface::disable_dump()
-{
-    mutex_guard guard(contextMutex);    // obtain the context mutex...
-    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__));
-
-    dump_y_uv = false;
-
-    return;
-}
-
-/**
- *  Return dump flag...
- */
-
-bool targetStandardInterface::get_dump_info(std::string& sPath)
-{
-    mutex_guard guard(contextMutex);    // obtain the context mutex...
-    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__));
-
-    sPath = dumpPath;
-
-    return dump_y_uv;
-}
-
-/**
- *  Play the stream...
- */
-
-bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
-                                          const std::string& sOutputYUVName,
-                                          const std::string& sProfile,
-                                          RMuint32           taskID)
-{
-    RMuint32 nProfile = VideoProfileMPEG2;
-    RMDBGLOG((LOCALDBG, "%s(%s, %s, %s)\n", __PRETTY_FUNCTION__,
-              sInputStreamName.c_str(), sOutputYUVName.c_str(),
-              sProfile.c_str()));
-
-    if ((nProfile = get_profile_id_from_string(sProfile)) == (RMuint32)-1) {
-        RMDBGLOG((LOCALDBG, "-- invalid profile [%s]!\n", sProfile.c_str()));
-        return false;
-    }
-
-    return play_stream(sInputStreamName, sOutputYUVName, nProfile, taskID);
-}
-
-/**
- *  Play the stream...
- */
-
-bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
-                                          const std::string& sOutputYUVName,
-                                          RMuint32 profile,
-                                          RMuint32 taskID)
-{
-    mutex_guard guard(contextMutex);    // obtain the context mutex...
-    bool        bRes = false;
-
-    RMDBGLOG((LOCALDBG, "%s(%s, %s, %d, %d)\n", __PRETTY_FUNCTION__,
-              sInputStreamName.c_str(), sOutputYUVName.c_str(), profile, taskID));
-
-    if (ifState == IF_PLAYING) {
-        RMDBGLOG((LOCALDBG, "Interface already playing media!\n"));
-        return false;
-    }
-
-    /* Check if the output YUV file was specified and can be opened! */
-    if (!sOutputYUVName.empty()) {
-        if (file_utils::can_write_file(sOutputYUVName)) {
-            outputYUVName   = sOutputYUVName;
-        } else {
-            RMDBGLOG((LOCALDBG, "Unable to create YUV output file!\n"));
-        }
-    }
-
-    if (file_utils::file_exists(sInputStreamName)) {
-        /* copy the names into the class storage. */
-        inputStreamName = sInputStreamName;
-        decoderProfile  = profile;
-
-        set_video_codec();
-        send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
-        launch_threads();
-        ifState = IF_PLAYING;
-    } else {
-        RMDBGLOG((LOCALDBG, "ERROR: Unable to find input file!\n"));
-    }
-
-    RMDBGLOG((LOCALDBG, "-- exiting play_stream()\n"));
-
-    return bRes;
-}
-
-/**
- *  Stop playback.
- */
-
-bool targetStandardInterface::stop() {
-    mutex_guard guard(contextMutex);    // obtain the context mutex...
-
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
-    if (ifState == IF_PLAYING) {
-        stop_threads();
-        ifState = IF_INITIALIZED;
-    }
-
-    return true;
+    stop();
 }
 
 /**
- *  Initialize parameters...
+ *  Return the tasks state.
  */
 
-void targetStandardInterface::init_parameters()
+targetStandardIFTask::taskState targetStandardIFTask::get_state() const {
+    return task_state;
+}
+
+/**
+ *
+ */
+
+void targetStandardIFTask::init_parameters()
 {
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
@@ -244,26 +168,23 @@ void targetStandardInterface::init_parameters()
     UserDataSize                = 0;
     ExtraPictureBufferCount     = 0;
 
-    set_tile_dimensions( m_pEngine[0]->get_engine()->get_parent()->get_parent()->get_chip_id() );
+    set_tile_dimensions( pIF->get_engine()->get_parent()->get_parent()->get_chip_id() );
 
     //m_pAlloc[0]->set_tile_dimensions( )
 }
 
 /**
- *  Initialize the video decoder...
+ *
  */
 
-RMstatus targetStandardInterface::init_video_engine()
+RMstatus targetStandardIFTask::init_video_engine()
 {
-    RMuint32            memBase = m_pEngine[0]->get_engine()->get_pmBase();
+    RMuint32            memBase = pIF->get_engine()->get_pmBase();
     RMuint32            Address = 0,
                         Size = 0;
-    controlInterface*   pIF = nullptr;
-    RMuint32            uiDRAMPtr = m_pAlloc[0]->dramPtr();
+    RMuint32            uiDRAMPtr = pAlloc->dramPtr();
 
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
-
-    pIF = dynamic_cast<controlInterface*>(m_pEngine[0].get());
 
     video_get_scheduler_memory( pIF, memBase, &Address, &Size );
 
@@ -271,36 +192,24 @@ RMstatus targetStandardInterface::init_video_engine()
         Address = (uiDRAMPtr & 0xfffffffc) + 4; // align by 4
         video_set_scheduler_memory(pIF, memBase, Address, Size);
         Size += 4;
-        m_pAlloc[0]->alloc(targetAllocator::ALLOC_DRAM, Size);
+        pAlloc->alloc(targetAllocator::ALLOC_DRAM, Size);
 #ifdef _DEBUG
-        m_pAlloc[0]->dump(std::cerr);
+        pAlloc->dump(std::cerr);
 #endif // _DEBUG
     }
 
     return RM_OK;
 }
 
-
-#define INIT_STRUCT( var, str )                                                 \
-    nStructSize = pStructDB->get_structure( (str) )->size();                    \
-    (var)       = pAlloc->alloc(targetAllocator::ALLOC_DRAM, nStructSize);      \
-                                                                                \
-    for (i = 0 ; i < nStructSize/4 ; i++) {                                     \
-        m_pEngine[0]->get_gbusptr()->gbus_write_uint32((var) + 4 * i, 0);       \
-    }
-
 /**
  *
  */
-#define RMTILE_SIZE_SHIFT 0xd
 
-RMstatus targetStandardInterface::open_video_decoder()
+RMstatus targetStandardIFTask::open_video_decoder()
 {
     RMstatus                nStatus     = RM_ERROR;
-    TARGET_ALLOC_PTR        pAlloc      = m_pAlloc[0];
-    structure_database*     pStructDB   = m_pEngine[0]->get_structdb();
+    structure_database*     pStructDB   = pIF->get_structdb();
     RMuint32                nStructSize = 0L;
-    controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     RMuint32                i           = 0;
     RMstatus 		        err __attribute__ ((unused))         = RM_OK;
     RMuint32                dramPtr     = 0;
@@ -308,7 +217,7 @@ RMstatus targetStandardInterface::open_video_decoder()
                             video_pts_fifo;
     RMuint32                fifoEraserSize = 0;
 
-    assert(pStructDB != nullptr);
+//    assert(pStructDB != nullptr);
     assert(pIF != nullptr);
 
 #ifdef ENABLE_GBUS_LOGGER
@@ -330,7 +239,7 @@ RMstatus targetStandardInterface::open_video_decoder()
     video_set_vti_pointer(pIF, pvtdb, pvti);
     /* Set pvtb in DMEM */
     video_set_vtdb_pointer(pIF,
-                           m_pEngine[0]->get_engine()->get_pmBase(),
+                           pIF->get_engine()->get_pmBase(),
                            0,
                            pvtdb);
 
@@ -447,7 +356,7 @@ static tileDef  chipTileSizes[] = {
  *  Set tile dimensions by chip ID...
  */
 
-bool targetStandardInterface::set_tile_dimensions(std::string sChipId)
+bool targetStandardIFTask::set_tile_dimensions(std::string sChipId)
 {
     RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, sChipId.c_str()));
 
@@ -467,7 +376,7 @@ bool targetStandardInterface::set_tile_dimensions(std::string sChipId)
  *  Set the tile dimensions tsw x tsh...
  */
 
-void targetStandardInterface::set_tile_dimensions(RMuint32 tsw, RMuint32 tsh)
+void targetStandardIFTask::set_tile_dimensions(RMuint32 tsw, RMuint32 tsh)
 {
     RMDBGLOG((LOCALDBG, "%s(%ld, %ld)\n", __PRETTY_FUNCTION__, tsw, tsh));
 
@@ -477,64 +386,93 @@ void targetStandardInterface::set_tile_dimensions(RMuint32 tsw, RMuint32 tsh)
     pvc_th              = (1 << tsh);
     pvc_ts              = pvc_tw * pvc_th;
 
-    m_pAlloc[0]->set_tile_size( tsw, tsh );
+    pAlloc->set_tile_size( tsw, tsh );
 
     return;
 }
 
-#ifdef USE_PTHREADS
-/**
- *  Stub for the fifo fill thread.
- */
-
-void* targetStandardInterface::_fifoFillThreadFunc(targetStandardInterface* pThis)
-{
-    return pThis->fifoFillThreadFunc();
-}
 
 /**
- *  Stub for the fifo empty thread.
+ *
  */
 
-void* targetStandardInterface::_fifoEmptyThreadFunc(targetStandardInterface* pThis)
+RMstatus targetStandardIFTask::set_video_codec()
 {
-    return pThis->fifoEmptyThreadFunc();
+#ifdef ENABLE_GBUS_LOGGER
+    pIF->get_gbusptr()->gbus_log_mark("entering set_video_codec");
+#endif // ENABLE_GBUS_LOGGER
+
+    send_video_command( VideoCommandUninit,  VideoStatusUninit );
+
+    video_set_profile(pIF, pvti, decoderProfile );
+
+    send_video_command( VideoCommandInit,    VideoStatusStop );
+
+#ifdef ENABLE_GBUS_LOGGER
+    pIF->get_gbusptr()->gbus_log_mark("exiting set_video_codec");
+#endif // ENABLE_GBUS_LOGGER
+
+    return RM_OK;
 }
 
-#endif // USE_PTHREADS
+
+RMstatus targetStandardIFTask::send_video_command(enum VideoCommand cmd,
+                                                  enum VideoStatus stat)
+{
+    RMstatus            result = RM_ERROR;
+    enum VideoStatus    VideoDecoderStatus;
+    RMuint32            started;
+
+#ifdef ENABLE_GBUS_LOGGER
+    pIF->get_gbusptr()->gbus_log_mark("entering send_video_command");
+#endif // ENABLE_GBUS_LOGGER
+
+    video_set_command(pIF, pvti, cmd );
+
+    started = gbus_utils::gbus_time_us(pIF->get_gbusptr());
+
+    while (1) {
+        video_get_status(pIF, pvti, &VideoDecoderStatus);
+
+        //printf("-- status %d\n", (int) VideoDecoderStatus);
+
+        if (VideoDecoderStatus == stat) {
+            result = RM_OK;
+            break;
+        }
+
+        if (gbus_utils::gbus_time_delta(started, gbus_utils::gbus_time_us(pIF->get_gbusptr())) > COMMAND_TIMEOUT) {
+            RMDBGLOG((DISABLE, "-- TIMEOUT (command not received) --\n"));
+            result = RM_PENDING;
+            break;
+        }
+        //usleep(1000);
+    }
+
+#ifdef ENABLE_GBUS_LOGGER
+    pIF->get_gbusptr()->gbus_log_mark("exiting send_video_command");
+#endif // ENABLE_GBUS_LOGGER
+
+    return result;
+}
 
 /**
  *  Launch the background threads, use std::thread unless USE_PTHREADS is defined.
  */
 
-bool targetStandardInterface::launch_threads()
+bool targetStandardIFTask::launch_threads()
 {
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
-#ifdef USE_PTHREADS
-    RMDBGLOG((LOCALDBG, "-- using pthreads to launch threads...\n"));
-    if (pthread_create(&fifoFillThread, NULL, _fifoFillThreadFunc, this) != 0) {
-        RMDBGLOG((LOCALDBG, "Unable to start fifoFillThread!\n"));
-        return false;
-    } else {
-        if (pthread_create(&fifoEmptyThread, NULL, _fifoEmptyThreadFunc) != 0) {
-            RMDBGLOG((LOCALDBG, "Unable to start fifoEmptyThread!\n"));
-            pthread_cancel(fifoFillThread);
-            return false;
-        }
-    }
-#else
-    RMDBGLOG((LOCALDBG, "-- using c++11 std::thread to launch threads...\n"));
-
-    fifoFillThread  = std::thread( &targetStandardInterface::fifoFillThreadFunc, this );
-    fifoEmptyThread = std::thread( &targetStandardInterface::fifoEmptyThreadFunc, this );
-
-#endif // USE_PTHREADS
+    fifoFillThread  = std::thread( &targetStandardIFTask::fifoFillThreadFunc, this );
+    fifoEmptyThread = std::thread( &targetStandardIFTask::fifoEmptyThreadFunc, this );
 
     /* Wait for both threads to enter running state */
     while ((fifoFillRunning == false) || (fifoEmptyRunning == false)) {
         usleep(50);
     }
+
+    task_state = TASK_PLAYING;
 
     RMDBGLOG((LOCALDBG, "-- threads running!\n"));
 
@@ -542,26 +480,10 @@ bool targetStandardInterface::launch_threads()
 }
 
 /**
- *  Signal the background threads to terminate. Wait for the threads to exit...
- */
-
-void targetStandardInterface::stop_threads()
-{
-    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
-
-    terminateThreads = true;
-
-    fifoFillThread.join();
-    fifoEmptyThread.join();
-
-    return;
-}
-
-/**
  *  Thread responsible for filling the bitstream FIFO.
  */
 
-void* targetStandardInterface::fifoFillThreadFunc()
+void* targetStandardIFTask::fifoFillThreadFunc()
 {
     FILE*           ifp                 = nullptr;
     unsigned char   Buffer[XFER_BUFFERSIZE];
@@ -624,9 +546,9 @@ void* targetStandardInterface::fifoFillThreadFunc()
  *  Thread responsible for emptying the display FIFO.
  */
 
-void* targetStandardInterface::fifoEmptyThreadFunc()
+void* targetStandardIFTask::fifoEmptyThreadFunc()
 {
-    controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+//  controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     RMuint32                rd          = 0,
                             wr          = 0,
                             fifo_base   = 0,
@@ -694,10 +616,10 @@ void* targetStandardInterface::fifoEmptyThreadFunc()
  *  Function to write data into a circular FIFO including wrap-around condition.
  */
 
-RMuint32 targetStandardInterface::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
+RMuint32 targetStandardIFTask::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
                                                                   RMuint32 sizeToSend)
 {
-    controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+//    controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     GBUS_PTR                pGbus       = pIF->get_gbusptr();
 	RMuint32                rd, wr,
                             fifo_base, fifo_size;
@@ -741,168 +663,11 @@ RMuint32 targetStandardInterface::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
     return sizeLeft;
 }
 
-
-/**
- *  Table which relates abbreviation string to codec ID.
- */
-
-struct targetStandardInterface::profileEntry targetStandardInterface::profileTable[] = {
-    { "mpeg2",  VideoProfileMPEG2, },
-    { "mpeg4",  VideoProfileMPEG4, },
-    { "h264",   VideoProfileH264, },
-    { "h265",   VideoProfileH265, },
-    { "hevc",   VideoProfileH265, },
-    { "divx",   VideoProfileDIVX3, },
-    { "spu",    VideoProfileDVDSpu, },
-    { "vc1",    VideoProfileVC1, },
-
-    { "", 0, },
-};
-
-/**
- *
- */
-
-RMint32 targetStandardInterface::get_profile_id_from_string(const std::string& sCodecID)
-{
-    struct profileEntry *pCurEntry = profileTable;
-
-    while (pCurEntry->sIdent.size() > 0) {
-        if (string_utils::caseInsensitiveStringCompare(pCurEntry->sIdent, sCodecID)) {
-            return pCurEntry->nProfile;
-        }
-        pCurEntry++;    // Advance to next profile entry...
-    }
-
-    return -1;
-}
-
-/**
- *
- */
-
-std::string targetStandardInterface::get_profile_string_from_id(RMint32 codec_id)
-{
-    struct profileEntry *pCurEntry = profileTable;
-
-    while (pCurEntry->sIdent.size() > 0) {
-        if (pCurEntry->nProfile == codec_id) {
-            return pCurEntry->sIdent;
-        }
-        pCurEntry++;    // Advance to next profile entry...
-    }
-
-    return "Undefined";
-}
-
-/**
- *
- */
-
-void targetStandardInterface::get_profile_vector(PROFILE_VECTOR& pVec)
-{
-    struct profileEntry *pCurEntry = profileTable;
-
-    while (pCurEntry->sIdent.size() > 0) {
-        pVec.push_back(pCurEntry->sIdent);
-        pCurEntry++;    // Advance to next profile entry...
-    }
-
-    return;
-}
-
-/**
- *
- */
-
-RMstatus targetStandardInterface::set_video_codec()
-{
-    controlInterface*   pIF    = dynamic_cast<controlInterface*>(m_pEngine[0].get());
-
-#ifdef ENABLE_GBUS_LOGGER
-    pIF->get_gbusptr()->gbus_log_mark("entering set_video_codec");
-#endif // ENABLE_GBUS_LOGGER
-
-    send_video_command( VideoCommandUninit,  VideoStatusUninit );
-
-    video_set_profile(pIF, pvti, decoderProfile );
-
-    send_video_command( VideoCommandInit,    VideoStatusStop );
-
-#ifdef ENABLE_GBUS_LOGGER
-    pIF->get_gbusptr()->gbus_log_mark("exiting set_video_codec");
-#endif // ENABLE_GBUS_LOGGER
-
-    return RM_OK;
-}
-
-
-RMstatus targetStandardInterface::send_video_command(enum VideoCommand cmd,
-                                                     enum VideoStatus stat)
-{
-    RMstatus            result = RM_ERROR;
-    controlInterface*   pIF    = dynamic_cast<controlInterface*>(m_pEngine[0].get());
-    enum VideoStatus    VideoDecoderStatus;
-    RMuint32            started;
-
-//    APP_STATE appState;
-//
-//    switch (cmd) {
-//    case VideoCommandUninit:
-//        appState = APP_SENDING_UNINIT;
-//        break;
-//    case VideoCommandInit:
-//        appState = APP_SENDING_INIT;
-//        break;
-//    case VideoCommandPlayFwd:
-//        appState = APP_SENDING_PLAY;
-//        break;
-//    case VideoCommandStop:
-//        appState = APP_SENDING_STOP;
-//        break;
-//    default:
-//        appState = APP_STATE_UNKNOWN;
-//        break;
-//    }
-
-#ifdef ENABLE_GBUS_LOGGER
-    pIF->get_gbusptr()->gbus_log_mark("entering send_video_command");
-#endif // ENABLE_GBUS_LOGGER
-
-    video_set_command(pIF, pvti, cmd );
-
-    started = gbus_utils::gbus_time_us(pIF->get_gbusptr());
-
-    while (1) {
-        video_get_status(pIF, pvti, &VideoDecoderStatus);
-
-        //printf("-- status %d\n", (int) VideoDecoderStatus);
-
-        if (VideoDecoderStatus == stat) {
-            result = RM_OK;
-            break;
-        }
-
-        if (gbus_utils::gbus_time_delta(started, gbus_utils::gbus_time_us(pIF->get_gbusptr())) > COMMAND_TIMEOUT) {
-            RMDBGLOG((DISABLE, "-- TIMEOUT (command not received) --\n"));
-            result = RM_PENDING;
-            break;
-        }
-        //usleep(1000);
-    }
-
-#ifdef ENABLE_GBUS_LOGGER
-    pIF->get_gbusptr()->gbus_log_mark("exiting send_video_command");
-#endif // ENABLE_GBUS_LOGGER
-
-    return result;
-}
-
 /**
  *  Retrieve the rectangle from the picture buffer.
  */
 
-void targetStandardInterface::READ_PICTURE_BUFFER_RECT(controlInterface* pIF, RMuint32 address, std::string sField, struct targetStandardInterface::EMhwlibWindow* pDest) {
+void targetStandardIFTask::READ_PICTURE_BUFFER_RECT(RMuint32 address, std::string sField, struct EMhwlibWindow* pDest) {
     RMuint32 gbusAddr   = 0;
     RMuint32 nSize      = 0;
 
@@ -917,23 +682,18 @@ void targetStandardInterface::READ_PICTURE_BUFFER_RECT(controlInterface* pIF, RM
  *  Retrieve a field from the picture buffer structure.
  */
 
-RMuint32 targetStandardInterface::READ_PICTURE_BUFFER_MEMBER(controlInterface* pIF, RMuint32 address, const std::string& member) {
+RMuint32 targetStandardIFTask::READ_PICTURE_BUFFER_MEMBER(RMuint32 address, const std::string& member) {
     RMuint32    value = 0L;
     struct_utils::read_structure_member(pIF, address, "VideoMicrocodePicture", member, &value);
     return value;
 }
 
-typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
-typedef std::chrono::duration<double> time_diff;
-
 /**
  *  Extract picture from display FIFO.
  */
 
-RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
+RMstatus targetStandardIFTask::process_picture(RMuint32 picture_address)
 {
-    mutex_guard         guard(contextMutex);    // obtain the context mutex...
-    controlInterface*   pIF    = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     RMstatus            result = RM_ERROR;
     RMuint32            frame_count = 0;
     RMuint32            luma_ttl_wd = 0,
@@ -950,14 +710,14 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
     time_diff           ts3;
 
 
-    frame_count    = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "frame_count");
-    luma_address   = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "luma_address");
-    chroma_address = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "chroma_address");
-    luma_ttl_wd    = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "luma_total_width");
-    chroma_ttl_wd  = READ_PICTURE_BUFFER_MEMBER(pIF, picture_address, "chroma_total_width");
+    frame_count    = READ_PICTURE_BUFFER_MEMBER(picture_address, "frame_count");
+    luma_address   = READ_PICTURE_BUFFER_MEMBER(picture_address, "luma_address");
+    chroma_address = READ_PICTURE_BUFFER_MEMBER(picture_address, "chroma_address");
+    luma_ttl_wd    = READ_PICTURE_BUFFER_MEMBER(picture_address, "luma_total_width");
+    chroma_ttl_wd  = READ_PICTURE_BUFFER_MEMBER(picture_address, "chroma_total_width");
 
-    READ_PICTURE_BUFFER_RECT(pIF, picture_address, "luma_position_in_buffer", &luma_position_in_buffer);
-    READ_PICTURE_BUFFER_RECT(pIF, picture_address, "chroma_position_in_buffer", &chroma_position_in_buffer);
+    READ_PICTURE_BUFFER_RECT(picture_address, "luma_position_in_buffer", &luma_position_in_buffer);
+    READ_PICTURE_BUFFER_RECT(picture_address, "chroma_position_in_buffer", &chroma_position_in_buffer);
 
     /* calculate luma buffer size */
     luma_buf_width  = ((luma_position_in_buffer.width + luma_position_in_buffer.x + pvc_tw - 1)/pvc_tw) * pvc_tw;
@@ -1046,7 +806,7 @@ RMstatus targetStandardInterface::process_picture(RMuint32 picture_address)
  *  Generate filenames for Y & UV dump files.
  */
 
-void  targetStandardInterface::get_dump_filenames(RMuint32 frame_no,
+void  targetStandardIFTask::get_dump_filenames(RMuint32 frame_no,
                                                   std::string& sYFilename,
                                                   std::string& sUVFilename)
 {
@@ -1062,11 +822,12 @@ void  targetStandardInterface::get_dump_filenames(RMuint32 frame_no,
     return;
 }
 
+
 /**
  *  Save picture buffer in YUV output file.
  */
 
-void targetStandardInterface::save_frame(RMuint32 frame_count,
+void targetStandardIFTask::save_frame(RMuint32 frame_count,
                                         EMhwlibWindow* luma_position_in_buffer, RMuint32 luma_ttl_wd,
                                         EMhwlibWindow* chroma_position_in_buffer, RMuint32 chroma_ttl_wd)
 {
@@ -1135,29 +896,34 @@ void targetStandardInterface::save_frame(RMuint32 frame_count,
     free( uPtr );
 }
 
-
-/**
- *  Return the current frame counter...
- */
-
-bool targetStandardInterface::get_output_stats(outputStats& stats) const
-{
-    mutex_guard guard(inputStatMutex);
-
-    stats = oStats;
-
-    return true;
-}
-
 /**
  *
  */
 
-bool targetStandardInterface::get_input_stats(inputStats& stats) const
+void targetStandardIFTask::stop_threads()
 {
-    mutex_guard guard(inputStatMutex);
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
-    stats = iStats;
+    terminateThreads = true;
+
+    fifoFillThread.join();
+    fifoEmptyThread.join();
+
+    return;
+}
+
+/**
+ *  Stop playback.
+ */
+
+bool targetStandardIFTask::stop() {
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    if (task_state == TASK_PLAYING) {
+        task_state = TASK_STOPPING;
+        stop_threads();
+        task_state = TASK_STOPPED;
+    }
 
     return true;
 }
@@ -1166,7 +932,7 @@ bool targetStandardInterface::get_input_stats(inputStats& stats) const
  *  Update input statistics block, locking mutex...
  */
 
-void targetStandardInterface::update_input_stats()
+void targetStandardIFTask::update_input_stats()
 {
     mutex_guard guard(inputStatMutex);
 
@@ -1181,7 +947,7 @@ void targetStandardInterface::update_input_stats()
  *  Update the output statistics block, locking mutex...
  */
 
-void targetStandardInterface::update_output_stats()
+void targetStandardIFTask::update_output_stats()
 {
     mutex_guard guard(outputStatMutex);
 
@@ -1195,4 +961,394 @@ void targetStandardInterface::update_output_stats()
     oStats.frame_count       = picture_count;
 
     return;
+}
+
+/**
+ *  Get the output stats from the task.
+ */
+
+bool targetStandardIFTask::get_output_stats(outputStats& stats) const
+{
+    mutex_guard guard(inputStatMutex);
+
+    stats = oStats;
+
+    return true;
+}
+
+/**
+ *  Get the input stats from the task.
+ */
+
+bool targetStandardIFTask::get_input_stats(inputStats& stats) const
+{
+    mutex_guard guard(inputStatMutex);
+
+    stats = iStats;
+
+    return true;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+/**
+ *  Object represents the standard microcode interface.
+ */
+
+targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
+:   targetInterfaceBase(pEngine),
+    bValid(false),
+    ifState(IF_UNINITIALIZED)
+{
+    // ctor
+    RMuint32 offset = 0;
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    pEngine->get_ucode_offset(nullptr, &offset);
+
+    init_parameters();
+
+    m_pAlloc[0]->alloc(targetAllocator::ALLOC_DRAM, offset);
+
+#ifdef _DEBUG
+    m_pAlloc[0]->dump(std::cerr);
+#endif // _DEBUG
+
+    ifState = IF_INITIALIZED;
+}
+
+/**
+ *
+ */
+
+targetStandardInterface::~targetStandardInterface()
+{
+    // dtor
+    if (ifState == IF_PLAYING) {
+        stop();
+    }
+
+    for (size_t i = 0 ; i < MAX_TASK_COUNT ; i++) {
+        if (tasks[i]) {
+            targetStandardIFTask::taskState state = tasks[i]->get_state();
+
+            if (state == targetStandardIFTask::TASK_STOPPED) {
+                // release the task object...
+                tasks[i].reset();
+            }
+        }
+    }
+}
+
+#ifdef _DEBUG
+
+/**
+ *  Display interface state...
+ */
+
+void targetStandardInterface::debug_state(std::ostream& os)
+{
+    os << "Task list" << std::endl;
+
+    for (size_t i = 0 ; i < MAX_TASK_COUNT ; i++) {
+        os << "Task # " << std::dec << std::setw(3) << i << " : ";
+
+        if (tasks[i]) {
+            os << *(tasks[i]) << std::endl;
+        } else {
+            os << "Not initialized" << std::endl;
+        }
+    }
+}
+
+#endif // _DEBUG
+
+/**
+ *  Set dump flag and path...
+ */
+
+void targetStandardInterface::enable_dump(const std::string& sPath)
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, sPath.c_str()));
+
+    dump_y_uv = true;
+    dumpPath  = sPath;
+
+    if (!dumpPath.empty() && *dumpPath.rbegin() != '/')
+        dumpPath += '/';
+
+    return;
+}
+
+/**
+ *  Clear dump flag...
+ */
+
+void targetStandardInterface::disable_dump()
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__));
+
+    dump_y_uv = false;
+
+    return;
+}
+
+/**
+ *  Return dump flag...
+ */
+
+bool targetStandardInterface::get_dump_info(std::string& sPath)
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__));
+
+    sPath = dumpPath;
+
+    return dump_y_uv;
+}
+
+/**
+ *  Play the stream...
+ */
+
+bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
+                                          const std::string& sOutputYUVName,
+                                          const std::string& sProfile,
+                                          RMuint32           taskID)
+{
+    RMuint32 nProfile = VideoProfileMPEG2;
+    RMDBGLOG((LOCALDBG, "%s(%s, %s, %s)\n", __PRETTY_FUNCTION__,
+              sInputStreamName.c_str(), sOutputYUVName.c_str(),
+              sProfile.c_str()));
+
+    if ((nProfile = get_profile_id_from_string(sProfile)) == (RMuint32)-1) {
+        RMDBGLOG((LOCALDBG, "-- invalid profile [%s]!\n", sProfile.c_str()));
+        return false;
+    }
+
+    return play_stream(sInputStreamName, sOutputYUVName, nProfile, taskID);
+}
+
+/**
+ *  Play the stream...
+ */
+
+bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
+                                          const std::string& sOutputYUVName,
+                                          RMuint32 profile,
+                                          RMuint32 taskID)
+{
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+    bool        bRes = false;
+    targetStandardIFTask::targetStdIfParms parms;
+
+    RMDBGLOG((LOCALDBG, "%s(%s, %s, %d, %d)\n", __PRETTY_FUNCTION__,
+              sInputStreamName.c_str(), sOutputYUVName.c_str(), profile, taskID));
+
+    if (ifState == IF_PLAYING) {
+        RMDBGLOG((LOCALDBG, "Interface already playing media!\n"));
+        return false;
+    }
+
+    /* Check if the output YUV file was specified and can be opened! */
+    if (!sOutputYUVName.empty()) {
+        if (file_utils::can_write_file(sOutputYUVName)) {
+//            outputYUVName   = sOutputYUVName;
+        } else {
+            RMDBGLOG((LOCALDBG, "Unable to create YUV output file!\n"));
+            return false;
+        }
+    }
+
+    parms.sInputStreamName = sInputStreamName;
+    parms.sOutputYUVName   = sOutputYUVName;
+    parms.nProfile         = profile;
+    parms.pAlloc           = m_pAlloc[0];
+    parms.pIF              = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+
+    tasks[taskID] = std::make_shared<targetStandardIFTask>(parms);
+
+    ifState = IF_PLAYING;
+
+//    if (file_utils::file_exists(sInputStreamName)) {
+//        /* copy the names into the class storage. */
+//        inputStreamName = sInputStreamName;
+//        decoderProfile  = profile;
+//
+//        set_video_codec();
+//        send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
+//        launch_threads();
+//        ifState = IF_PLAYING;
+//    } else {
+//        RMDBGLOG((LOCALDBG, "ERROR: Unable to find input file!\n"));
+//    }
+
+    RMDBGLOG((LOCALDBG, "-- exiting play_stream()\n"));
+
+    return bRes;
+}
+
+/**
+ *  Stop playback.
+ */
+
+bool targetStandardInterface::stop() {
+    mutex_guard guard(contextMutex);    // obtain the context mutex...
+
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    if (ifState == IF_PLAYING) {
+        stop_tasks();
+        ifState = IF_INITIALIZED;
+    }
+
+    return true;
+}
+
+/**
+ *  Initialize parameters...
+ */
+
+void targetStandardInterface::init_parameters()
+{
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    /* Nothing to see here */
+
+}
+
+/**
+ *  Table which relates abbreviation string to codec ID.
+ */
+
+struct targetStandardInterface::profileEntry targetStandardInterface::profileTable[] = {
+    { "mpeg2",  VideoProfileMPEG2, },
+    { "mpeg4",  VideoProfileMPEG4, },
+    { "h264",   VideoProfileH264, },
+    { "h265",   VideoProfileH265, },
+    { "hevc",   VideoProfileH265, },
+    { "divx",   VideoProfileDIVX3, },
+    { "spu",    VideoProfileDVDSpu, },
+    { "vc1",    VideoProfileVC1, },
+
+    { "", 0, },
+};
+
+/**
+ *
+ */
+
+RMint32 targetStandardInterface::get_profile_id_from_string(const std::string& sCodecID)
+{
+    struct profileEntry *pCurEntry = profileTable;
+
+    while (pCurEntry->sIdent.size() > 0) {
+        if (string_utils::caseInsensitiveStringCompare(pCurEntry->sIdent, sCodecID)) {
+            return pCurEntry->nProfile;
+        }
+        pCurEntry++;    // Advance to next profile entry...
+    }
+
+    return -1;
+}
+
+/**
+ *
+ */
+
+std::string targetStandardInterface::get_profile_string_from_id(RMint32 codec_id)
+{
+    struct profileEntry *pCurEntry = profileTable;
+
+    while (pCurEntry->sIdent.size() > 0) {
+        if (pCurEntry->nProfile == codec_id) {
+            return pCurEntry->sIdent;
+        }
+        pCurEntry++;    // Advance to next profile entry...
+    }
+
+    return "Undefined";
+}
+
+/**
+ *
+ */
+
+void targetStandardInterface::get_profile_vector(PROFILE_VECTOR& pVec)
+{
+    struct profileEntry *pCurEntry = profileTable;
+
+    while (pCurEntry->sIdent.size() > 0) {
+        pVec.push_back(pCurEntry->sIdent);
+        pCurEntry++;    // Advance to next profile entry...
+    }
+
+    return;
+}
+
+/**
+ *
+ */
+
+void targetStandardInterface::stop_tasks() {
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    for (auto task : tasks) {
+        if (task) {
+            if (task->get_state() == targetStandardIFTask::TASK_PLAYING) {
+                task->stop();
+            }
+        }
+    }
+
+    return;
+}
+
+/**
+ *
+ */
+
+bool targetStandardInterface::get_output_stats(RMuint32 taskID, outputStats& stats) const
+{
+    bool    bRes = false;
+
+    if (taskID < MAX_TASK_COUNT) {
+        if (tasks[taskID] && tasks[taskID]->get_state() == targetStandardIFTask::TASK_PLAYING) {
+            bRes = tasks[taskID]->get_output_stats(stats);
+        } else {
+            RMDBGLOG((LOCALDBG, "ERROR: task ID %d is not playing.\n", taskID));
+        }
+    } else {
+        RMDBGLOG((LOCALDBG, "ERROR: task ID %d out of range.\n", taskID));
+    }
+
+    return bRes;
+}
+
+/**
+ *
+ */
+
+bool targetStandardInterface::get_input_stats(RMuint32 taskID, inputStats& stats) const
+{
+    bool    bRes = false;
+
+    if (taskID < MAX_TASK_COUNT) {
+        if (tasks[taskID] && tasks[taskID]->get_state() == targetStandardIFTask::TASK_PLAYING) {
+            bRes = tasks[taskID]->get_input_stats(stats);
+        } else {
+            RMDBGLOG((LOCALDBG, "ERROR: task ID %d is not playing.\n", taskID));
+        }
+    } else {
+        RMDBGLOG((LOCALDBG, "ERROR: task ID %d out of range.\n", taskID));
+}
+
+    return bRes;
 }
