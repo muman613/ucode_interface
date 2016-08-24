@@ -1043,6 +1043,8 @@ targetStandardInterface::~targetStandardInterface()
             }
         }
     }
+
+    clear_scheduler_data();
 }
 
 #ifdef _DEBUG
@@ -1351,4 +1353,16 @@ bool targetStandardInterface::get_input_stats(RMuint32 taskID, inputStats& stats
 }
 
     return bRes;
+}
+
+/**
+ *
+ */
+
+void targetStandardInterface::clear_scheduler_data()
+{
+    controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+    RMuint32                memBase     = pIF->get_engine()->get_pmBase();
+
+    video_utils::video_set_scheduler_memory(pIF, memBase, 0, 0);
 }

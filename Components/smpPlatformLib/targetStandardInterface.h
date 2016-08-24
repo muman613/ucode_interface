@@ -387,6 +387,9 @@ protected:
     bool                    dump_y_uv;
     std::string             dumpPath;
 
+    void                    clear_scheduler_data();
+
+
 private:
     mutable std::mutex      contextMutex;      ///< Mutex for access to class context variables.
 };
