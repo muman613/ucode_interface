@@ -22,8 +22,11 @@ get_chip () {
 
 	CHIPSPEC=$(dialog --backtitle "Copy Microcode Script" 					\
                       --title "Select Chip" 								\
-                      --menu "Select Chip" 20 80 10 "8758" 					\
-                      "Riesling B" "8760" "Riesling C" --output-fd 1)
+                      --menu "Select Chip" 20 80 10 						\
+                      "8756" "Chablis"										\
+                      "8758" "Riesling B"									\
+                      "8760" "Riesling C" 									\
+                      --output-fd 1)
 	if [ "$?" -eq "1" ]; then
 		exit
 	fi
@@ -99,6 +102,10 @@ do_copy_files () {
 	#echo "do_copy_files"
 
 	case ${CHIP} in
+	8756)
+		UCODE_DIRS=( video_t4/src video_t4_h265/src )
+		DEST="${PROJECTROOT}/ucode/8756/"
+		;;
 	8758)
 		UCODE_DIRS=( video_t4/src video_t4_h265/src )
 		DEST="${PROJECTROOT}/ucode/8758/"
