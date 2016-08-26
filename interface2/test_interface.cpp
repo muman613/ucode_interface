@@ -105,7 +105,9 @@ static void print_usage(const char* sAppName) {
     char *sAppCopy = strdup(sAppName);
 
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "   %s [-c chipid] [-m mode] [-s stream] [-p codec] [-o capfile]\n", basename(sAppCopy));
+    fprintf(stderr, "   %s [-c chipid] [-m mode] [-s stream] [-p codec] [-o capfile] [-r remote_spec]\n", basename(sAppCopy));
+    fprintf(stderr, "\n");
+    fprintf(stderr, "If remote_spec is not specified using -r, EM8XXX_SERVER is used.\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Mode is 'r' for release or 'd' for debug.\n");
     fprintf(stderr, "\n");
@@ -129,7 +131,7 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
     int         opt;
     RMstatus    result = RM_ERROR;
     std::string sChipID, sChipMode;
-    const char* opts="Dc:m:s:p:o:O:h";
+    const char* opts="Dc:m:s:p:o:O:r:h";
     FILE_PACK   fPack;
 
     while ((opt = getopt(argc, argv, opts)) != -1)
@@ -141,15 +143,18 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
             break;
 
         case 'c':
-            sChipID = optarg;
+            if (optarg != nullptr)
+                sChipID = optarg;
             break;
 
         case 'm':
-            sChipMode = optarg;
+            if (optarg != nullptr)
+                sChipMode = optarg;
             break;
 
         case 's':
-            pCtx->file.sStrFilename = optarg;
+            if (optarg != nullptr)
+                pCtx->file.sStrFilename = optarg;
             break;
 
         case 'p':
@@ -158,20 +163,19 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
             break;
 
         case 'o':
-            pCtx->file.sYUVFilename = optarg;
+            if (optarg != nullptr)
+                pCtx->file.sYUVFilename = optarg;
             break;
 
         case 'O':
-            pCtx->file.sYUVPath = optarg;
+            if (optarg != nullptr)
+                pCtx->file.sYUVPath = optarg;
             break;
 
-//        case 'e':
-//            if (strcmp(optarg, "1") == 0) {
-//                pCtx->pmBaseAddress       = PMEM_BASE_mpeg_engine_1;
-//                pCtx->dmBaseAddress       = DMEM_BASE_mpeg_engine_1;
-//                pCtx->regBaseAddress      = REG_BASE_mpeg_engine_1;
-//            }
-//            break;
+        case 'r':
+            if (optarg != nullptr)
+                pCtx->serverStr = optarg;
+            break;
 
         case 'h':
         default:
@@ -220,14 +224,8 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
         if ((file_exists( pCtx->file.sBinFilename ) == RM_OK) &&
             (file_exists( pCtx->file.sStrFilename ) == RM_OK))
         {
-//            if (pCtx->szBinFilename[1] != 0) {
-//                if (file_exists(pCtx->szBinFilename[1]) == RM_OK) {
-//                result = RM_OK;
-//                }
-//            } else {
-                set_tile_dimensions( pCtx.get(), sChipID );
-                result = RM_OK;
-//            }
+            set_tile_dimensions( pCtx.get(), sChipID );
+            result = RM_OK;
         }
     } else {
         fprintf(stderr, "ERROR: Must at least specify microcode (-b) and input stream (-s)!\n");
@@ -267,14 +265,16 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
 #ifdef ENABLE_CURSES
         pCtx->pUIContext->szChip = pCtx->sChip.c_str(); //getenv("EM8XXX_SERVER");
 #endif // ENABLE_CURSES
-        if (get_environment_string("EM8XXX_SERVER", pCtx->serverStr)) {
-#ifdef ENABLE_CURSES
-            pCtx->pUIContext->szConn = pCtx->serverStr.c_str();
-#endif // ENABLE_CURSES
-        } else {
-            result = RM_ERROR;
-            fprintf(stderr, "Environment variable EM8XXX_SERVER must be set!\n");
+
+        if (pCtx->serverStr.empty()) {
+            if (!get_environment_string("EM8XXX_SERVER", pCtx->serverStr)) {
+                result = RM_ERROR;
+                fprintf(stderr, "Environment variable EM8XXX_SERVER must be set!\n");
+            }
         }
+#ifdef ENABLE_CURSES
+        pCtx->pUIContext->szConn = pCtx->serverStr.c_str();
+#endif // ENABLE_CURSES
     }
 
 exitParse:
