@@ -396,7 +396,8 @@ private:
 
 #define VPTS_FIFO_ENTRY_SIZE	8 /* 8 bytes = PTS on 32 bits and byte counter on 32 bits */
 #define DECODE_ERROR_ENTRIES 	128
-#define DECODER_DATA_SIZE       (29638656 * 12)
+#define DECODER_DATA_SIZE       (29638656)
+//#define DECODER_DATA_SIZE       (29638656 * 12)
 #define DECODER_CTX_SIZE        6242304
 
 

@@ -180,7 +180,8 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
     }
 
     /* Make sure chip and mode specified! */
-    if ((sChipID == "8758") ||
+    if ((sChipID == "8756") ||
+        (sChipID == "8758") ||
         (sChipID == "8760"))
     {
         if ((sChipMode == "d") ||

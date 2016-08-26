@@ -728,6 +728,10 @@ RMstatus video_set_command(
 	RMuint32 pvti,
 	enum VideoCommand command)
 {
+	RMDBGLOG((LOCALDBG, "***** %s: addr=0x%lx command=0x%lx\n", __FUNCTION__,
+           struct_utils::resolve_offset(pIF, pvti, "video_task_interface", "Command"),
+           command));
+
     struct_utils::write_structure_member(pIF, pvti,
                                          "video_task_interface", "Command",
                                          (RMuint32)command);

@@ -15,7 +15,8 @@
 
 #include "symbolmgr/symbolmgr.h"
 
-#define DRAM_BASE       0xa8000000 // hardcoded value in a free Dram zone
+//#define DRAM_BASE       0xa8000000 // hardcoded value in a free Dram zone
+#define DRAM_BASE       0xb0000000 // hardcoded value in a free Dram zone
 
 //#undef  G2L_RESET_CONTROL
 //#define G2L_RESET_CONTROL		0xffc
@@ -29,8 +30,8 @@
 
 #define VPTS_FIFO_ENTRY_SIZE	8 /* 8 bytes = PTS on 32 bits and byte counter on 32 bits */
 #define DECODE_ERROR_ENTRIES 	128
-//#define DECODER_DATA_SIZE       29638656
-#define DECODER_DATA_SIZE       (29638656 * 12)
+#define DECODER_DATA_SIZE       (29638656 * 6)
+//#define DECODER_DATA_SIZE       (29638656 * 12)
 #define DECODER_CTX_SIZE        6242304
 
 #define BUFFERSIZE              65536

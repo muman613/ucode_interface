@@ -136,7 +136,8 @@ typedef targetEngine*                   TARGET_ENGINE_PTR;
 #define UCODE_PREFIX "../../../"
 
 #define DRAM_BASE       0xa8000000 // hardcoded value in a free Dram zone
-#define DRAM_OFFSET     0x28000000
+#define DRAM_OFFSET     0x30000000
+//#define DRAM_OFFSET     0
 
 #define DSP_RUN                 0x00
 #define DSP_STOP                0x01

@@ -348,6 +348,7 @@ typedef struct {
 } tileDef;
 
 static tileDef  chipTileSizes[] = {
+    { "8756", 8, 5, },
     { "8758", 8, 5, },
     { "8760", 9, 5, },
 };
