@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sstream>      // std::ostringstream
+#include <iostream>
+#include <iomanip>
+#include <mutex>
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,6 +16,7 @@
 #include "ucode_utils.h"
 #include "video_utils.h"
 #include "targetEngine.h"
+#include "file_utils.h"
 
 #ifdef _DEBUG
     #define LOCALDBG ENABLE
@@ -27,17 +31,74 @@
 
 using namespace std;
 
+std::ostream& operator<<(std::ostream& os, const engineFlags& flags) {
+//    flags.flag_mutex.lock();
+
+    os << hex << showbase << setw(4) << flags.value <<
+          " ( valid=" << dec << flags.bits.bValid <<
+          " conn=" << flags.bits.bConnected <<
+          " loaded=" << flags.bits.bUcodeLoaded <<
+          " state=";
+    switch (flags.bits.eState) {
+    case DSP_RUN:
+        os << "DSP_RUN";
+        break;
+    case DSP_STOP:
+        os << "DSP_STOP";
+        break;
+    case DSP_RESET:
+        os << "DSP_RESET";
+        break;
+    }
+    os << " )";
+
+//    flags.flag_mutex.unlock();
+
+    return os;
+}
+
+
+std::ostream& operator<<(std::ostream& os, const targetEngine& engine)
+{
+    auto flags = os.flags();
+
+    std::lock_guard<std::mutex> lock(engine.m_flags.flag_mutex);
+
+    os << std::string(80, '-') << "\n";
+    os << "Engine : " << engine.m_sBlockID <<
+          " block "   << engine.m_nEngineIndex <<
+          " on "      << engine.m_sChipID <<
+          " @ "       << (!engine.m_sTarget.empty()?engine.m_sTarget:"Not Connected") << "\n";
+    os << std::hex <<
+          std::uppercase <<
+          std::internal <<
+          std::setfill('0');
+    os << "PM     : 0x" << std::setw(8) << engine.m_engine.get_pmBase() << "\n" <<
+          "DM     : 0x" << std::setw(8) << engine.m_engine.get_dmBase() << "\n" <<
+          "DRAM   : 0x" << std::setw(8) << engine.m_engine.get_dramBase() << "\n";
+    os << "UCODE  : " <<  ((engine.m_flags.bits.bUcodeLoaded == true)?engine.m_sUcode:"Not Loaded") << "\n";
+    os << "FLAGS  : " << engine.m_flags << "\n";
+
+    os << std::string(80, '-') << std::endl;
+
+    os.flags(flags);
+
+    return os;
+}
+
 /**
  *  Constructor
  */
 
 targetEngine::targetEngine(string sChipID, string sBlockID, uint32_t nEngineIndex, ucodeType type)
-:   m_bValid(false),
-    m_bConnected(false),
-    m_dramBase(DRAM_BASE),
+:   m_dramBase(DRAM_BASE),
     m_uiDRAMPtr(DRAM_BASE)
 {
     // ctor
+    m_flags.flag_mutex.lock();
+    m_flags.bits.eState = DSP_STOP;
+    m_flags.flag_mutex.unlock();
+
     open(sChipID, sBlockID, nEngineIndex, type);
 }
 
@@ -56,15 +117,45 @@ targetEngine::~targetEngine()
 
 bool targetEngine::is_valid() const
 {
-    return m_bValid;
+    std::lock_guard<std::mutex> lock(m_flags.flag_mutex);
+
+    bool bRes = m_flags.bits.bValid;
+
+    return bRes;
 }
+
+/**
+ *
+ */
 
 bool targetEngine::is_connected() const
 {
-    return m_bConnected;
+    std::lock_guard<std::mutex> lock(m_flags.flag_mutex);
+
+    bool bRes = m_flags.bits.bConnected;
+
+    return bRes;
 }
 
-bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, ucodeType eType)
+/**
+ *
+ */
+
+bool targetEngine::is_ucode_loaded() const
+{
+    std::lock_guard<std::mutex> lock(m_flags.flag_mutex);
+
+    bool bRes = m_flags.bits.bUcodeLoaded;
+
+    return bRes;
+}
+
+/**
+ *
+ */
+
+bool targetEngine::open(string sChipID, string sBlockID,
+                        uint32_t nEngineIndex, ucodeType eType)
 {
     std::lock_guard<std::mutex> guard(m_mutex);
     PlatformDatabase            platDB;
@@ -125,7 +216,9 @@ bool targetEngine::open(string sChipID, string sBlockID, uint32_t nEngineIndex, 
         }
     }
 
-    m_bValid = bRes;
+    m_flags.flag_mutex.lock();
+    m_flags.bits.bValid = bRes;
+    m_flags.flag_mutex.unlock();
 
     return bRes;
 }
@@ -144,7 +237,9 @@ void targetEngine::close()
     m_sChipID.clear();
     m_sBlockID.clear();
 
-    m_bValid = false;
+    m_flags.flag_mutex.lock();
+    m_flags.bits.bValid = false;
+    m_flags.flag_mutex.unlock();
 }
 
 /**
@@ -169,23 +264,35 @@ bool targetEngine::resolve_files()
     return bRes;
 }
 
+std::string targetEngine::get_chipid() const {
+    return m_sChipID;
+}
+
+std::string targetEngine::get_blockid() const {
+    return m_sBlockID;
+}
+
+std::string targetEngine::get_targetid() const {
+    return m_sTarget;
+}
+
 /**
  *  Connect to the device specified in the EM8XXX_SERVER environment.
  */
 
-bool targetEngine::connect()
-{
-    bool        bRes        = false;
-    const char* szEnvVar    = nullptr;
-
-    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
-
-    if ((szEnvVar = getenv("EM8XXX_SERVER")) != nullptr) {
-        bRes = connect(szEnvVar);
-    }
-
-    return bRes;
-}
+//bool targetEngine::connect()
+//{
+//    bool        bRes        = false;
+//    const char* szEnvVar    = nullptr;
+//
+//    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+//
+//    if ((szEnvVar = getenv("EM8XXX_SERVER")) != nullptr) {
+//        bRes = connect(szEnvVar);
+//    }
+//
+//    return bRes;
+//}
 
 /**
  *  Connect to the device specified in the sHostSpec string.
@@ -200,6 +307,16 @@ bool targetEngine::connect(std::string sHostSpec)
 
     RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__, sHostSpec.c_str()));
 
+    if (sHostSpec.empty()) {
+        const char* szEnvVar    = nullptr;
+        if ((szEnvVar = getenv("EM8XXX_SERVER")) != nullptr) {
+            sHostSpec = szEnvVar;
+        } else {
+            RMDBGLOG((LOCALDBG, "No host specified!\n"));
+            return false;
+        }
+    }
+
     pLlad = std::make_shared<llad>(sHostSpec);
     if (pLlad && pLlad->is_valid()) {
         m_pGbus = std::make_shared<gbus>(pLlad);
@@ -207,10 +324,14 @@ bool targetEngine::connect(std::string sHostSpec)
         if (m_pGbus && m_pGbus->is_valid()) {
             RMDBGLOG((LOCALDBG, "Connected to %s\n", sHostSpec.c_str()));
 
-            m_bConnected = true;
+            m_sTarget = sHostSpec;
             bRes = true;
         }
     }
+
+    m_flags.flag_mutex.lock();
+    m_flags.bits.bConnected = bRes;
+    m_flags.flag_mutex.unlock();
 
     return bRes;
 }
@@ -252,10 +373,12 @@ void targetEngine::unlock_mutex()
 
 void targetEngine::close_gbus()
 {
-    if (m_bConnected) {
+    m_flags.flag_mutex.lock();
+    if (m_flags.bits.bConnected) {
         m_pGbus.reset();
-        m_bConnected = false;
+        m_flags.bits.bConnected = false;
     }
+    m_flags.flag_mutex.unlock();
 }
 
 /**
@@ -267,7 +390,7 @@ bool targetEngine::get_info(std::string& sChipID, std::string& sBlockID, uint32_
     std::lock_guard<std::mutex> guard(m_mutex);
     bool                        bRes = false;
 
-    if (m_bValid) {
+    if (is_valid()) {
         sChipID   = m_sChipID;
         sBlockID  = m_sBlockID;
         nEngineID = m_nEngineIndex;
@@ -290,7 +413,7 @@ bool targetEngine::get_connection_info(std::string& sHostSpec)
     std::string                 sHost;
     RMuint32                    nDevice;
 
-    if (m_bConnected) {
+    if (is_connected()) {
         LLAD_PTR llad = m_pGbus->get_llad();
 
         if (llad) {
@@ -373,9 +496,16 @@ bool targetEngine::load_ucode(std::string sUcodeFilename)
 
             delete [] pBinData;
 
+            file_utils::get_absolute_path(sUcodeFilename, m_sUcode);
             bRes = true;
         }
     }
+
+    /* Update the flags */
+    m_flags.flag_mutex.lock();
+    m_flags.bits.bUcodeLoaded = bRes;
+    m_flags.flag_mutex.unlock();
+
     return bRes;
 }
 
@@ -455,6 +585,10 @@ bool targetEngine::start()
     m_pGbus->gbus_write_uint32( reset_control_reg, DSP_RUN );
     //while (((m_pGbus->gbus_read_uint32(reset_control_reg) & 0x0000ff00) >> 8)!= DSP_RUN);
 
+    m_flags.flag_mutex.lock();
+    m_flags.bits.eState = DSP_RUN;
+    m_flags.flag_mutex.unlock();
+
     return true;
 }
 
@@ -473,6 +607,9 @@ bool targetEngine::stop()
     m_pGbus->gbus_write_uint32( reset_control_reg, DSP_STOP );
 
     //while (((m_pGbus->gbus_read_uint32(reset_control_reg) & 0x0000ff00) >> 8)!= DSP_STOP);
+    m_flags.flag_mutex.lock();
+    m_flags.bits.eState = DSP_STOP;
+    m_flags.flag_mutex.unlock();
 
     return true;
 }

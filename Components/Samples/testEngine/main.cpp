@@ -30,6 +30,7 @@ public:
     std::string                 chipID;
     std::string                 inputStream;
     std::string                 outputYUV;
+    std::string                 serverStr;
     RMuint32                    profile;
     RMuint32                    engineNo;
     targetEngine::ucodeType     type;
@@ -105,12 +106,13 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
         { "yuv",    required_argument, 0, 'y', },
         { "engine", required_argument, 0, 'e', },
         { "mode",   required_argument, 0, 'm', },
+        { "remote", required_argument, 0, 'r', },
         { "help",   no_argument,       0, 'h', },
 
         { 0, 0, 0, 0, },
     };
 
-    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:h", long_options, &option_index)) != -1) {
+    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:r:h", long_options, &option_index)) != -1) {
         switch (c) {
         case 'c':
             if (optarg != nullptr)
@@ -151,6 +153,11 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
             break;
         case 'h':
             display_help(argv[0]);
+            break;
+        case 'r':
+            if (optarg != nullptr) {
+                options.serverStr = optarg;
+            }
             break;
 
         default:
@@ -224,18 +231,19 @@ int main(int argc, char * argv[])
 
         pTarget = CREATE_NEW_ENGINE( opts.chipID, "Video",
                                      opts.engineNo, opts.type );
-//      pTarget = std::make_shared<targetEngine>("8758", "Video");
 
         if (pTarget && pTarget->is_valid()) {
+            std::cout << *pTarget;
 
             std::cout << "Target was created, attempting to connect!" << std::endl;
 
-            if (pTarget->connect()) {
-                std::cout << "Target is connected, loading microcode!" << std::endl;
+            if (pTarget->connect(opts.serverStr)) {
+                std::cout << "Target is connected to " << pTarget->get_targetid() << ", loading microcode!" << std::endl;
 
                 display_target_info( pTarget );
 
                 if (pTarget->load_ucode()) {
+                    std::cout << *pTarget;
 
                     std::cout << "Microcode loaded!" << std::endl;
 

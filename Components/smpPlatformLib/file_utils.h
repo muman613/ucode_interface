@@ -7,6 +7,10 @@ namespace file_utils {
 
     bool can_write_file(std::string sFilename);
     bool can_write_file(const char* szFilename);
+
+    bool get_absolute_path(const std::string& filePath,
+                           std::string& absolutePath);
+
 }
 
 #endif // __FILE_UTILS_H__
