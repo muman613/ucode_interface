@@ -109,6 +109,8 @@ targetEngine::targetEngine(string sChipID, string sBlockID, uint32_t nEngineInde
 targetEngine::~targetEngine()
 {
     // dtor
+    if (is_valid() && is_connected())
+        stop();
 }
 
 /**
@@ -323,11 +325,12 @@ bool targetEngine::connect(std::string sHostSpec)
 
         if (m_pGbus && m_pGbus->is_valid()) {
             RMDBGLOG((LOCALDBG, "Connected to %s\n", sHostSpec.c_str()));
-
+            stop();
             m_sTarget = sHostSpec;
             bRes = true;
         }
     }
+
 
     m_flags.flag_mutex.lock();
     m_flags.bits.bConnected = bRes;

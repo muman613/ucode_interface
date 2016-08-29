@@ -17,14 +17,11 @@
 
 class optionPack {
 public:
-//    enum ucodeType {
-//        UCODE_RELEASE,
-//        UCODE_DEBUG,
-//    };
     optionPack()
     : profile(VideoProfileMPEG2),
       engineNo(0),
-      type(targetEngine::UCODE_RELEASE)
+      type(targetEngine::UCODE_RELEASE),
+      verboseLevel(0)
     {
     }
     std::string                 chipID;
@@ -34,7 +31,7 @@ public:
     RMuint32                    profile;
     RMuint32                    engineNo;
     targetEngine::ucodeType     type;
-
+    RMuint32                    verboseLevel;
 };
 
 #ifdef _DEBUG
@@ -108,11 +105,12 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
         { "mode",   required_argument, 0, 'm', },
         { "remote", required_argument, 0, 'r', },
         { "help",   no_argument,       0, 'h', },
+        { "verbose",optional_argument, 0, 'v', },
 
         { 0, 0, 0, 0, },
     };
 
-    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:r:h", long_options, &option_index)) != -1) {
+    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:r:v:h", long_options, &option_index)) != -1) {
         switch (c) {
         case 'c':
             if (optarg != nullptr)
@@ -159,7 +157,13 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
                 options.serverStr = optarg;
             }
             break;
-
+        case 'v':
+            if (optarg != nullptr) {
+                options.verboseLevel = atoi(optarg);
+            } else {
+                options.verboseLevel = 1;
+            }
+            break;
         default:
             break;
         }
@@ -240,7 +244,8 @@ int main(int argc, char * argv[])
             if (pTarget->connect(opts.serverStr)) {
                 std::cout << "Target is connected to " << pTarget->get_targetid() << ", loading microcode!" << std::endl;
 
-                display_target_info( pTarget );
+                if (opts.verboseLevel > 0)
+                    display_target_info( pTarget );
 
                 if (pTarget->load_ucode()) {
                     std::cout << *pTarget;
@@ -276,6 +281,8 @@ int main(int argc, char * argv[])
                                             opts.profile);
 
                         std::cout << "waiting for user input!" << std::endl;
+
+                        sleep(1);
 
 #ifdef  _DEBUG
                         pStdIF->debug_state();
