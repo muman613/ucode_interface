@@ -200,9 +200,7 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
                     fprintf(stderr, "ERROR: Unable to load labels file!\n");
                     return RM_ERROR;
                 }
-#ifdef _DEBUG
-                fprintf(stderr, "loaded %zu symbols!\n", pCtx->symMgr.size());
-#endif // _DEBUG
+                RMDBGLOG((LOCALDBG, "loaded %zu symbols!\n", pCtx->symMgr.size()));
             } else {
                 fprintf(stderr, "ERROR: Unable to locate required files!\n");
                 return RM_ERROR;

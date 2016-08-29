@@ -431,7 +431,7 @@ RMstatus video_get_status(
 	enum VideoStatus *status)
 {
 	*status = (VideoStatus)gbus_read_uint32(pGBus, (RMuint32) &(pvti->Status));
-	RMDBGLOG((DISABLE, "video_get_status addr=0x%lx status=0x%lx\n", (RMuint32) &(pvti->Status), *status));
+	RMDBGLOG((LOCALDBG, "video_get_status addr=0x%lx status=0x%lx\n", (RMuint32) &(pvti->Status), *status));
 
 	return RM_OK;
 }
