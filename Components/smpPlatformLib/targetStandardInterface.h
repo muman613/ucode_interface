@@ -158,17 +158,20 @@ public:
     enum taskState {
         TASK_UNINITIALIZED,
         TASK_INITIALIZED,
+        TASK_COMMAND_PENDING,
         TASK_PLAYING,
-        TASK_STOPPING,
         TASK_STOPPED,
     };
 
     enum taskSubstate {
-        IF_SUBSTATE_UNKNOWN,
-        IF_SENT_UNINIT,
-        IF_SENT_INIT,
-        IF_SENT_PLAY,
-        IF_SENT_STOP,
+        TASK_SUBSTATE_UNKNOWN,
+        TASK_SUBSTATE_SENT_UNINIT,
+        TASK_SUBSTATE_UNINIT,
+        TASK_SUBSTATE_SENT_INIT,
+        TASK_SUBSTATE_STOP,
+        TASK_SUBSTATE_SENT_PLAY,
+        TASK_SUBSTATE_PLAY,
+        TASK_SUBSTATE_SENT_STOP,
     };
 
     struct targetStdIfParms {
@@ -192,6 +195,7 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os,const targetStandardIFTask& task);
 
+    bool                    start();
     bool                    stop();
 
     //taskState               get_state() const;
@@ -264,8 +268,8 @@ protected:
     typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
     typedef std::chrono::duration<double>                               time_diff;
 
-    std::atomic<taskState>      task_state;
-    std::atomic<taskSubstate>   task_substate;
+    volatile std::atomic<taskState>      task_state;
+    volatile std::atomic<taskSubstate>   task_substate;
 
 private:
     controlInterface*       pIF;
@@ -313,6 +317,8 @@ private:
     void                    get_dump_filenames(RMuint32 frame_no,
                                                std::string& sYFilename,
                                                std::string& sUVFilename);
+
+    void                    update_task_state(VideoCommand command, VideoStatus status);
 
     void                    set_state(taskState pState, taskSubstate pSubState);
 
@@ -382,6 +388,10 @@ public:
     void                    debug_state(std::ostream& os = std::cout);
 #endif // _DEBUG
 
+    if_state                get_interface_state(uint32_t* taskCount = nullptr) const;
+    bool                    get_task_state(uint32_t taskID,
+                                           targetStandardIFTask::taskState* pTaskState,
+                                           targetStandardIFTask::taskSubstate* pTaskSubstate);
     bool                    get_output_stats(RMuint32 taskID, outputStats& stats) const;
     bool                    get_input_stats(RMuint32 taskID, inputStats& stats) const;
 
@@ -397,8 +407,8 @@ protected:
 
     bool                        bValid;
 
-    std::atomic<if_state>       ifState;
-    RMuint32                    ifVersion;          ///< (1 = version 1 2 = version 2)
+    volatile std::atomic<if_state>       ifState;
+   // RMuint32                    ifVersion;          ///< (1 = version 1 2 = version 2)
     IFTASKARRAY                 tasks;
 
     bool                        dump_y_uv;

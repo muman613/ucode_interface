@@ -214,6 +214,71 @@ void _control_c_handler(int n) {
     exit(-10);
 }
 
+bool wait_for_playback_to_start(TARGET_STD_IF pIF)
+{
+    bool    bDone = false,
+            bRes = false;
+    targetStandardIFTask::taskState tskState = targetStandardIFTask::TASK_UNINITIALIZED;
+    targetStandardIFTask::taskSubstate tskSubstate = targetStandardIFTask::TASK_SUBSTATE_UNKNOWN;
+    targetStandardInterface::if_state ifState;
+    char    sMsgBuffer[128];
+    static size_t lastSize = 0;
+    std::string sCmdString;
+
+    while (!bDone) {
+        ifState = pIF->get_interface_state();
+
+        pIF->get_task_state(0, &tskState, &tskSubstate);
+
+        switch (tskState) {
+            case targetStandardIFTask::TASK_COMMAND_PENDING:
+                switch (tskSubstate) {
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_UNINIT:
+                        sCmdString = "Sent UNINIT command";
+                        break;
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_INIT:
+                        sCmdString = "Sent INIT command";
+                        break;
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_STOP:
+                        sCmdString = "Sent STOP command";
+                        break;
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_PLAY:
+                        sCmdString = "Sent PLAY command";
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case targetStandardIFTask::TASK_PLAYING:
+                sCmdString = "Playing";
+                break;
+            default:
+                break;
+        }
+//        std::cout <<  "ifState :" << (int)ifState << " Task State : " << (int)tskState << " Task Substate : " << (int)tskSubstate << std::endl;
+
+        snprintf(sMsgBuffer, 128, "%s...", sCmdString.c_str());
+
+        if (lastSize != 0) {
+            for (size_t i = 0 ; i < lastSize ; i++)
+                fputc('\b', stdout);
+        }
+
+        fputs(sMsgBuffer, stdout);
+        fflush(stdout);
+        lastSize = strlen(sMsgBuffer);
+
+        if (ifState == targetStandardInterface::IF_PLAYING)
+            bDone = true;
+
+        usleep(100);
+    }
+
+    fputs("\033[K\n", stdout);
+
+    return bRes;
+}
+
 /**
  *  Main entry point
  */
@@ -280,9 +345,10 @@ int main(int argc, char * argv[])
                                             opts.outputYUV,
                                             opts.profile);
 
-                        std::cout << "waiting for user input!" << std::endl;
 
-                        sleep(1);
+                        wait_for_playback_to_start(pStdIF);
+
+                        std::cout << "waiting for user input!" << std::endl;
 
 #ifdef  _DEBUG
                         pStdIF->debug_state();

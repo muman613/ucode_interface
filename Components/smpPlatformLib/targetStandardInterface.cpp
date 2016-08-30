@@ -71,6 +71,7 @@ targetStandardIFTask::targetStandardIFTask()
     dump_y_uv(false),
     total_bytes_read(0),
     task_state(TASK_UNINITIALIZED),
+    task_substate(TASK_SUBSTATE_UNKNOWN),
     pIF(nullptr),
     fifoFillRunning(false),
     fifoEmptyRunning(false),
@@ -96,6 +97,7 @@ targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
     dump_y_uv(false),
     total_bytes_read(0),
     task_state(TASK_UNINITIALIZED),
+    task_substate(TASK_SUBSTATE_UNKNOWN),
     pIF(nullptr),
     fifoFillRunning(false),
     fifoEmptyRunning(false),
@@ -116,18 +118,36 @@ targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
     dumpPath        = parms.sDumpPath;
 //  ifVersion       = parms.nIFVersion;
 
+#if 0
     init_video_engine();
     open_video_decoder();
 
     set_video_codec();
     send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
 
-    task_state = TASK_INITIALIZED;
+  //  task_state = TASK_INITIALIZED;
 
     update_output_stats();
     launch_threads();
+#endif // 0
 }
 
+bool targetStandardIFTask::start() {
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    init_video_engine();
+    open_video_decoder();
+
+    set_video_codec();
+    send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
+
+  //  task_state = TASK_INITIALIZED;
+
+    update_output_stats();
+    launch_threads();
+
+    return true;
+}
 /**
  *
  */
@@ -157,25 +177,17 @@ void targetStandardIFTask::get_state(taskState* pState, taskSubstate* pSubstate)
 }
 
 /**
- *
+ *  Initialize decoding parameters...
  */
 
 void targetStandardIFTask::init_parameters()
 {
-
-    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
-
-
-//    ifVersion                   = 1;
-//    DecoderDataSize	            = DECODER_DATA_SIZE;
-//    DecoderContextSize          = DECODER_CTX_SIZE;
-//    BitstreamFIFOSize           = (2 * 1024 * 1024);
-//    NumOfPictures               = PICTURE_COUNT;
-
-#if 1
     targetOptionsManager        mgr(PLATFORM_OPTION_FILE);
     TARGET_OPTIONS_REQ          req;
 
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+    /* Fill in request structure with pointers to 32bit integers */
     req.ifVersion           = &ifVersion;
     req.decoderDataSize     = &DecoderDataSize;
     req.decoderContextSize  = &DecoderContextSize;
@@ -183,7 +195,6 @@ void targetStandardIFTask::init_parameters()
     req.numPictures         = &NumOfPictures;
 
     mgr.get_options(pIF->get_target()->get_chipid(), req);
-#endif // 1
 
     PtsFIFOCount                = 512;
     InbandFIFOCount             = 512;
@@ -195,7 +206,8 @@ void targetStandardIFTask::init_parameters()
     UserDataSize                = 0;
     ExtraPictureBufferCount     = 0;
 
-    set_tile_dimensions( pIF->get_engine()->get_parent()->get_parent()->get_chip_id() );
+    set_tile_dimensions( pIF->get_target()->get_chipid() );
+//    set_tile_dimensions( pIF->get_engine()->get_parent()->get_parent()->get_chip_id() );
 
     //m_pAlloc[0]->set_tile_dimensions( )
 }
@@ -460,6 +472,8 @@ RMstatus targetStandardIFTask::send_video_command(enum VideoCommand cmd,
     pIF->get_gbusptr()->gbus_log_mark("entering send_video_command");
 #endif // ENABLE_GBUS_LOGGER
 
+    update_task_state(cmd, VideoStatusPending);
+
     video_set_command(pIF, pvti, cmd );
 
     started = gbus_utils::gbus_time_us(pIF->get_gbusptr());
@@ -482,6 +496,8 @@ RMstatus targetStandardIFTask::send_video_command(enum VideoCommand cmd,
         //usleep(1000);
     }
 
+    update_task_state(VideoCommandNoCmd, stat);
+
 #ifdef ENABLE_GBUS_LOGGER
     pIF->get_gbusptr()->gbus_log_mark("exiting send_video_command");
 #endif // ENABLE_GBUS_LOGGER
@@ -500,12 +516,14 @@ bool targetStandardIFTask::launch_threads()
     fifoFillThread  = std::thread( &targetStandardIFTask::fifoFillThreadFunc, this );
     fifoEmptyThread = std::thread( &targetStandardIFTask::fifoEmptyThreadFunc, this );
 
+#if 0
     /* Wait for both threads to enter running state */
     while ((fifoFillRunning == false) || (fifoEmptyRunning == false)) {
         usleep(50);
     }
 
     task_state = TASK_PLAYING;
+#endif // 0
 
     RMDBGLOG((LOCALDBG, "-- threads running!\n"));
 
@@ -953,9 +971,8 @@ bool targetStandardIFTask::stop() {
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
     if (task_state == TASK_PLAYING) {
-        task_state = TASK_STOPPING;
         stop_threads();
-        task_state = TASK_STOPPED;
+        send_video_command(VideoCommandStop, VideoStatusStop);
     }
 
     return true;
@@ -1022,6 +1039,80 @@ bool targetStandardIFTask::get_input_stats(inputStats& stats) const
     return true;
 }
 
+void targetStandardIFTask::set_state(taskState state, taskSubstate subState) {
+    mutex_guard     lock(stateMutex);
+
+    task_state      = state;
+    task_substate   = subState;
+
+    return;
+}
+
+void targetStandardIFTask::update_task_state(VideoCommand command, VideoStatus status) {
+    taskSubstate    subState = TASK_SUBSTATE_UNKNOWN;
+    taskState       State = TASK_COMMAND_PENDING;
+
+    std::string sName;
+
+    if (command != VideoCommandNoCmd) {
+        switch (command) {
+            case VideoCommandUninit:
+                sName = "VideoCommandUninit";
+                subState = TASK_SUBSTATE_SENT_UNINIT;
+                break;
+
+            case VideoCommandInit:
+                sName = "VideoCommandInit";
+                subState = TASK_SUBSTATE_SENT_INIT;
+                break;
+
+            case VideoCommandStop:
+                sName = "VideoCommandStop";
+                subState = TASK_SUBSTATE_SENT_STOP;
+                break;
+
+            case VideoCommandPlayFwd:
+                sName = "VideoCommandPlayFwd";
+                subState = TASK_SUBSTATE_SENT_PLAY;
+                break;
+            default:
+                sName = "Invalid command";
+                subState = TASK_SUBSTATE_UNKNOWN;
+                break;
+        }
+//      printf("Sent %s\n", sName.c_str());
+    } else if (status != VideoStatusPending) {
+        switch (status) {
+            case VideoStatusUninit:
+                sName = "VideoStatusUninit";
+                State       = TASK_INITIALIZED;
+                subState    = TASK_SUBSTATE_UNINIT;
+                break;
+
+            case VideoStatusStop:
+                sName       = "VideoStatusStop";
+                State       = TASK_STOPPED;
+                subState    = TASK_SUBSTATE_STOP;
+                break;
+
+            case VideoStatusPlayFwd:
+                sName       = "VideoStatusPlayFwd";
+                State       = TASK_PLAYING;
+                subState    = TASK_SUBSTATE_PLAY;
+                break;
+
+            default:
+                sName = "Invalid command";
+                subState = TASK_SUBSTATE_UNKNOWN;
+                break;
+        }
+//      printf("Received %s\n", sName.c_str());
+    }
+
+    set_state(State, subState);
+
+    return;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -1036,8 +1127,7 @@ bool targetStandardIFTask::get_input_stats(inputStats& stats) const
 targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
 :   targetInterfaceBase(pEngine),
     bValid(false),
-    ifState(IF_UNINITIALIZED),
-    ifVersion(2)
+    ifState(IF_UNINITIALIZED)
 {
     // ctor
     RMuint32 offset = 0;
@@ -1219,11 +1309,6 @@ bool targetStandardInterface::_play_stream(const std::string& sInputStreamName,
     RMDBGLOG((LOCALDBG, "%s(%s, %s, %d, %d)\n", __PRETTY_FUNCTION__,
               sInputStreamName.c_str(), sOutputYUVName.c_str(), profile, taskID));
 
-//    if (ifState == IF_PLAYING) {
-//        RMDBGLOG((LOCALDBG, "Interface already playing media!\n"));
-//        return false;
-//    }
-
     /* Check if the output YUV file was specified and can be opened! */
     if (!sOutputYUVName.empty()) {
         if (file_utils::can_write_file(sOutputYUVName)) {
@@ -1238,10 +1323,10 @@ bool targetStandardInterface::_play_stream(const std::string& sInputStreamName,
     parms.sOutputYUVName    = sOutputYUVName;
     parms.nProfile          = profile;
     parms.pAlloc            = m_pAlloc[0];
-//  parms.nIFVersion        = ifVersion;
     parms.pIF               = dynamic_cast<controlInterface*>(m_pEngine[0].get());
 
     tasks[taskID] = std::make_shared<targetStandardIFTask>(parms);
+    tasks[taskID]->start();
 
     ifState = IF_PLAYING;
 
@@ -1436,3 +1521,42 @@ void targetStandardInterface::clear_scheduler_data()
 
     video_utils::video_set_scheduler_memory(pIF, memBase, 0, 0);
 }
+
+/**
+ *
+ */
+
+targetStandardInterface::if_state targetStandardInterface::get_interface_state(uint32_t* taskCount) const
+{
+    if (taskCount != nullptr) {
+        *taskCount = 0;
+        for (auto task : tasks) {
+            if (task) {
+                (*taskCount)++;
+            }
+        }
+    }
+
+    return ifState;
+}
+
+/**
+ *
+ */
+
+bool targetStandardInterface::get_task_state(uint32_t taskID,
+                                       targetStandardIFTask::taskState* pTaskState,
+                                       targetStandardIFTask::taskSubstate* pTaskSubstate)
+{
+    bool bRes = false;
+
+    if ((taskID >= 0) && (taskID < MAX_TASK_COUNT)) {
+        if (tasks[taskID]) {
+            tasks[taskID]->get_state(pTaskState, pTaskSubstate);
+            bRes = true;
+        }
+    }
+
+    return bRes;
+}
+
