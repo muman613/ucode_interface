@@ -4,6 +4,7 @@
 #include <mutex>
 #include <string>
 #include <memory>
+#include <atomic>
 
 #include "platformDB2/libplatformdb.h"
 #include "fileresolver/fileresolver.h"
@@ -11,6 +12,23 @@
 #include "symbolmgr/symbolmgr.h"
 #include "remote_client/llad.h"
 #include "remote_client/gbus.h"
+
+struct engineFlags {
+    mutable std::mutex flag_mutex;
+
+    union {
+        struct {
+            uint32_t eState       :2;
+            uint32_t bUcodeLoaded :1;
+            uint32_t bConnected   :1;
+            uint32_t bValid       :1;
+        } bits;
+
+        uint32_t  value = 0;
+    };
+};
+
+class targetEngine;
 
 /**
  *  controlInterface is a pure virtual interface providing utilities with
@@ -25,6 +43,7 @@ public:
     virtual UcodeSymbolMgr*     get_symmgr()   = 0;
     virtual PlatformEngine*     get_engine()   = 0;
     virtual std::mutex*         get_mutex()    = 0;
+    virtual targetEngine*       get_target()   = 0;
 };
 
 /**
@@ -49,17 +68,20 @@ public:
     bool                is_valid() const;
     /*! Return true if the targetEngine is connected to a remote system. */
     bool                is_connected() const;
+    /*! Return true if the ucode is loaded on the targetEngine. */
+    bool                is_ucode_loaded() const;
+
     /*! Open the targetEngine using Chip and Block ID, and engine index. */
     bool                open(std::string sChipID,
                              std::string sBlockID,
-                             uint32_t engineIndex,
+                             uint32_t engineIndex = 0,
                              ucodeType eType = UCODE_RELEASE);
     /*! Close the targetEngine. */
     void                close();
     /*! Connect to the remote system specified by the EM8XXX_SERVER environment. */
-    bool                connect();
+//  bool                connect();
     /*! Connect to the remote system specified by sHostSpec string. */
-    bool                connect(std::string sHostSpec);
+    bool                connect(std::string sHostSpec = "");
     /*! Connect the target to an existing GBUS_PTR object. */
     bool                connect(GBUS_PTR pGbus);
     /*! Disconnect the targetEngine from the remote system. */
@@ -85,12 +107,20 @@ public:
     UcodeSymbolMgr*     get_symmgr();
     PlatformEngine*     get_engine();
     std::mutex*         get_mutex();
+    targetEngine*       get_target();
 
 //    void                test_function();
 
     void                get_ucode_offset(RMuint32* lo, RMuint32* hi);
 
     bool                set_dram_base(RMuint32 dram_base);
+
+    std::string         get_chipid() const;
+    std::string         get_blockid() const;
+    std::string         get_targetid() const;
+
+
+    friend std::ostream& operator<<(std::ostream& os,const targetEngine& engine);
 
 protected:
 
@@ -99,11 +129,17 @@ protected:
     void                lock_mutex();
     void                unlock_mutex();
 
-    bool                m_bValid;
-    bool                m_bConnected;
+//    std::atomic<bool>   m_bValid;
+//    std::atomic<bool>   m_bConnected;
+//    std::atomic<bool>   m_bUcodeLoaded;
+
+    engineFlags         m_flags;
 
     std::string         m_sChipID;
     std::string         m_sBlockID;
+    std::string         m_sTarget;
+    std::string         m_sUcode;
+
     uint32_t            m_nEngineIndex;
     ucodeType           m_eType;
 
@@ -136,7 +172,8 @@ typedef targetEngine*                   TARGET_ENGINE_PTR;
 #define UCODE_PREFIX "../../../"
 
 #define DRAM_BASE       0xa8000000 // hardcoded value in a free Dram zone
-#define DRAM_OFFSET     0x28000000
+//#define DRAM_OFFSET     0x30000000
+#define DRAM_OFFSET     0
 
 #define DSP_RUN                 0x00
 #define DSP_STOP                0x01

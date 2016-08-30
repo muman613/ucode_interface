@@ -7,6 +7,8 @@
 #include "ucode/8760/debug/video_microcode_SMP8760_labels.h"
 #elif (RMCHIP_ID == RMCHIP_ID_SMP8758)
 #include "ucode/8758/debug/video_microcode_SMP8758_labels.h"
+#elif (RMCHIP_ID == RMCHIP_ID_SMP8756)
+#include "ucode/8756/debug/video_microcode_SMP8756_labels.h"
 #endif
 
 #else   // UCODE_DEBUG
@@ -15,6 +17,8 @@
 #include "ucode/8760/release/video_microcode_SMP8760_labels.h"
 #elif (RMCHIP_ID == RMCHIP_ID_SMP8758)
 #include "ucode/8758/release/video_microcode_SMP8758_labels.h"
+#elif (RMCHIP_ID == RMCHIP_ID_SMP8756)
+#include "ucode/8756/release/video_microcode_SMP8756_labels.h"
 #endif
 
 #endif // UCODE_DEBUG

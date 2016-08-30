@@ -17,23 +17,21 @@
 
 class optionPack {
 public:
-//    enum ucodeType {
-//        UCODE_RELEASE,
-//        UCODE_DEBUG,
-//    };
     optionPack()
     : profile(VideoProfileMPEG2),
       engineNo(0),
-      type(targetEngine::UCODE_RELEASE)
+      type(targetEngine::UCODE_RELEASE),
+      verboseLevel(0)
     {
     }
     std::string                 chipID;
     std::string                 inputStream;
     std::string                 outputYUV;
+    std::string                 serverStr;
     RMuint32                    profile;
     RMuint32                    engineNo;
     targetEngine::ucodeType     type;
-
+    RMuint32                    verboseLevel;
 };
 
 #ifdef _DEBUG
@@ -105,12 +103,14 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
         { "yuv",    required_argument, 0, 'y', },
         { "engine", required_argument, 0, 'e', },
         { "mode",   required_argument, 0, 'm', },
+        { "remote", required_argument, 0, 'r', },
         { "help",   no_argument,       0, 'h', },
+        { "verbose",optional_argument, 0, 'v', },
 
         { 0, 0, 0, 0, },
     };
 
-    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:h", long_options, &option_index)) != -1) {
+    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:r:v:h", long_options, &option_index)) != -1) {
         switch (c) {
         case 'c':
             if (optarg != nullptr)
@@ -152,7 +152,18 @@ bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
         case 'h':
             display_help(argv[0]);
             break;
-
+        case 'r':
+            if (optarg != nullptr) {
+                options.serverStr = optarg;
+            }
+            break;
+        case 'v':
+            if (optarg != nullptr) {
+                options.verboseLevel = atoi(optarg);
+            } else {
+                options.verboseLevel = 1;
+            }
+            break;
         default:
             break;
         }
@@ -203,6 +214,71 @@ void _control_c_handler(int n) {
     exit(-10);
 }
 
+bool wait_for_playback_to_start(TARGET_STD_IF pIF)
+{
+    bool    bDone = false,
+            bRes = false;
+    targetStandardIFTask::taskState tskState = targetStandardIFTask::TASK_UNINITIALIZED;
+    targetStandardIFTask::taskSubstate tskSubstate = targetStandardIFTask::TASK_SUBSTATE_UNKNOWN;
+    targetStandardInterface::if_state ifState;
+    char    sMsgBuffer[128];
+    static size_t lastSize = 0;
+    std::string sCmdString;
+
+    while (!bDone) {
+        ifState = pIF->get_interface_state();
+
+        pIF->get_task_state(0, &tskState, &tskSubstate);
+
+        switch (tskState) {
+            case targetStandardIFTask::TASK_COMMAND_PENDING:
+                switch (tskSubstate) {
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_UNINIT:
+                        sCmdString = "Sent UNINIT command";
+                        break;
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_INIT:
+                        sCmdString = "Sent INIT command";
+                        break;
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_STOP:
+                        sCmdString = "Sent STOP command";
+                        break;
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_PLAY:
+                        sCmdString = "Sent PLAY command";
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case targetStandardIFTask::TASK_PLAYING:
+                sCmdString = "Playing";
+                break;
+            default:
+                break;
+        }
+//        std::cout <<  "ifState :" << (int)ifState << " Task State : " << (int)tskState << " Task Substate : " << (int)tskSubstate << std::endl;
+
+        snprintf(sMsgBuffer, 128, "%s...", sCmdString.c_str());
+
+        if (lastSize != 0) {
+            for (size_t i = 0 ; i < lastSize ; i++)
+                fputc('\b', stdout);
+        }
+
+        fputs(sMsgBuffer, stdout);
+        fflush(stdout);
+        lastSize = strlen(sMsgBuffer);
+
+        if (ifState == targetStandardInterface::IF_PLAYING)
+            bDone = true;
+
+        usleep(100);
+    }
+
+    fputs("\033[K\n", stdout);
+
+    return bRes;
+}
+
 /**
  *  Main entry point
  */
@@ -224,18 +300,20 @@ int main(int argc, char * argv[])
 
         pTarget = CREATE_NEW_ENGINE( opts.chipID, "Video",
                                      opts.engineNo, opts.type );
-//      pTarget = std::make_shared<targetEngine>("8758", "Video");
 
         if (pTarget && pTarget->is_valid()) {
+            std::cout << *pTarget;
 
             std::cout << "Target was created, attempting to connect!" << std::endl;
 
-            if (pTarget->connect()) {
-                std::cout << "Target is connected, loading microcode!" << std::endl;
+            if (pTarget->connect(opts.serverStr)) {
+                std::cout << "Target is connected to " << pTarget->get_targetid() << ", loading microcode!" << std::endl;
 
-                display_target_info( pTarget );
+                if (opts.verboseLevel > 0)
+                    display_target_info( pTarget );
 
                 if (pTarget->load_ucode()) {
+                    std::cout << *pTarget;
 
                     std::cout << "Microcode loaded!" << std::endl;
 
@@ -266,6 +344,9 @@ int main(int argc, char * argv[])
                         pStdIF->play_stream(opts.inputStream,
                                             opts.outputYUV,
                                             opts.profile);
+
+
+                        wait_for_playback_to_start(pStdIF);
 
                         std::cout << "waiting for user input!" << std::endl;
 

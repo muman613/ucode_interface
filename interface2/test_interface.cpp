@@ -184,7 +184,8 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
     }
 
     /* Make sure chip and mode specified! */
-    if ((sChipID == "8758") ||
+    if ((sChipID == "8756") ||
+        (sChipID == "8758") ||
         (sChipID == "8760"))
     {
         if ((sChipMode == "d") ||
@@ -199,9 +200,7 @@ static RMstatus parse_options(CONTEXT_PTR pCtx, const char* szAppName, int argc,
                     fprintf(stderr, "ERROR: Unable to load labels file!\n");
                     return RM_ERROR;
                 }
-#ifdef _DEBUG
-                fprintf(stderr, "loaded %zu symbols!\n", pCtx->symMgr.size());
-#endif // _DEBUG
+                RMDBGLOG((LOCALDBG, "loaded %zu symbols!\n", pCtx->symMgr.size()));
             } else {
                 fprintf(stderr, "ERROR: Unable to locate required files!\n");
                 return RM_ERROR;

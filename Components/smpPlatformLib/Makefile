@@ -32,7 +32,7 @@ CPP_SOURCES = 	targetAllocator.cpp												\
 				gbus_utils.cpp													\
 				misc_utils.cpp
 
-INCLUDES=-I../.. -I.. -I ../gbusfifolib -I../remote_client
+INCLUDES=-I../.. -I.. -I ../gbusfifolib -I../remote_client -I ../targetOptions
 #DEFINES=-DRMFEATURE_VIDEO_INTERFACE_VERSION=2 -DGBUS_LOGGER=1
 DEFINES=-DRMFEATURE_VIDEO_INTERFACE_VERSION=2
 LIBXML2_CFLAGS=$(shell xml2-config --cflags)

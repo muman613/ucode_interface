@@ -21,6 +21,7 @@
 #include "gbus.h"
 #include "gbus_utils.h"
 #include "misc_utils.h"
+#include "targetOptionsManager.h"
 
 #ifdef _DEBUG
 #define LOCALDBG    ENABLE
@@ -70,6 +71,7 @@ targetStandardIFTask::targetStandardIFTask()
     dump_y_uv(false),
     total_bytes_read(0),
     task_state(TASK_UNINITIALIZED),
+    task_substate(TASK_SUBSTATE_UNKNOWN),
     pIF(nullptr),
     fifoFillRunning(false),
     fifoEmptyRunning(false),
@@ -95,6 +97,7 @@ targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
     dump_y_uv(false),
     total_bytes_read(0),
     task_state(TASK_UNINITIALIZED),
+    task_substate(TASK_SUBSTATE_UNKNOWN),
     pIF(nullptr),
     fifoFillRunning(false),
     fifoEmptyRunning(false),
@@ -113,6 +116,24 @@ targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
     decoderProfile  = parms.nProfile;
     dump_y_uv       = parms.bDumpUntiled;
     dumpPath        = parms.sDumpPath;
+//  ifVersion       = parms.nIFVersion;
+
+#if 0
+    init_video_engine();
+    open_video_decoder();
+
+    set_video_codec();
+    send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
+
+  //  task_state = TASK_INITIALIZED;
+
+    update_output_stats();
+    launch_threads();
+#endif // 0
+}
+
+bool targetStandardIFTask::start() {
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
     init_video_engine();
     open_video_decoder();
@@ -120,12 +141,13 @@ targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
     set_video_codec();
     send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
 
-    task_state = TASK_INITIALIZED;
+  //  task_state = TASK_INITIALIZED;
 
     update_output_stats();
     launch_threads();
-}
 
+    return true;
+}
 /**
  *
  */
@@ -142,24 +164,40 @@ targetStandardIFTask::~targetStandardIFTask()
  *  Return the tasks state.
  */
 
-targetStandardIFTask::taskState targetStandardIFTask::get_state() const {
-    return task_state;
+void targetStandardIFTask::get_state(taskState* pState, taskSubstate* pSubstate)
+{
+    mutex_guard lock(stateMutex);
+
+    if (pState != nullptr)
+        *pState = task_state;
+    if (pSubstate != nullptr)
+        *pSubstate = task_substate;
+
+    return;
 }
 
 /**
- *
+ *  Initialize decoding parameters...
  */
 
 void targetStandardIFTask::init_parameters()
 {
+    targetOptionsManager        mgr(PLATFORM_OPTION_FILE);
+    TARGET_OPTIONS_REQ          req;
+
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
-    DecoderDataSize	            = DECODER_DATA_SIZE;
-    DecoderContextSize          = DECODER_CTX_SIZE;
-    BitstreamFIFOSize           = (2 * 1024 * 1024);
+    /* Fill in request structure with pointers to 32bit integers */
+    req.ifVersion           = &ifVersion;
+    req.decoderDataSize     = &DecoderDataSize;
+    req.decoderContextSize  = &DecoderContextSize;
+    req.bitstreamFIFOSize   = &BitstreamFIFOSize;
+    req.numPictures         = &NumOfPictures;
+
+    mgr.get_options(pIF->get_target()->get_chipid(), req);
+
     PtsFIFOCount                = 512;
     InbandFIFOCount             = 512;
-    NumOfPictures               = PICTURE_COUNT;
     soc_arch                    = SOC_TANGO;
     storage_format              = 0;
     luma_nb_comp_per_sample     = 1;
@@ -168,7 +206,8 @@ void targetStandardIFTask::init_parameters()
     UserDataSize                = 0;
     ExtraPictureBufferCount     = 0;
 
-    set_tile_dimensions( pIF->get_engine()->get_parent()->get_parent()->get_chip_id() );
+    set_tile_dimensions( pIF->get_target()->get_chipid() );
+//    set_tile_dimensions( pIF->get_engine()->get_parent()->get_parent()->get_chip_id() );
 
     //m_pAlloc[0]->set_tile_dimensions( )
 }
@@ -247,8 +286,13 @@ RMstatus targetStandardIFTask::open_video_decoder()
 //    dramPtr = tempVal;
     dramPtr = pAlloc->alloc(targetAllocator::ALLOC_DRAM|targetAllocator::ALLOC_TILEALIGN, DecoderDataSize);
 
-    err = video_set_data_context_buffer(pIF, pvti, dramPtr,
-                                        DecoderDataSize, DecoderContextSize);
+    if (ifVersion == 1) {
+        err = video_set_data_context_buffer_v1(pIF, pvti, dramPtr,
+                                               DecoderDataSize, DecoderContextSize);
+    } else {
+        err = video_set_data_context_buffer_v2(pIF, pvti, dramPtr,
+                                               DecoderDataSize, DecoderContextSize);
+    }
 
     struct_utils::write_structure_member(pIF, pvti, "video_task_interface", "MiscFlags", 1);
 
@@ -348,6 +392,7 @@ typedef struct {
 } tileDef;
 
 static tileDef  chipTileSizes[] = {
+    { "8756", 8, 5, },
     { "8758", 8, 5, },
     { "8760", 9, 5, },
 };
@@ -427,6 +472,8 @@ RMstatus targetStandardIFTask::send_video_command(enum VideoCommand cmd,
     pIF->get_gbusptr()->gbus_log_mark("entering send_video_command");
 #endif // ENABLE_GBUS_LOGGER
 
+    update_task_state(cmd, VideoStatusPending);
+
     video_set_command(pIF, pvti, cmd );
 
     started = gbus_utils::gbus_time_us(pIF->get_gbusptr());
@@ -449,6 +496,8 @@ RMstatus targetStandardIFTask::send_video_command(enum VideoCommand cmd,
         //usleep(1000);
     }
 
+    update_task_state(VideoCommandNoCmd, stat);
+
 #ifdef ENABLE_GBUS_LOGGER
     pIF->get_gbusptr()->gbus_log_mark("exiting send_video_command");
 #endif // ENABLE_GBUS_LOGGER
@@ -467,12 +516,14 @@ bool targetStandardIFTask::launch_threads()
     fifoFillThread  = std::thread( &targetStandardIFTask::fifoFillThreadFunc, this );
     fifoEmptyThread = std::thread( &targetStandardIFTask::fifoEmptyThreadFunc, this );
 
+#if 0
     /* Wait for both threads to enter running state */
     while ((fifoFillRunning == false) || (fifoEmptyRunning == false)) {
         usleep(50);
     }
 
     task_state = TASK_PLAYING;
+#endif // 0
 
     RMDBGLOG((LOCALDBG, "-- threads running!\n"));
 
@@ -920,9 +971,8 @@ bool targetStandardIFTask::stop() {
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
     if (task_state == TASK_PLAYING) {
-        task_state = TASK_STOPPING;
         stop_threads();
-        task_state = TASK_STOPPED;
+        send_video_command(VideoCommandStop, VideoStatusStop);
     }
 
     return true;
@@ -989,6 +1039,80 @@ bool targetStandardIFTask::get_input_stats(inputStats& stats) const
     return true;
 }
 
+void targetStandardIFTask::set_state(taskState state, taskSubstate subState) {
+    mutex_guard     lock(stateMutex);
+
+    task_state      = state;
+    task_substate   = subState;
+
+    return;
+}
+
+void targetStandardIFTask::update_task_state(VideoCommand command, VideoStatus status) {
+    taskSubstate    subState = TASK_SUBSTATE_UNKNOWN;
+    taskState       State = TASK_COMMAND_PENDING;
+
+    std::string sName;
+
+    if (command != VideoCommandNoCmd) {
+        switch (command) {
+            case VideoCommandUninit:
+                sName = "VideoCommandUninit";
+                subState = TASK_SUBSTATE_SENT_UNINIT;
+                break;
+
+            case VideoCommandInit:
+                sName = "VideoCommandInit";
+                subState = TASK_SUBSTATE_SENT_INIT;
+                break;
+
+            case VideoCommandStop:
+                sName = "VideoCommandStop";
+                subState = TASK_SUBSTATE_SENT_STOP;
+                break;
+
+            case VideoCommandPlayFwd:
+                sName = "VideoCommandPlayFwd";
+                subState = TASK_SUBSTATE_SENT_PLAY;
+                break;
+            default:
+                sName = "Invalid command";
+                subState = TASK_SUBSTATE_UNKNOWN;
+                break;
+        }
+//      printf("Sent %s\n", sName.c_str());
+    } else if (status != VideoStatusPending) {
+        switch (status) {
+            case VideoStatusUninit:
+                sName = "VideoStatusUninit";
+                State       = TASK_INITIALIZED;
+                subState    = TASK_SUBSTATE_UNINIT;
+                break;
+
+            case VideoStatusStop:
+                sName       = "VideoStatusStop";
+                State       = TASK_STOPPED;
+                subState    = TASK_SUBSTATE_STOP;
+                break;
+
+            case VideoStatusPlayFwd:
+                sName       = "VideoStatusPlayFwd";
+                State       = TASK_PLAYING;
+                subState    = TASK_SUBSTATE_PLAY;
+                break;
+
+            default:
+                sName = "Invalid command";
+                subState = TASK_SUBSTATE_UNKNOWN;
+                break;
+        }
+//      printf("Received %s\n", sName.c_str());
+    }
+
+    set_state(State, subState);
+
+    return;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -1035,7 +1159,10 @@ targetStandardInterface::~targetStandardInterface()
 
     for (size_t i = 0 ; i < MAX_TASK_COUNT ; i++) {
         if (tasks[i]) {
-            targetStandardIFTask::taskState state = tasks[i]->get_state();
+            targetStandardIFTask::taskState state;
+            targetStandardIFTask::taskSubstate substate;
+
+            tasks[i]->get_state(&state, &substate);
 
             if (state == targetStandardIFTask::TASK_STOPPED) {
                 // release the task object...
@@ -1138,11 +1265,39 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
     return play_stream(sInputStreamName, sOutputYUVName, nProfile, taskID);
 }
 
+bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
+                                          const std::string& sOutputYUVName,
+                                          RMuint32 profile,
+                                          RMuint32 taskID)
+{
+    bool bRes = false;
+    RMDBGLOG((LOCALDBG, "%s(%s, %s, %d, %d)\n", __PRETTY_FUNCTION__,
+              sInputStreamName.c_str(), sOutputYUVName.c_str(), profile, taskID));
+
+    if (!tasks[taskID]) {
+        std::thread     playThread(&targetStandardInterface::_play_stream, this,
+                                   sInputStreamName, sOutputYUVName, profile, taskID);
+
+        playThread.detach();
+        bRes = true;
+    } else {
+        targetStandardIFTask::taskState state;
+        targetStandardIFTask::taskSubstate substate;
+
+        tasks[taskID]->get_state(&state, &substate);
+
+        RMDBGLOG((LOCALDBG, "ERROR: Task #%d is in state %d substate %d...\n",
+                  (int)state, (int)substate));
+    }
+
+    return bRes;
+}
+
 /**
  *  Play the stream...
  */
 
-bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
+bool targetStandardInterface::_play_stream(const std::string& sInputStreamName,
                                           const std::string& sOutputYUVName,
                                           RMuint32 profile,
                                           RMuint32 taskID)
@@ -1154,11 +1309,6 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
     RMDBGLOG((LOCALDBG, "%s(%s, %s, %d, %d)\n", __PRETTY_FUNCTION__,
               sInputStreamName.c_str(), sOutputYUVName.c_str(), profile, taskID));
 
-    if (ifState == IF_PLAYING) {
-        RMDBGLOG((LOCALDBG, "Interface already playing media!\n"));
-        return false;
-    }
-
     /* Check if the output YUV file was specified and can be opened! */
     if (!sOutputYUVName.empty()) {
         if (file_utils::can_write_file(sOutputYUVName)) {
@@ -1169,30 +1319,18 @@ bool targetStandardInterface::play_stream(const std::string& sInputStreamName,
         }
     }
 
-    parms.sInputStreamName = sInputStreamName;
-    parms.sOutputYUVName   = sOutputYUVName;
-    parms.nProfile         = profile;
-    parms.pAlloc           = m_pAlloc[0];
-    parms.pIF              = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+    parms.sInputStreamName  = sInputStreamName;
+    parms.sOutputYUVName    = sOutputYUVName;
+    parms.nProfile          = profile;
+    parms.pAlloc            = m_pAlloc[0];
+    parms.pIF               = dynamic_cast<controlInterface*>(m_pEngine[0].get());
 
     tasks[taskID] = std::make_shared<targetStandardIFTask>(parms);
+    tasks[taskID]->start();
 
     ifState = IF_PLAYING;
 
-//    if (file_utils::file_exists(sInputStreamName)) {
-//        /* copy the names into the class storage. */
-//        inputStreamName = sInputStreamName;
-//        decoderProfile  = profile;
-//
-//        set_video_codec();
-//        send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
-//        launch_threads();
-//        ifState = IF_PLAYING;
-//    } else {
-//        RMDBGLOG((LOCALDBG, "ERROR: Unable to find input file!\n"));
-//    }
-
-    RMDBGLOG((LOCALDBG, "-- exiting play_stream()\n"));
+    RMDBGLOG((LOCALDBG, "-- exiting _play_stream()\n"));
 
     return bRes;
 }
@@ -1304,7 +1442,11 @@ void targetStandardInterface::stop_tasks() {
 
     for (auto task : tasks) {
         if (task) {
-            if (task->get_state() == targetStandardIFTask::TASK_PLAYING) {
+            targetStandardIFTask::taskState state;
+
+            task->get_state(&state, nullptr);
+
+            if (state == targetStandardIFTask::TASK_PLAYING) {
                 task->stop();
             }
         }
@@ -1322,10 +1464,17 @@ bool targetStandardInterface::get_output_stats(RMuint32 taskID, outputStats& sta
     bool    bRes = false;
 
     if (taskID < MAX_TASK_COUNT) {
-        if (tasks[taskID] && tasks[taskID]->get_state() == targetStandardIFTask::TASK_PLAYING) {
-            bRes = tasks[taskID]->get_output_stats(stats);
-        } else {
-            RMDBGLOG((LOCALDBG, "ERROR: task ID %d is not playing.\n", taskID));
+
+        if (tasks[taskID]) {
+            targetStandardIFTask::taskState state;
+
+            tasks[taskID]->get_state(&state, nullptr);
+
+            if (state == targetStandardIFTask::TASK_PLAYING) {
+                bRes = tasks[taskID]->get_output_stats(stats);
+            } else {
+                RMDBGLOG((LOCALDBG, "ERROR: task ID %d is not playing.\n", taskID));
+            }
         }
     } else {
         RMDBGLOG((LOCALDBG, "ERROR: task ID %d out of range.\n", taskID));
@@ -1337,20 +1486,26 @@ bool targetStandardInterface::get_output_stats(RMuint32 taskID, outputStats& sta
 /**
  *
  */
-
 bool targetStandardInterface::get_input_stats(RMuint32 taskID, inputStats& stats) const
 {
     bool    bRes = false;
 
     if (taskID < MAX_TASK_COUNT) {
-        if (tasks[taskID] && tasks[taskID]->get_state() == targetStandardIFTask::TASK_PLAYING) {
-            bRes = tasks[taskID]->get_input_stats(stats);
-        } else {
-            RMDBGLOG((LOCALDBG, "ERROR: task ID %d is not playing.\n", taskID));
+
+        if (tasks[taskID]) {
+            targetStandardIFTask::taskState state;
+
+            tasks[taskID]->get_state(&state, nullptr);
+
+            if (state == targetStandardIFTask::TASK_PLAYING) {
+                bRes = tasks[taskID]->get_input_stats(stats);
+            } else {
+                RMDBGLOG((LOCALDBG, "ERROR: task ID %d is not playing.\n", taskID));
+            }
         }
     } else {
         RMDBGLOG((LOCALDBG, "ERROR: task ID %d out of range.\n", taskID));
-}
+    }
 
     return bRes;
 }
@@ -1366,3 +1521,42 @@ void targetStandardInterface::clear_scheduler_data()
 
     video_utils::video_set_scheduler_memory(pIF, memBase, 0, 0);
 }
+
+/**
+ *
+ */
+
+targetStandardInterface::if_state targetStandardInterface::get_interface_state(uint32_t* taskCount) const
+{
+    if (taskCount != nullptr) {
+        *taskCount = 0;
+        for (auto task : tasks) {
+            if (task) {
+                (*taskCount)++;
+            }
+        }
+    }
+
+    return ifState;
+}
+
+/**
+ *
+ */
+
+bool targetStandardInterface::get_task_state(uint32_t taskID,
+                                       targetStandardIFTask::taskState* pTaskState,
+                                       targetStandardIFTask::taskSubstate* pTaskSubstate)
+{
+    bool bRes = false;
+
+    if ((taskID >= 0) && (taskID < MAX_TASK_COUNT)) {
+        if (tasks[taskID]) {
+            tasks[taskID]->get_state(pTaskState, pTaskSubstate);
+            bRes = true;
+        }
+    }
+
+    return bRes;
+}
+

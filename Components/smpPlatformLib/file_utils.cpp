@@ -12,7 +12,7 @@
 #include "file_utils.h"
 
 #ifdef _DEBUG
-#define LOCALDBG        ENABLE
+#define LOCALDBG        DISABLE
 #else
 #define LOCALDBG        DISABLE
 #endif // _DEBUG
@@ -71,6 +71,21 @@ namespace file_utils {
             }
         } else {
             RMDBGLOG((LOCALDBG, "No filename specified!\n"));
+        }
+
+        return bRes;
+    }
+
+    bool get_absolute_path(const std::string& filePath, std::string& absolutePath) {
+        bool bRes = false;
+        char* szTmp = nullptr;
+
+        if ((szTmp = realpath(filePath.c_str(), nullptr)) != nullptr) {
+            absolutePath = szTmp;
+            free(szTmp);
+            bRes = true;
+        } else {
+            RMDBGLOG((LOCALDBG, "get_absolute_path failed %s\n", strerror(errno)));
         }
 
         return bRes;

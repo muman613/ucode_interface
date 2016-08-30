@@ -48,7 +48,14 @@ RMstatus video_set_vtdb_pointer(
 	RMuint32 index,
 	RMuint32 pvtdb);
 
-RMstatus video_set_data_context_buffer(
+RMstatus video_set_data_context_buffer_v2(
+	controlInterface* pPF,
+	RMuint32 pvti,
+	RMuint32 start_address,
+	RMuint32 total_size,
+	RMuint32 context_size);
+
+RMstatus video_set_data_context_buffer_v1(
 	controlInterface* pPF,
 	RMuint32 pvti,
 	RMuint32 start_address,

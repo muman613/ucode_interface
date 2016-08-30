@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!DOCTYPE targetOptions SYSTEM "targetOptions.dtd">
+<targetOptions version="1.0">
+	<defaults>
+		<ifVersion>2</ifVersion>
+		<decoderDataSize>355663872</decoderDataSize>
+		<decoderContextSize>6242304</decoderContextSize>
+		<decodeErrorEntries>128</decodeErrorEntries>
+		<bitstreamFIFOSize>2097152</bitstreamFIFOSize>
+		<numPictures>32</numPictures>
+	</defaults>
+
+	<chip id="8756">
+		<ifVersion>1</ifVersion>
+		<decoderDataSize>177831936</decoderDataSize>
+	</chip>
+
+</targetOptions>
+

@@ -101,50 +101,50 @@ typedef enum _SOC_ARCH {
   SOC_PMAN,
 } SOC_ARCH;
 
-    typedef struct _fifo {
-        uint32_t        uiFifoCont;             ///< FIFO container address
-        uint32_t        uiFifoPtr;              ///< FIFO base address
-        uint32_t        uiFifoSize;             ///< FIFO size
-        uint32_t        uiFifoRdPtr;            ///< FIFO read pointer
-        uint32_t        uiFifoWrPtr;            ///< FIFO write pointer
-    } FIFO;
+typedef struct _fifo {
+    uint32_t        uiFifoCont;             ///< FIFO container address
+    uint32_t        uiFifoPtr;              ///< FIFO base address
+    uint32_t        uiFifoSize;             ///< FIFO size
+    uint32_t        uiFifoRdPtr;            ///< FIFO read pointer
+    uint32_t        uiFifoWrPtr;            ///< FIFO write pointer
+} FIFO;
 
-    struct inputStats {
-        std::string     sInputFile;
-        RMuint32        profile;
-        size_t          bytesRead;
-    };
+struct inputStats {
+    std::string     sInputFile;
+    RMuint32        profile;
+    size_t          bytesRead;
+};
 
-    struct outputStats {
-        std::string     sYUVFile;
-        RMuint32        pic_address;
-        RMuint32        pic_luma_buffer;
-        RMuint32        pic_chroma_buffer;
-        RMuint32        pic_width;
-        RMuint32        pic_height;
-        RMuint32        frame_count;
-        double          save_time;
-    };
+struct outputStats {
+    std::string     sYUVFile;
+    RMuint32        pic_address;
+    RMuint32        pic_luma_buffer;
+    RMuint32        pic_chroma_buffer;
+    RMuint32        pic_width;
+    RMuint32        pic_height;
+    RMuint32        frame_count;
+    double          save_time;
+};
 
-    struct MicrocodeInbandParams {
-        RMuint32 ref_cnt;
-        RMuint32 params[COMMAND_PARAMS_RMUINT32_SIZE];
-    };
+struct MicrocodeInbandParams {
+    RMuint32 ref_cnt;
+    RMuint32 params[COMMAND_PARAMS_RMUINT32_SIZE];
+};
 
-    struct EMhwlibWindow {
-            RMuint32 x;
-            RMuint32 y;
-            RMuint32 width;
-            RMuint32 height;
-    };
+struct EMhwlibWindow {
+        RMuint32 x;
+        RMuint32 y;
+        RMuint32 width;
+        RMuint32 height;
+};
 
-    struct MicrocodeInbandCommand {
-        RMuint32 flags_tag;      // INBAND_COMMAND_GET_TAG() is the macro to find the tag
-        RMuint32 byte_counter;   // byte counter - see EMhwlibInbandOffset
-        RMuint32 target;         // destination or target id. If 0 = broadcast.
-        RMuint32 params_address; // pointer to the "union params_type" that contains the specific parameters
-        RMuint32 params_ref_cnt; // 0 if free
-    };
+struct MicrocodeInbandCommand {
+    RMuint32 flags_tag;      // INBAND_COMMAND_GET_TAG() is the macro to find the tag
+    RMuint32 byte_counter;   // byte counter - see EMhwlibInbandOffset
+    RMuint32 target;         // destination or target id. If 0 = broadcast.
+    RMuint32 params_address; // pointer to the "union params_type" that contains the specific parameters
+    RMuint32 params_ref_cnt; // 0 if free
+};
 
 
 #define XFER_BUFFERSIZE              65536
@@ -160,8 +160,18 @@ public:
         TASK_INITIALIZED,
         TASK_COMMAND_PENDING,
         TASK_PLAYING,
-        TASK_STOPPING,
         TASK_STOPPED,
+    };
+
+    enum taskSubstate {
+        TASK_SUBSTATE_UNKNOWN,
+        TASK_SUBSTATE_SENT_UNINIT,
+        TASK_SUBSTATE_UNINIT,
+        TASK_SUBSTATE_SENT_INIT,
+        TASK_SUBSTATE_STOP,
+        TASK_SUBSTATE_SENT_PLAY,
+        TASK_SUBSTATE_PLAY,
+        TASK_SUBSTATE_SENT_STOP,
     };
 
     struct targetStdIfParms {
@@ -171,6 +181,7 @@ public:
         bool                    bDumpUntiled    = false;
         std::string             sDumpPath       = "/tmp";
         controlInterface*       pIF             = nullptr;
+//        RMuint32                nIFVersion      = 2;
         TARGET_ALLOC_PTR        pAlloc;
     };
 
@@ -184,9 +195,12 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os,const targetStandardIFTask& task);
 
+    bool                    start();
     bool                    stop();
 
-    taskState               get_state() const;
+    //taskState               get_state() const;
+    void                    get_state(taskState* pState, taskSubstate* pSubState = nullptr);
+
     bool                    get_output_stats(outputStats& stats) const;
     bool                    get_input_stats(inputStats& stats) const;
 
@@ -247,12 +261,15 @@ protected:
     bool                    dump_y_uv;                  ///< If true dump each tiled buffer to Y & UV file.
     std::string             dumpPath;
 
+    RMuint32                ifVersion;
+
     size_t                  total_bytes_read;
 
     typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
     typedef std::chrono::duration<double>                               time_diff;
 
-    std::atomic<taskState>  task_state;
+    volatile std::atomic<taskState>      task_state;
+    volatile std::atomic<taskSubstate>   task_substate;
 
 private:
     controlInterface*       pIF;
@@ -301,14 +318,19 @@ private:
                                                std::string& sYFilename,
                                                std::string& sUVFilename);
 
-    std::thread                          fifoFillThread;    ///< Thread used to send stream data to input fifo...
-    std::thread                          fifoEmptyThread;   ///< Thread used to extract pictures to output file.
-    volatile mutable std::atomic_bool    fifoFillRunning;   ///< Flag set when the fill thread is running.
-    volatile mutable std::atomic_bool    fifoEmptyRunning;  ///< Flag set when the empty thread is running.
-    volatile mutable std::atomic_bool    terminateThreads;  ///< Flag used to signal threads shut-down.
+    void                    update_task_state(VideoCommand command, VideoStatus status);
+
+    void                    set_state(taskState pState, taskSubstate pSubState);
+
+    std::thread                         fifoFillThread;    ///< Thread used to send stream data to input fifo...
+    std::thread                         fifoEmptyThread;   ///< Thread used to extract pictures to output file.
+    volatile mutable std::atomic_bool   fifoFillRunning;   ///< Flag set when the fill thread is running.
+    volatile mutable std::atomic_bool   fifoEmptyRunning;  ///< Flag set when the empty thread is running.
+    volatile mutable std::atomic_bool   terminateThreads;  ///< Flag used to signal threads shut-down.
 //  mutable std::mutex                  contextMutex;      ///< Mutex for access to class context variables.
-    mutable std::mutex                   inputStatMutex;
-    mutable std::mutex                   outputStatMutex;
+    mutable std::mutex                  stateMutex;
+    mutable std::mutex                  inputStatMutex;
+    mutable std::mutex                  outputStatMutex;
 
     void                        update_input_stats();
     void                        update_output_stats();
@@ -366,6 +388,10 @@ public:
     void                    debug_state(std::ostream& os = std::cout);
 #endif // _DEBUG
 
+    if_state                get_interface_state(uint32_t* taskCount = nullptr) const;
+    bool                    get_task_state(uint32_t taskID,
+                                           targetStandardIFTask::taskState* pTaskState,
+                                           targetStandardIFTask::taskSubstate* pTaskSubstate);
     bool                    get_output_stats(RMuint32 taskID, outputStats& stats) const;
     bool                    get_input_stats(RMuint32 taskID, inputStats& stats) const;
 
@@ -376,19 +402,24 @@ protected:
         int             nProfile;
     } profileTable[];
 
-    void                    init_parameters();
-    void                    stop_tasks();
+    void                        init_parameters();
+    void                        stop_tasks();
 
-    bool                    bValid;
+    bool                        bValid;
 
-    std::atomic<if_state>   ifState;
-    IFTASKARRAY             tasks;
+    volatile std::atomic<if_state>       ifState;
+   // RMuint32                    ifVersion;          ///< (1 = version 1 2 = version 2)
+    IFTASKARRAY                 tasks;
 
-    bool                    dump_y_uv;
-    std::string             dumpPath;
+    bool                        dump_y_uv;
+    std::string                 dumpPath;
 
-    void                    clear_scheduler_data();
+    void                        clear_scheduler_data();
 
+    bool                        _play_stream(const std::string& sInputStreamName,
+                                             const std::string& sOutputYUVName,
+                                             RMuint32 sProfile,
+                                             RMuint32 taskID);
 
 private:
     mutable std::mutex      contextMutex;      ///< Mutex for access to class context variables.
@@ -396,7 +427,8 @@ private:
 
 #define VPTS_FIFO_ENTRY_SIZE	8 /* 8 bytes = PTS on 32 bits and byte counter on 32 bits */
 #define DECODE_ERROR_ENTRIES 	128
-#define DECODER_DATA_SIZE       (29638656 * 12)
+#define DECODER_DATA_SIZE       (29638656 * 6)
+//#define DECODER_DATA_SIZE       (29638656 * 12)
 #define DECODER_CTX_SIZE        6242304
 
 
@@ -405,5 +437,7 @@ typedef std::shared_ptr<targetStandardInterface>    TARGET_STD_IF;
 
 #define CREATE_NEW_INTERFACE(engine)											\
 	std::make_shared<targetStandardInterface>( engine )
+
+#define PLATFORM_OPTION_FILE        "../../../xml/targetOptions.xml"
 
 #endif // __TARGET_STD_INTERFACE_H__
