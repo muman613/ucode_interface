@@ -85,11 +85,11 @@ LDFLAGS+=$(EXTERN_LIBS) $(LIBS)
 
 
 #	Default rules
-$(OBJ_DIR)/%.o : %.cpp $(MAKEFILE)
+$(OBJ_DIR)/%.o : %.cpp $(MAKEFILE) | objdir
 	@echo "Compiling $*.cpp"
 	@$(CXX) 2>&1 -c -o $@ $(CFLAGS) $<
 
-$(OBJ_DIR)/%.o : %.c $(MAKEFILE)
+$(OBJ_DIR)/%.o : %.c $(MAKEFILE) | objdir
 	@echo "Compiling $*.c"
 	@$(CC) 2>&1 -c -o $@ $(CFLAGS) $<
 	
