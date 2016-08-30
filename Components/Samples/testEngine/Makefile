@@ -21,10 +21,13 @@ TARGET_EXE=testEngine_shared
 
 ifdef DEBUG
 PLATLIB_LIBS=-L../../libs/Linux/${ARCH}/ -lsmpplatform_d
+OPTS_LIBS=../../libs/Linux/$(ARCH)/libtargetOptions_d.a
+
 
 CPP_SOURCES+=../common/dbgimplementation.cpp
 else
 PLATLIB_LIBS=-L../../libs/Linux/${ARCH}/ -lsmpplatform
+OPTS_LIBS=../../libs/Linux/$(ARCH)/libtargetOptions.a
 endif
 
 PLATLIB_CFLAGS=-I../../smpPlatformLib/
@@ -32,7 +35,7 @@ LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)
 LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
 INCLUDES=-I../.. -I../../.. -I ../../include
 CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) $(PLATLIB_CFLAGS) -std=c++11
-LIBS=$(PLATLIB_LIBS) $(LIBXML_LIBS) -lpthread
+LIBS=$(PLATLIB_LIBS) $(LIBXML_LIBS) $(OPTS_LIBS) -lpthread
 
 else	# SHARED
 TARGET_EXE=testEngine
@@ -45,6 +48,7 @@ GBUSFIFO_LIBS=../../libs/Linux/$(ARCH)/libgbusfifo_d.a
 SYMMGR_LIBS=../../libs/Linux/$(ARCH)/libsymbolmgr_d.a -lpthread
 STRUCT_LIBS=../../libs/Linux/$(ARCH)/libstructcontrol_d.a
 RESOLV_LIBS=../../libs/Linux/$(ARCH)/libfileresolver_d.a
+OPTS_LIBS=../../libs/Linux/$(ARCH)/libtargetOptions_d.a
 
 CPP_SOURCES+=../common/dbgimplementation.cpp
 else
@@ -55,6 +59,7 @@ GBUSFIFO_LIBS=../../libs/Linux/$(ARCH)/libgbusfifo.a
 SYMMGR_LIBS=../../libs/Linux/$(ARCH)/libsymbolmgr.a
 STRUCT_LIBS=../../libs/Linux/$(ARCH)/libstructcontrol.a
 RESOLV_LIBS=../../libs/Linux/$(ARCH)/libfileresolver.a
+OPTS_LIBS=../../libs/Linux/$(ARCH)/libtargetOptions.a
 endif
 
 TRE_CFLAGS=-I../../include
@@ -71,7 +76,7 @@ LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
 INCLUDES=-I../.. -I../../.. -I ../../include $(PLATLIB_CFLAGS) $(GBUSFIFO_CFLAGS)
 
 CFLAGS=$(DEFINES) $(LIBXML_CFLAGS) -std=c++11
-LIBS=$(PLATLIB_LIBS) $(PLATDB_LIBS) $(RCLIENT_LIBS) $(SYMMGR_LIBS)				\
+LIBS=$(PLATLIB_LIBS) $(OPTS_LIBS) $(PLATDB_LIBS) $(RCLIENT_LIBS) $(SYMMGR_LIBS) \
      $(STRUCT_LIBS) $(RESOLV_LIBS) $(LIBXML_LIBS) $(GBUSFIFO_LIBS) -lpthread
 
 endif	# SHARED

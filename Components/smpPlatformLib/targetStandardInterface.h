@@ -178,7 +178,7 @@ public:
         bool                    bDumpUntiled    = false;
         std::string             sDumpPath       = "/tmp";
         controlInterface*       pIF             = nullptr;
-        RMuint32                nIFVersion      = 2;
+//        RMuint32                nIFVersion      = 2;
         TARGET_ALLOC_PTR        pAlloc;
     };
 
@@ -427,5 +427,7 @@ typedef std::shared_ptr<targetStandardInterface>    TARGET_STD_IF;
 
 #define CREATE_NEW_INTERFACE(engine)											\
 	std::make_shared<targetStandardInterface>( engine )
+
+#define PLATFORM_OPTION_FILE        "../../../xml/targetOptions.xml"
 
 #endif // __TARGET_STD_INTERFACE_H__

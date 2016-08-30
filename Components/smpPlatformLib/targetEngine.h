@@ -28,6 +28,8 @@ struct engineFlags {
     };
 };
 
+class targetEngine;
+
 /**
  *  controlInterface is a pure virtual interface providing utilities with
  *  objects including the gbus pointer, structure database object, symbol
@@ -41,6 +43,7 @@ public:
     virtual UcodeSymbolMgr*     get_symmgr()   = 0;
     virtual PlatformEngine*     get_engine()   = 0;
     virtual std::mutex*         get_mutex()    = 0;
+    virtual targetEngine*       get_target()   = 0;
 };
 
 /**
@@ -104,6 +107,7 @@ public:
     UcodeSymbolMgr*     get_symmgr();
     PlatformEngine*     get_engine();
     std::mutex*         get_mutex();
+    targetEngine*       get_target();
 
 //    void                test_function();
 

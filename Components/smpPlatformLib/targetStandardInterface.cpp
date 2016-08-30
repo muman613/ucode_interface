@@ -21,6 +21,7 @@
 #include "gbus.h"
 #include "gbus_utils.h"
 #include "misc_utils.h"
+#include "targetOptionsManager.h"
 
 #ifdef _DEBUG
 #define LOCALDBG    ENABLE
@@ -113,7 +114,7 @@ targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
     decoderProfile  = parms.nProfile;
     dump_y_uv       = parms.bDumpUntiled;
     dumpPath        = parms.sDumpPath;
-    ifVersion       = parms.nIFVersion;
+//  ifVersion       = parms.nIFVersion;
 
     init_video_engine();
     open_video_decoder();
@@ -161,14 +162,31 @@ void targetStandardIFTask::get_state(taskState* pState, taskSubstate* pSubstate)
 
 void targetStandardIFTask::init_parameters()
 {
+
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
 
-    DecoderDataSize	            = DECODER_DATA_SIZE;
-    DecoderContextSize          = DECODER_CTX_SIZE;
-    BitstreamFIFOSize           = (2 * 1024 * 1024);
+
+//    ifVersion                   = 1;
+//    DecoderDataSize	            = DECODER_DATA_SIZE;
+//    DecoderContextSize          = DECODER_CTX_SIZE;
+//    BitstreamFIFOSize           = (2 * 1024 * 1024);
+//    NumOfPictures               = PICTURE_COUNT;
+
+#if 1
+    targetOptionsManager        mgr(PLATFORM_OPTION_FILE);
+    TARGET_OPTIONS_REQ          req;
+
+    req.ifVersion           = &ifVersion;
+    req.decoderDataSize     = &DecoderDataSize;
+    req.decoderContextSize  = &DecoderContextSize;
+    req.bitstreamFIFOSize   = &BitstreamFIFOSize;
+    req.numPictures         = &NumOfPictures;
+
+    mgr.get_options(pIF->get_target()->get_chipid(), req);
+#endif // 1
+
     PtsFIFOCount                = 512;
     InbandFIFOCount             = 512;
-    NumOfPictures               = PICTURE_COUNT;
     soc_arch                    = SOC_TANGO;
     storage_format              = 0;
     luma_nb_comp_per_sample     = 1;
@@ -1220,7 +1238,7 @@ bool targetStandardInterface::_play_stream(const std::string& sInputStreamName,
     parms.sOutputYUVName    = sOutputYUVName;
     parms.nProfile          = profile;
     parms.pAlloc            = m_pAlloc[0];
-    parms.nIFVersion        = ifVersion;
+//  parms.nIFVersion        = ifVersion;
     parms.pIF               = dynamic_cast<controlInterface*>(m_pEngine[0].get());
 
     tasks[taskID] = std::make_shared<targetStandardIFTask>(parms);

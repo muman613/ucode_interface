@@ -574,6 +574,11 @@ std::mutex*         targetEngine::get_mutex()
     return &m_mutex;
 }
 
+targetEngine*       targetEngine::get_target()
+{
+    return this;
+}
+
 /**
  *  Start the Engine running.
  */
