@@ -60,10 +60,14 @@ ifeq ($(MAKECMDGOALS),clean)
 # doing clean, so dont make deps.
 DEPS=
 else
+ifeq ($(MAKECMDGOALS),info)
+DEPS=
+else
 CPP_SOURCES_TRIM=$(notdir $(CPP_SOURCES))
 DEPS=$(CPP_SOURCES_TRIM:%.cpp=$(DEP_DIR)/%.d)
 C_SOURCES_TRIM=$(notdir $(C_SOURCES))
 DEPS+=$(notdir $(C_SOURCES_TRIM:%.c=$(DEP_DIR)/%.d))
+endif
 endif
 
 ################################################################################
