@@ -14,7 +14,7 @@ MAKEFILE := $(call where-am-i)
 ARCH?=$(shell arch)
 TARGET_TYPE=exe
 
-CPP_SOURCES=main.cpp utils.cpp
+CPP_SOURCES=main.cpp utils.cpp optionparser.cpp
 
 COMPONENT_DIR=../Components/libs/Linux/$(ARCH)
 

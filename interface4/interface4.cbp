@@ -17,13 +17,14 @@
 					<Add option="-D_DEBUG=1" />
 				</Compiler>
 				<Linker>
-					<Add option="../../libs/Linux/x86_64/libsmpplatform_d.a" />
-					<Add option="../../libs/Linux/x86_64/libplatformdb_d.a" />
-					<Add option="../../libs/Linux/x86_64/libfileresolver_d.a" />
-					<Add option="../../libs/Linux/x86_64/libsymbolmgr_d.a" />
-					<Add option="../../libs/Linux/x86_64/libstructcontrol_d.a" />
-					<Add option="../../libs/Linux/x86_64/libremote_d.a" />
-					<Add option="../../libs/Linux/x86_64/libgbusfifo_d.a" />
+					<Add option="../Components/libs/Linux/x86/libsmpplatform_d.a" />
+					<Add option="../Components/libs/Linux/x86/libplatformdb_d.a" />
+					<Add option="../Components/libs/Linux/x86/libfileresolver_d.a" />
+					<Add option="../Components/libs/Linux/x86/libsymbolmgr_d.a" />
+					<Add option="../Components/libs/Linux/x86/libstructcontrol_d.a" />
+					<Add option="../Components/libs/Linux/x86/libremote_d.a" />
+					<Add option="../Components/libs/Linux/x86/libgbusfifo_d.a" />
+					<Add option="../Components/libs/Linux/x86/libtargetOptions_d.a" />
 					<Add option="`xml2-config --libs`" />
 				</Linker>
 			</Target>
@@ -38,13 +39,14 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="../../libs/Linux/x86_64/libsmpplatform.a" />
-					<Add option="../../libs/Linux/x86_64/libplatformdb.a" />
-					<Add option="../../libs/Linux/x86_64/libfileresolver.a" />
-					<Add option="../../libs/Linux/x86_64/libsymbolmgr.a" />
-					<Add option="../../libs/Linux/x86_64/libstructcontrol.a" />
-					<Add option="../../libs/Linux/x86_64/libremote.a" />
-					<Add option="../../libs/Linux/x86_64/libgbusfifo.a" />
+					<Add option="../Components/libs/Linux/x86/libsmpplatform.a" />
+					<Add option="../Components/libs/Linux/x86/libplatformdb.a" />
+					<Add option="../Components/libs/Linux/x86/libfileresolver.a" />
+					<Add option="../Components/libs/Linux/x86/libsymbolmgr.a" />
+					<Add option="../Components/libs/Linux/x86/libstructcontrol.a" />
+					<Add option="../Components/libs/Linux/x86/libremote.a" />
+					<Add option="../Components/libs/Linux/x86/libgbusfifo.a" />
+					<Add option="../Components/libs/Linux/x86/libtargetOptions.a" />
 					<Add option="`xml2-config --libs`" />
 				</Linker>
 			</Target>
@@ -52,16 +54,24 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-std=c++11" />
+			<Add option="-m32" />
 			<Add option="-fexceptions" />
 			<Add option="`xml2-config --cflags`" />
-			<Add directory="../../" />
-			<Add directory="../../.." />
-			<Add directory="../../smpPlatformLib" />
+			<Add directory=".." />
+			<Add directory="../Components" />
+			<Add directory="../Components/include" />
+			<Add directory="../Components/smpPlatformLib" />
 		</Compiler>
-		<Unit filename="../common/dbgimplementation.cpp">
+		<Linker>
+			<Add option="-m32" />
+			<Add library="pthread" />
+		</Linker>
+		<Unit filename="dbgimplementation.cpp">
 			<Option target="Debug" />
 		</Unit>
 		<Unit filename="main.cpp" />
+		<Unit filename="optionparser.cpp" />
+		<Unit filename="optionparser.h" />
 		<Unit filename="utils.cpp" />
 		<Unit filename="utils.h" />
 		<Extensions>

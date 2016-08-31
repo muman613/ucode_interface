@@ -3,36 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <getopt.h>
 #include <unistd.h>
 #include <signal.h>
 #include "dbgutils.h"
 #include "targetEngine.h"
 #include "targetStandardInterface.h"
 #include "utils.h"
-
-////////////////////////////////////////////////////////////////////////////////
-//  optionPack stores options used by the test application.
-////////////////////////////////////////////////////////////////////////////////
-
-class optionPack {
-public:
-    optionPack()
-    : profile(VideoProfileMPEG2),
-      engineNo(0),
-      type(targetEngine::UCODE_RELEASE),
-      verboseLevel(0)
-    {
-    }
-    std::string                 chipID;
-    std::string                 inputStream;
-    std::string                 outputYUV;
-    std::string                 serverStr;
-    RMuint32                    profile;
-    RMuint32                    engineNo;
-    targetEngine::ucodeType     type;
-    RMuint32                    verboseLevel;
-};
+#include "optionparser.h"
 
 #ifdef _DEBUG
 void debug(const char* sFmt, ...) {
@@ -88,97 +65,6 @@ void display_help(const char* cmd) {
     std::for_each(pVec.begin(), pVec.end(), [](std::string codec) { std::cout << "   " << codec << std::endl; } );
 
     exit(0);
-}
-/**
- *  Parse commandline parameters.
- */
-
-bool parse_cmdline_arguments(int argc, char* argv[], optionPack& options) {
-    bool            bRes =  false;
-    int             c, option_index = 0;
-    static struct option long_options[] = {
-        { "chip",   required_argument, 0, 'c', },
-        { "stream", required_argument, 0, 's', },
-        { "decoder",required_argument, 0, 'd', },
-        { "yuv",    required_argument, 0, 'y', },
-        { "engine", required_argument, 0, 'e', },
-        { "mode",   required_argument, 0, 'm', },
-        { "remote", required_argument, 0, 'r', },
-        { "help",   no_argument,       0, 'h', },
-        { "verbose",optional_argument, 0, 'v', },
-
-        { 0, 0, 0, 0, },
-    };
-
-    while ((c=getopt_long(argc, argv, "c:s:d:y:e:m:r:v:h", long_options, &option_index)) != -1) {
-        switch (c) {
-        case 'c':
-            if (optarg != nullptr)
-                options.chipID = optarg;
-            break;
-        case 's':
-            if (optarg != nullptr)
-                options.inputStream = optarg;
-            break;
-        case 'd':
-            if (optarg != nullptr) {
-                options.profile = targetStandardInterface::get_profile_id_from_string(optarg);
-                if (options.profile == (RMuint32)-1) {
-                    std::cout << "ERROR: Unknown profile " << optarg << " exiting..." << std::endl;
-                    return false;
-                }
-            }
-            break;
-        case 'y':
-            if (optarg != nullptr)
-                options.outputYUV = optarg;
-            break;
-        case 'e':
-            if (optarg != nullptr)
-                options.engineNo = atoi(optarg);
-            break;
-        case 'm':
-            {
-                std::string sMode;
-                if (optarg != nullptr) {
-                    sMode = optarg;
-
-                    if ((sMode == "d") || (sMode == "r")) {
-                        options.type = (sMode == "d")?targetEngine::UCODE_DEBUG:targetEngine::UCODE_RELEASE;
-                    }
-                }
-            }
-            break;
-        case 'h':
-            display_help(argv[0]);
-            break;
-        case 'r':
-            if (optarg != nullptr) {
-                options.serverStr = optarg;
-            }
-            break;
-        case 'v':
-            if (optarg != nullptr) {
-                options.verboseLevel = atoi(optarg);
-            } else {
-                options.verboseLevel = 1;
-            }
-            break;
-        default:
-            break;
-        }
-    }
-
-    if ((options.chipID == "8758") && (options.profile == VideoProfileH265)) {
-        options.engineNo = 1;
-    }
-
-
-    bRes = (!options.chipID.empty() &&
-            !options.inputStream.empty() &&
-            (options.profile != (RMuint32)-1));
-
-    return bRes;
 }
 
 /**
@@ -290,7 +176,7 @@ int main(int argc, char * argv[])
 
     D(open_log_files("messages.txt", "errors.txt"));
 
-    if (parse_cmdline_arguments( argc, argv, opts )) {
+    if (opts.parse( argc, argv, display_help )) {
         set_terminal_mode();
         signal(SIGINT, _control_c_handler);
 
