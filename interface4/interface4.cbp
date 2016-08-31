@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="interface4" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/x86/interface4" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/x86" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option projectLinkerOptionsRelation="2" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-D_DEBUG=1" />
+				</Compiler>
+				<Linker>
+					<Add option="../../libs/Linux/x86_64/libsmpplatform_d.a" />
+					<Add option="../../libs/Linux/x86_64/libplatformdb_d.a" />
+					<Add option="../../libs/Linux/x86_64/libfileresolver_d.a" />
+					<Add option="../../libs/Linux/x86_64/libsymbolmgr_d.a" />
+					<Add option="../../libs/Linux/x86_64/libstructcontrol_d.a" />
+					<Add option="../../libs/Linux/x86_64/libremote_d.a" />
+					<Add option="../../libs/Linux/x86_64/libgbusfifo_d.a" />
+					<Add option="`xml2-config --libs`" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/x86/interface4" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/x86/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option projectLinkerOptionsRelation="2" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="../../libs/Linux/x86_64/libsmpplatform.a" />
+					<Add option="../../libs/Linux/x86_64/libplatformdb.a" />
+					<Add option="../../libs/Linux/x86_64/libfileresolver.a" />
+					<Add option="../../libs/Linux/x86_64/libsymbolmgr.a" />
+					<Add option="../../libs/Linux/x86_64/libstructcontrol.a" />
+					<Add option="../../libs/Linux/x86_64/libremote.a" />
+					<Add option="../../libs/Linux/x86_64/libgbusfifo.a" />
+					<Add option="`xml2-config --libs`" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-std=c++11" />
+			<Add option="-fexceptions" />
+			<Add option="`xml2-config --cflags`" />
+			<Add directory="../../" />
+			<Add directory="../../.." />
+			<Add directory="../../smpPlatformLib" />
+		</Compiler>
+		<Unit filename="../common/dbgimplementation.cpp">
+			<Option target="Debug" />
+		</Unit>
+		<Unit filename="main.cpp" />
+		<Unit filename="utils.cpp" />
+		<Unit filename="utils.h" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<lib_finder disable_auto="1" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
