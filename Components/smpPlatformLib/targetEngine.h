@@ -61,7 +61,9 @@ public:
     targetEngine(std::string sChipID,
                  std::string sBlockID,
                  uint32_t engineIndex = 0,
-                 ucodeType eType = UCODE_RELEASE);
+                 ucodeType eType = UCODE_RELEASE,
+                 std::string sPathToUcode = "../../../",
+                 std::string sPathToDatabase = "../../../xml/");
     virtual ~targetEngine();
 
     /*! Return true if the targetEngine is valid */
@@ -94,6 +96,8 @@ public:
     bool                load_ucode();
     /*! Load microcode from file specified in sUcodeFilename string. */
     bool                load_ucode(std::string sUcodeFilename);
+
+    std::string         get_ucode_file(bool bFullPath = false);
 
     /* Engine control functions */
 
@@ -158,6 +162,9 @@ protected:
 
     RMuint32            m_resetOff;
 
+    std::string         m_sPathToUcode;
+    std::string         m_sPathToDatabase;
+
 private:
 
     void                close_gbus();
@@ -182,9 +189,11 @@ typedef targetEngine*                   TARGET_ENGINE_PTR;
 inline TARGET_ENGINE_PTR CREATE_NEW_ENGINE(std::string chip,
                                            std::string blockID,
                                            int engineNo = 0,
-                                           targetEngine::ucodeType type = targetEngine::UCODE_RELEASE)
+                                           targetEngine::ucodeType type = targetEngine::UCODE_RELEASE,
+                                           std::string sPathToUcode = "../../../",
+                                           std::string sPathToDatabase = "../../../xml/")
 {
-    return std::make_shared<targetEngine>(chip, blockID, engineNo, type);
+    return std::make_shared<targetEngine>(chip, blockID, engineNo, type, sPathToUcode, sPathToDatabase);
 }
 
 #endif // __TARGET_ENGINE_H__

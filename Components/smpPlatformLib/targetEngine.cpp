@@ -90,9 +90,13 @@ std::ostream& operator<<(std::ostream& os, const targetEngine& engine)
  *  Constructor
  */
 
-targetEngine::targetEngine(string sChipID, string sBlockID, uint32_t nEngineIndex, ucodeType type)
+targetEngine::targetEngine(string sChipID, string sBlockID,
+                           uint32_t nEngineIndex, ucodeType type,
+                           string sPathToUcode, string sPathToDatabase)
 :   m_dramBase(DRAM_BASE),
-    m_uiDRAMPtr(DRAM_BASE)
+    m_uiDRAMPtr(DRAM_BASE),
+    m_sPathToUcode(sPathToUcode),
+    m_sPathToDatabase(sPathToDatabase)
 {
     // ctor
     m_flags.flag_mutex.lock();
@@ -173,7 +177,7 @@ bool targetEngine::open(string sChipID, string sBlockID,
     m_nEngineIndex  = nEngineIndex;
 
     if (resolve_files()) {
-        if (platDB.LoadDatabase(PLATFORM_DATABASE_FILE, PDB_FILE_PATH)) {
+        if (platDB.LoadDatabase(PLATFORM_DATABASE_FILE, m_sPathToDatabase)) {
             PlatformChip chip;
 
 #ifdef _DEBUG
@@ -255,7 +259,7 @@ bool targetEngine::resolve_files()
     if (m_filePack.resolve_package(m_sChipID,
                                    m_nEngineIndex,
                                    (m_eType == UCODE_DEBUG)?true:false,
-                                   UCODE_PREFIX))
+                                   m_sPathToUcode))
     {
 #ifdef _DEBUG
         m_filePack.dump( stderr );
@@ -629,3 +633,26 @@ bool targetEngine::stop()
 //
 //    video_utils::video_get_scheduler_memory(CONTROL_IF, m_engine.get_pmBase(), &start, &size);
 //}
+
+std::string targetEngine::get_ucode_file(bool bFullPath)
+{
+    std::string sUcodePath;
+
+    if (m_flags.bits.bUcodeLoaded) {
+        if (bFullPath == true) {
+            sUcodePath = m_sUcode;
+        } else {
+            sUcodePath = basename(m_sUcode.c_str());
+        }
+    } else if (!m_filePack.sBinFile.empty()) {
+        if (bFullPath) {
+            sUcodePath = m_filePack.sBinFile;
+        } else {
+            sUcodePath = basename(m_filePack.sBinFile.c_str());
+        }
+    } else {
+        sUcodePath = "N/A";
+    }
+
+    return sUcodePath;
+}
