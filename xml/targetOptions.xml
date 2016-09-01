@@ -3,7 +3,7 @@
 <targetOptions version="1.0">
 	<defaults>
 		<ifVersion>2</ifVersion>
-		<decoderDataSize>355663872</decoderDataSize>
+		<decoderDataSize>177831936</decoderDataSize>
 		<decoderContextSize>6242304</decoderContextSize>
 		<decodeErrorEntries>128</decodeErrorEntries>
 		<bitstreamFIFOSize>2097152</bitstreamFIFOSize>
