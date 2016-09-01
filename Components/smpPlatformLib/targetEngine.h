@@ -63,7 +63,7 @@ public:
                  uint32_t engineIndex = 0,
                  ucodeType eType = UCODE_RELEASE,
                  std::string sPathToUcode = "../../../",
-                 std::string sPathToDatabase = "../../../xml/");
+                 std::string sPathToXml = "../../../xml/");
     virtual ~targetEngine();
 
     /*! Return true if the targetEngine is valid */
@@ -123,6 +123,8 @@ public:
     std::string         get_blockid() const;
     std::string         get_targetid() const;
 
+    std::string         get_xml_path() const;
+    std::string         get_ucode_path() const;
 
     friend std::ostream& operator<<(std::ostream& os,const targetEngine& engine);
 
@@ -132,10 +134,6 @@ protected:
 
     void                lock_mutex();
     void                unlock_mutex();
-
-//    std::atomic<bool>   m_bValid;
-//    std::atomic<bool>   m_bConnected;
-//    std::atomic<bool>   m_bUcodeLoaded;
 
     engineFlags         m_flags;
 
@@ -163,7 +161,7 @@ protected:
     RMuint32            m_resetOff;
 
     std::string         m_sPathToUcode;
-    std::string         m_sPathToDatabase;
+    std::string         m_sPathToXml;
 
 private:
 
@@ -191,9 +189,9 @@ inline TARGET_ENGINE_PTR CREATE_NEW_ENGINE(std::string chip,
                                            int engineNo = 0,
                                            targetEngine::ucodeType type = targetEngine::UCODE_RELEASE,
                                            std::string sPathToUcode = "../../../",
-                                           std::string sPathToDatabase = "../../../xml/")
+                                           std::string sPathToXml = "../../../xml/")
 {
-    return std::make_shared<targetEngine>(chip, blockID, engineNo, type, sPathToUcode, sPathToDatabase);
+    return std::make_shared<targetEngine>(chip, blockID, engineNo, type, sPathToUcode, sPathToXml);
 }
 
 #endif // __TARGET_ENGINE_H__

@@ -92,11 +92,11 @@ std::ostream& operator<<(std::ostream& os, const targetEngine& engine)
 
 targetEngine::targetEngine(string sChipID, string sBlockID,
                            uint32_t nEngineIndex, ucodeType type,
-                           string sPathToUcode, string sPathToDatabase)
+                           string sPathToUcode, string sPathToXml)
 :   m_dramBase(DRAM_BASE),
     m_uiDRAMPtr(DRAM_BASE),
     m_sPathToUcode(sPathToUcode),
-    m_sPathToDatabase(sPathToDatabase)
+    m_sPathToXml(sPathToXml)
 {
     // ctor
     m_flags.flag_mutex.lock();
@@ -177,7 +177,7 @@ bool targetEngine::open(string sChipID, string sBlockID,
     m_nEngineIndex  = nEngineIndex;
 
     if (resolve_files()) {
-        if (platDB.LoadDatabase(PLATFORM_DATABASE_FILE, m_sPathToDatabase)) {
+        if (platDB.LoadDatabase(PLATFORM_DATABASE_FILE, m_sPathToXml)) {
             PlatformChip chip;
 
 #ifdef _DEBUG
@@ -626,13 +626,9 @@ bool targetEngine::stop()
     return true;
 }
 
-
-//void targetEngine::test_function()
-//{
-//    RMuint32 start, size;
-//
-//    video_utils::video_get_scheduler_memory(CONTROL_IF, m_engine.get_pmBase(), &start, &size);
-//}
+/**
+ *
+ */
 
 std::string targetEngine::get_ucode_file(bool bFullPath)
 {
@@ -655,4 +651,20 @@ std::string targetEngine::get_ucode_file(bool bFullPath)
     }
 
     return sUcodePath;
+}
+
+/**
+ *
+ */
+
+std::string targetEngine::get_xml_path() const {
+    return m_sPathToXml;
+}
+
+/**
+ *
+ */
+
+std::string targetEngine::get_ucode_path() const {
+    return m_sPathToUcode;
 }

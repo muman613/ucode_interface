@@ -180,8 +180,8 @@ public:
         RMuint32                nProfile        = VideoProfileMPEG2;
         bool                    bDumpUntiled    = false;
         std::string             sDumpPath       = "/tmp";
+        std::string             sXmlPath        = "../../xml/";
         controlInterface*       pIF             = nullptr;
-//        RMuint32                nIFVersion      = 2;
         TARGET_ALLOC_PTR        pAlloc;
     };
 
@@ -270,6 +270,8 @@ protected:
 
     volatile std::atomic<taskState>      task_state;
     volatile std::atomic<taskSubstate>   task_substate;
+
+    std::string             sXmlPath;
 
 private:
     controlInterface*       pIF;
@@ -438,7 +440,6 @@ typedef std::shared_ptr<targetStandardInterface>    TARGET_STD_IF;
 #define CREATE_NEW_INTERFACE(engine)											\
 	std::make_shared<targetStandardInterface>( engine )
 
-//#define PLATFORM_OPTION_FILE        "../../../xml/targetOptions.xml"
-#define PLATFORM_OPTION_FILE        "../xml/targetOptions.xml"
+#define PLATFORM_OPTION_FILE            "targetOptions.xml"
 
 #endif // __TARGET_STD_INTERFACE_H__

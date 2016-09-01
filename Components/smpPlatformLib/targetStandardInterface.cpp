@@ -109,27 +109,16 @@ targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
     pAlloc          = parms.pAlloc;
     pIF             = parms.pIF;
 
-    init_parameters();
-
     inputStreamName = parms.sInputStreamName;
     outputYUVName   = parms.sOutputYUVName;
     decoderProfile  = parms.nProfile;
     dump_y_uv       = parms.bDumpUntiled;
     dumpPath        = parms.sDumpPath;
-//  ifVersion       = parms.nIFVersion;
+    sXmlPath        = parms.sXmlPath;
 
-#if 0
-    init_video_engine();
-    open_video_decoder();
+    init_parameters();
 
-    set_video_codec();
-    send_video_command( VideoCommandPlayFwd, VideoStatusPlayFwd );
-
-  //  task_state = TASK_INITIALIZED;
-
-    update_output_stats();
-    launch_threads();
-#endif // 0
+	return;
 }
 
 bool targetStandardIFTask::start() {
@@ -182,7 +171,10 @@ void targetStandardIFTask::get_state(taskState* pState, taskSubstate* pSubstate)
 
 void targetStandardIFTask::init_parameters()
 {
-    targetOptionsManager        mgr(PLATFORM_OPTION_FILE);
+    std::string                 sOptionsXml;
+
+    sOptionsXml    = sXmlPath + "/" + PLATFORM_OPTION_FILE;
+    targetOptionsManager        mgr(sOptionsXml);
     TARGET_OPTIONS_REQ          req;
 
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
@@ -202,7 +194,6 @@ void targetStandardIFTask::init_parameters()
     storage_format              = 0;
     luma_nb_comp_per_sample     = 1;
     chroma_nb_comp_per_sample   = 2;
-    decoderProfile              = VideoProfileMPEG2;
     UserDataSize                = 0;
     ExtraPictureBufferCount     = 0;
 
@@ -1324,6 +1315,7 @@ bool targetStandardInterface::_play_stream(const std::string& sInputStreamName,
     parms.nProfile          = profile;
     parms.pAlloc            = m_pAlloc[0];
     parms.pIF               = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+    parms.sXmlPath          = m_pEngine[0]->get_xml_path();
 
     tasks[taskID] = std::make_shared<targetStandardIFTask>(parms);
     tasks[taskID]->start();
