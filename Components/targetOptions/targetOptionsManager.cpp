@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <libxml/tree.h>
 #include <libxml/parser.h>
+#include "dbgutils.h"
 
 #include "targetOptionsManager.h"
 
@@ -59,6 +60,8 @@ bool targetOptionsManager::get_defaults()
     XML_NODE_PTR    pTmpNode  = nullptr;
     XML_DOC_PTR     pDocument = nullptr;
     bool            bRes      = false;
+
+    D(debug("%s\n", __PRETTY_FUNCTION__));
 
     pDocument = xmlParseFile(m_sConfigXmlPath.c_str());
     if (pDocument != nullptr) {
@@ -122,6 +125,8 @@ bool targetOptionsManager::get_options(std::string sChip,
 {
     bool                bRes      = false;
     TARGET_OPTIONS      resOpts   = defaults;
+
+    D(debug("%s(%s, refToOptions)\n", __PRETTY_FUNCTION__, sChip.c_str()));
 
     if (m_bValid == true) {
         XML_NODE_PTR        pRootNode = nullptr;
