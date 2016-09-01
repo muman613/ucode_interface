@@ -378,6 +378,10 @@ bool interfaceUI::run()
                 pStdIF = CREATE_NEW_INTERFACE( pTarget );
 
                 if (pStdIF) {
+                    D(debug("-- interface created --\n"));
+
+                    pStdIF->play_stream(opts.inputStream, opts.outputYUV, opts.profile);
+
                     main_loop();
                     bRes = true;
                 }

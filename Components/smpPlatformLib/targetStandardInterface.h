@@ -438,6 +438,7 @@ typedef std::shared_ptr<targetStandardInterface>    TARGET_STD_IF;
 #define CREATE_NEW_INTERFACE(engine)											\
 	std::make_shared<targetStandardInterface>( engine )
 
-#define PLATFORM_OPTION_FILE        "../../../xml/targetOptions.xml"
+//#define PLATFORM_OPTION_FILE        "../../../xml/targetOptions.xml"
+#define PLATFORM_OPTION_FILE        "../xml/targetOptions.xml"
 
 #endif // __TARGET_STD_INTERFACE_H__
