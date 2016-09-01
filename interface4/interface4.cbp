@@ -65,10 +65,14 @@
 		<Linker>
 			<Add option="-m32" />
 			<Add library="pthread" />
+			<Add library="ncursesw" />
+			<Add library="panelw" />
 		</Linker>
 		<Unit filename="dbgimplementation.cpp">
 			<Option target="Debug" />
 		</Unit>
+		<Unit filename="interfaceUI.cpp" />
+		<Unit filename="interfaceUI.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="optionparser.cpp" />
 		<Unit filename="optionparser.h" />

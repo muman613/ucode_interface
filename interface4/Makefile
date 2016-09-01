@@ -14,12 +14,14 @@ MAKEFILE := $(call where-am-i)
 ARCH?=$(shell arch)
 TARGET_TYPE=exe
 
-CPP_SOURCES=main.cpp utils.cpp optionparser.cpp
+CPP_SOURCES=main.cpp utils.cpp optionparser.cpp interfaceUI.cpp
 
 COMPONENT_DIR=../Components/libs/Linux/$(ARCH)
 
 ifdef SHARED
 TARGET_EXE=interface4_shared
+
+CURSES_LIBS=-lncursesw -lpanelw
 
 ifdef DEBUG
 PLATLIB_LIBS=-L$(COMPONENT_DIR) -lsmpplatform_d
@@ -37,10 +39,12 @@ LIBXML_CFLAGS=$(shell pkg-config libxml-2.0 --cflags)
 LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
 INCLUDES=-I.. -I../Components/include -I../Components $(PLATLIB_CFLAGS) 
 CFLAGS=$(INCLUDES) $(LIBXML_CFLAGS) $(PLATLIB_CFLAGS) -std=c++11
-LIBS=$(PLATLIB_LIBS) $(LIBXML_LIBS) $(OPTS_LIBS) -lpthread
+LIBS=$(PLATLIB_LIBS) $(LIBXML_LIBS) $(OPTS_LIBS) $(CURSES_LIBS) -lpthread
 
 else	# SHARED
 TARGET_EXE=interface4
+
+CURSES_LIBS=-lncursesw -lpanelw
 
 ifdef DEBUG
 PLATLIB_LIBS=$(COMPONENT_DIR)/libsmpplatform_d.a
@@ -79,8 +83,9 @@ LIBXML_LIBS=$(shell pkg-config libxml-2.0 --libs)
 INCLUDES=-I.. -I../Components/include -I../Components $(PLATLIB_CFLAGS) 
 
 CFLAGS=$(DEFINES) $(LIBXML_CFLAGS) -std=c++11
-LIBS=$(PLATLIB_LIBS) $(OPTS_LIBS) $(PLATDB_LIBS) $(RCLIENT_LIBS) $(SYMMGR_LIBS) \
-     $(STRUCT_LIBS) $(RESOLV_LIBS) $(LIBXML_LIBS) $(GBUSFIFO_LIBS) -lpthread
+LIBS=$(PLATLIB_LIBS) $(OPTS_LIBS) $(PLATDB_LIBS) $(RCLIENT_LIBS) $(SYMMGR_LIBS)    \
+     $(STRUCT_LIBS) $(RESOLV_LIBS) $(LIBXML_LIBS) $(GBUSFIFO_LIBS)  $(CURSES_LIBS) \
+     -lpthread
 
 endif	# SHARED
 
