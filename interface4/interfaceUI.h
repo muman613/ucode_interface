@@ -3,6 +3,7 @@
 
 #include <ncurses.h>
 #include <panel.h>
+#include <chrono>
 #include "targetEngine.h"
 #include "targetStandardInterface.h"
 #include "utils.h"
@@ -51,7 +52,16 @@ class interfaceUI
 
     protected:
 
+        typedef std::chrono::time_point<std::chrono::system_clock> TIME_POINT;
+
+        typedef enum _flags {
+            FLAG_SAVING_YUV          = (1L << 0),
+            FLAG_QUIT_IN_PROGRESS    = (1L << 1),
+        } FLAGS;
+
         APP_STATE           state;
+        int                 flags;
+
         int                 screenx;
         int                 screeny;
         int                 maxlines;
@@ -88,6 +98,12 @@ class interfaceUI
 
         TARGET_ENGINE_PTR   pTarget;
         TARGET_STD_IF       pStdIF;
+
+        inputStats          inStats;
+        outputStats         outStats;
+
+        TIME_POINT          start;
+//      std::chrono::time_point current;
 
     private:
 };

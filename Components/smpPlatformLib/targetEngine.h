@@ -61,9 +61,13 @@ public:
     targetEngine(std::string sChipID,
                  std::string sBlockID,
                  uint32_t engineIndex = 0,
-                 ucodeType eType = UCODE_RELEASE,
-                 std::string sPathToUcode = "../../../",
-                 std::string sPathToXml = "../../../xml/");
+                 ucodeType eType = UCODE_RELEASE);
+//    targetEngine(std::string sChipID,
+//                 std::string sBlockID,
+//                 uint32_t engineIndex = 0,
+//                 ucodeType eType = UCODE_RELEASE,
+//                 std::string sPathToUcode = "../../../",
+//                 std::string sPathToXml = "../../../xml/");
     virtual ~targetEngine();
 
     /*! Return true if the targetEngine is valid */
@@ -123,8 +127,8 @@ public:
     std::string         get_blockid() const;
     std::string         get_targetid() const;
 
-    std::string         get_xml_path() const;
-    std::string         get_ucode_path() const;
+//    std::string         get_xml_path() const;
+//    std::string         get_ucode_path() const;
 
     friend std::ostream& operator<<(std::ostream& os,const targetEngine& engine);
 
@@ -160,8 +164,8 @@ protected:
 
     RMuint32            m_resetOff;
 
-    std::string         m_sPathToUcode;
-    std::string         m_sPathToXml;
+//    std::string         m_sPathToUcode;
+//    std::string         m_sPathToXml;
 
 private:
 
@@ -174,7 +178,7 @@ typedef std::shared_ptr<targetEngine>   TARGET_ENGINE_PTR;
 typedef targetEngine*                   TARGET_ENGINE_PTR;
 #endif
 
-#define UCODE_PREFIX "../../../"
+//#define UCODE_PREFIX "../../../"
 
 #define DRAM_BASE       0xa8000000 // hardcoded value in a free Dram zone
 //#define DRAM_OFFSET     0x30000000
@@ -184,14 +188,21 @@ typedef targetEngine*                   TARGET_ENGINE_PTR;
 #define DSP_STOP                0x01
 #define DSP_RESET               0x03
 
+//inline TARGET_ENGINE_PTR CREATE_NEW_ENGINE(std::string chip,
+//                                           std::string blockID,
+//                                           int engineNo = 0,
+//                                           targetEngine::ucodeType type = targetEngine::UCODE_RELEASE,
+//                                           std::string sPathToUcode = "../../../",
+//                                           std::string sPathToXml = "../../../xml/")
+//{
+//    return std::make_shared<targetEngine>(chip, blockID, engineNo, type, sPathToUcode, sPathToXml);
+//}
 inline TARGET_ENGINE_PTR CREATE_NEW_ENGINE(std::string chip,
                                            std::string blockID,
                                            int engineNo = 0,
-                                           targetEngine::ucodeType type = targetEngine::UCODE_RELEASE,
-                                           std::string sPathToUcode = "../../../",
-                                           std::string sPathToXml = "../../../xml/")
+                                           targetEngine::ucodeType type = targetEngine::UCODE_RELEASE)
 {
-    return std::make_shared<targetEngine>(chip, blockID, engineNo, type, sPathToUcode, sPathToXml);
+    return std::make_shared<targetEngine>(chip, blockID, engineNo, type);
 }
 
 #endif // __TARGET_ENGINE_H__

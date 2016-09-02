@@ -89,6 +89,8 @@
 		<Unit filename="file_utils.h" />
 		<Unit filename="gbus_utils.cpp" />
 		<Unit filename="gbus_utils.h" />
+		<Unit filename="libOptions.cpp" />
+		<Unit filename="libOptions.h" />
 		<Unit filename="misc_utils.cpp" />
 		<Unit filename="misc_utils.h" />
 		<Unit filename="string_utils.cpp" />

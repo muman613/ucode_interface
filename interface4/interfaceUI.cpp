@@ -19,8 +19,13 @@ void _control_c_handler(int n) {
     bControlC = true;
 }
 
+#define     SET_FLAG(x)     flags |= (x)
+#define     CLEAR_FLAG(x)   flags &= ~(x)
+#define     TEST_FLAG(x)    ((flags & (x)) != 0)
+
 interfaceUI::interfaceUI()
-:   state(APP_STATE_UNKNOWN)
+:   state(APP_STATE_UNKNOWN),
+    flags(0)
 {
     //ctor
 }
@@ -254,6 +259,8 @@ void interfaceUI::draw_status_panel()
 {
     const char *msg = 0L;
     char buffer[DRAW_BUFFER_SIZE];
+    inputStats      inpStats;
+
     super_box( status_window, "Application Status", 2);
 
     snprintf(buffer, DRAW_BUFFER_SIZE, "Connected to %s @ %s",
@@ -281,7 +288,7 @@ void interfaceUI::draw_status_panel()
             msg = "Sending Stop command!";
             break;
         case APP_PLAYING:
-            snprintf(buffer, 256, "> Playing stream %s <", "N/A");
+            snprintf(buffer, 256, "> Playing stream %s <", inStats.sInputFile.c_str());
             msg = buffer;
             break;
         default:
@@ -292,6 +299,7 @@ void interfaceUI::draw_status_panel()
     /* Update status panel... */
     center_string(status_window, 2, 3, msg);
 
+    return;
 }
 
 /**
@@ -313,16 +321,15 @@ int interfaceUI::update_user_interface()
         draw_input_panel();
         draw_output_panel();
 
-//        if ((pCtx->flags & FLAG_QUIT_IN_PROGRESS) == 0) {
-//
-//            if ((pCtx->flags & FLAG_SAVING_YUV) != 0) {
-//                sMsg = "Hit 'v' to view YUV/ Hit 'q' to quit";
-//            } else {
-        sMsg = "Hit 'q' to quit";
-//            }
-//        } else {
-//            sMsg = "Quitting application";
-//        }
+        if (!TEST_FLAG(FLAG_QUIT_IN_PROGRESS)) {
+            if (outStats.bSavingYUV == true) {
+                sMsg = "Hit 'v' to view YUV/ Hit 'q' to quit";
+            } else {
+                sMsg = "Hit 'q' to quit";
+            }
+        } else {
+            sMsg = "Quitting application";
+        }
 
         center_string( stdscr, 1, screeny-1, sMsg.c_str());
     } else {
@@ -330,19 +337,13 @@ int interfaceUI::update_user_interface()
         hide_panel( output_panel );
     }
 
-//    if ((pCtx->flags & FLAG_QUIT_IN_PROGRESS) == 0) {
-    center_string( stdscr, 1, screeny-1, "Hit 'q' to quit");
-//    } else {
-//        center_string( pCtx, stdscr, 1, pCtx->screeny-1, "Quitting application");
-//    }
-
     update_panels();
     doupdate();
 
     /* release context mutex */
 //    pthread_mutex_unlock( &pCtx->context_mutex );
 
-    return UIRESULT_FAIL;
+    return UIRESULT_OK;
 }
 
 /**
@@ -354,13 +355,13 @@ bool interfaceUI::run()
     bool bRes = false;
     D(debug("%s\n", __PRETTY_FUNCTION__));
 
+    start = std::chrono::system_clock::now();
+
     state = APP_INITIALIZING;
     update_user_interface();
 
     pTarget = CREATE_NEW_ENGINE(opts.chipID, "Video",
-                                opts.engineNo, opts.type,
-                                "../",          /* Path to Ucode */
-                                "../xml/");     /* Path to database */
+                                opts.engineNo, opts.type);
 
     if (pTarget && pTarget->is_valid()) {
 #ifdef _DEBUG
@@ -386,6 +387,10 @@ bool interfaceUI::run()
                     bRes = true;
                 }
 
+                update_user_interface();
+
+                pStdIF->stop();
+
                 pStdIF.reset();
             }
         } else {
@@ -400,10 +405,15 @@ bool interfaceUI::run()
 
 void interfaceUI::main_loop()
 {
-    bool bDone = false;
+    bool                                bDone = false;
+    targetStandardIFTask::taskState     taskState;
+    targetStandardIFTask::taskSubstate  taskSubstate;
+    targetStandardInterface::if_state   ifState;
+    int                                 ch;
 
     while (!bDone) {
-        int ch = getch();
+
+        ch = getch();
 
         if (bControlC == true) {
             D(debug("-- user hit control-c!\n"));
@@ -413,23 +423,42 @@ void interfaceUI::main_loop()
         if (ch != ERR) {
             if (tolower(ch) == 'q') {
                 bDone = true;
+                SET_FLAG(FLAG_QUIT_IN_PROGRESS);
                 break;
             }
-            if (tolower(ch) == 'l') {
-                state = APP_LOADING_MICROCODE;
-                continue;
-            }
-            if (tolower(ch) == 'p') {
-                state = APP_PLAYING;
-                continue;
-            }
-            if (tolower(ch) == 's') {
-                state = APP_SENDING_STOP;
-                continue;
-            }
+
 //            if ((toupper(ch) == 'V') && (pCtx->yuvfp != 0)) {
 //                launch_viewer(pCtx.get());
 //            }
+        }
+
+        ifState = pStdIF->get_interface_state();
+
+        if (ifState != targetStandardInterface::IF_PLAYING) {
+            pStdIF->get_task_state(0, &taskState, &taskSubstate);
+
+            if (taskState == targetStandardIFTask::TASK_COMMAND_PENDING) {
+                switch (taskSubstate) {
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_UNINIT:
+                        state = APP_SENDING_UNINIT;
+                        break;
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_INIT:
+                        state = APP_SENDING_INIT;
+                        break;
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_STOP:
+                        state = APP_SENDING_STOP;
+                        break;
+                    case targetStandardIFTask::TASK_SUBSTATE_SENT_PLAY:
+                        state = APP_SENDING_PLAY;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        } else {
+            state = APP_PLAYING;
+            pStdIF->get_input_stats(0, inStats);
+            pStdIF->get_output_stats(0, outStats);
         }
 
         update_user_interface();

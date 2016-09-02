@@ -17,6 +17,7 @@
 #include "video_utils.h"
 #include "targetEngine.h"
 #include "file_utils.h"
+#include "libOptions.h"
 
 #ifdef _DEBUG
     #define LOCALDBG ENABLE
@@ -91,12 +92,9 @@ std::ostream& operator<<(std::ostream& os, const targetEngine& engine)
  */
 
 targetEngine::targetEngine(string sChipID, string sBlockID,
-                           uint32_t nEngineIndex, ucodeType type,
-                           string sPathToUcode, string sPathToXml)
+                           uint32_t nEngineIndex, ucodeType type)
 :   m_dramBase(DRAM_BASE),
-    m_uiDRAMPtr(DRAM_BASE),
-    m_sPathToUcode(sPathToUcode),
-    m_sPathToXml(sPathToXml)
+    m_uiDRAMPtr(DRAM_BASE)
 {
     // ctor
     m_flags.flag_mutex.lock();
@@ -177,7 +175,7 @@ bool targetEngine::open(string sChipID, string sBlockID,
     m_nEngineIndex  = nEngineIndex;
 
     if (resolve_files()) {
-        if (platDB.LoadDatabase(PLATFORM_DATABASE_FILE, m_sPathToXml)) {
+        if (platDB.LoadDatabase(PLATFORM_DATABASE_FILE, OPTION_XML_PATH)) {
             PlatformChip chip;
 
 #ifdef _DEBUG
@@ -259,7 +257,7 @@ bool targetEngine::resolve_files()
     if (m_filePack.resolve_package(m_sChipID,
                                    m_nEngineIndex,
                                    (m_eType == UCODE_DEBUG)?true:false,
-                                   m_sPathToUcode))
+                                   OPTION_UCODE_PATH))
     {
 #ifdef _DEBUG
         m_filePack.dump( stderr );
@@ -657,14 +655,4 @@ std::string targetEngine::get_ucode_file(bool bFullPath)
  *
  */
 
-std::string targetEngine::get_xml_path() const {
-    return m_sPathToXml;
-}
 
-/**
- *
- */
-
-std::string targetEngine::get_ucode_path() const {
-    return m_sPathToUcode;
-}

@@ -22,6 +22,7 @@
 #include "gbus_utils.h"
 #include "misc_utils.h"
 #include "targetOptionsManager.h"
+#include "libOptions.h"
 
 #ifdef _DEBUG
 #define LOCALDBG    ENABLE
@@ -1315,7 +1316,7 @@ bool targetStandardInterface::_play_stream(const std::string& sInputStreamName,
     parms.nProfile          = profile;
     parms.pAlloc            = m_pAlloc[0];
     parms.pIF               = dynamic_cast<controlInterface*>(m_pEngine[0].get());
-    parms.sXmlPath          = m_pEngine[0]->get_xml_path();
+    parms.sXmlPath          = OPTION_XML_PATH;
 
     tasks[taskID] = std::make_shared<targetStandardIFTask>(parms);
     tasks[taskID]->start();

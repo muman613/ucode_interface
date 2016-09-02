@@ -30,7 +30,8 @@ CPP_SOURCES = 	targetAllocator.cpp												\
 				struct_utils.cpp												\
 				file_utils.cpp													\
 				gbus_utils.cpp													\
-				misc_utils.cpp
+				misc_utils.cpp													\
+				libOptions.cpp
 
 INCLUDES=-I../.. -I.. -I ../gbusfifolib -I../remote_client -I ../targetOptions
 #DEFINES=-DRMFEATURE_VIDEO_INTERFACE_VERSION=2 -DGBUS_LOGGER=1

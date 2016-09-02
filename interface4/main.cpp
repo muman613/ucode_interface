@@ -7,6 +7,7 @@
 #include <signal.h>
 #include "dbgutils.h"
 #include "interfaceUI.h"
+#include "libOptions.h"
 
 using namespace std;
 
@@ -29,6 +30,9 @@ void debug(const char* sFmt, ...) {
 int main(int argc, char * argv[])
 {
     interfaceUI     ui;
+
+    globalOptions.set_xml_path("../xml/");
+    globalOptions.set_ucode_path("../");
 
     D(open_log_files("messages.txt", "errors.txt"));
 
