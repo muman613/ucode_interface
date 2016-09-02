@@ -209,14 +209,21 @@ bool targetEngine::open(string sChipID, string sBlockID,
                         if (m_structDB.open( m_filePack.sInterfaceFile.c_str() )) {
                             RMDBGLOG((LOCALDBG, "%zu structures loaded!\n", m_structDB.size()));
                             bRes = true;
+                        } else {
+                            RMDBGLOG((LOCALDBG, "ERROR: Unable to video interface header!\n"));
                         }
+                    } else {
+                        RMDBGLOG((LOCALDBG, "ERROR: Unable to open labels header!\n"));
                     }
+                } else {
+                    RMDBGLOG((LOCALDBG, "ERROR: Engine # out of range!\n"));
                 }
-
             } else {
                 RMDBGLOG((LOCALDBG, "ERROR: Invalid chip ID [%s]\n", m_sChipID.c_str()));
             }
 
+        } else {
+            RMDBGLOG((LOCALDBG, "ERROR: Unable to open platform database!\n"));
         }
     }
 

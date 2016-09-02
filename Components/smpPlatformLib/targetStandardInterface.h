@@ -116,6 +116,7 @@ struct inputStats {
 };
 
 struct outputStats {
+    bool            bSavingYUV;
     std::string     sYUVFile;
     RMuint32        pic_address;
     RMuint32        pic_luma_buffer;

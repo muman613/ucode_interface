@@ -993,6 +993,7 @@ void targetStandardIFTask::update_output_stats()
 {
     mutex_guard guard(outputStatMutex);
 
+    oStats.bSavingYUV        = (yuvfp != nullptr)?true:false;
     oStats.sYUVFile          = outputYUVName;
     oStats.pic_address       = picbuf_address;
     oStats.pic_luma_buffer   = luma_address;
@@ -1317,6 +1318,8 @@ bool targetStandardInterface::_play_stream(const std::string& sInputStreamName,
     parms.pAlloc            = m_pAlloc[0];
     parms.pIF               = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     parms.sXmlPath          = OPTION_XML_PATH;
+
+    ifState = IF_COMMAND_PENDING;
 
     tasks[taskID] = std::make_shared<targetStandardIFTask>(parms);
     tasks[taskID]->start();
