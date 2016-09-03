@@ -9,6 +9,7 @@
 #include "dbgutils.h"
 #include "targetEngine.h"
 #include "targetStandardInterface.h"
+#include "libOptions.h"
 #include "utils.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -257,7 +258,7 @@ bool wait_for_playback_to_start(TARGET_STD_IF pIF)
         }
 //        std::cout <<  "ifState :" << (int)ifState << " Task State : " << (int)tskState << " Task Substate : " << (int)tskSubstate << std::endl;
 
-        snprintf(sMsgBuffer, 128, "%s...", sCmdString.c_str());
+        snprintf(sMsgBuffer, 128, "%d %s...", (int)ifState, sCmdString.c_str());
 
         if (lastSize != 0) {
             for (size_t i = 0 ; i < lastSize ; i++)
@@ -287,6 +288,9 @@ int main(int argc, char * argv[])
 {
     TARGET_ENGINE_PTR   pTarget;
     optionPack          opts;
+
+//  globalOptions.set_xml_path("../../../xml/");
+//  globalOptions.set_ucode_path("../../../ucode/");
 
     D(open_log_files("messages.txt", "errors.txt"));
 
@@ -376,12 +380,16 @@ int main(int argc, char * argv[])
 
                         pStdIF.reset();
                     }
+                } else {
+                    std::cout << "Unable to load microcode!" << std::endl;
                 }
             } else {
                 std::cout << "UNABLE TO CONNECT TO TARGET!" << std::endl;
             }
 
             pTarget.reset();
+        } else {
+            std::cout << "Unable to open engine..." << std::endl;
         }
 
         reset_terminal_mode();
