@@ -109,6 +109,24 @@ typedef struct _fifo {
     uint32_t        uiFifoWrPtr;            ///< FIFO write pointer
 } FIFO;
 
+typedef struct picBufComponent {
+    uint32_t        uiBufAddress;
+    uint32_t        uiTotalWidth;
+    uint32_t        uiBufWidth;
+    uint32_t        uiBufHeight;
+    uint32_t        uiPosX;
+    uint32_t        uiPosY;
+    uint32_t        uiPosWidth;
+    uint32_t        uiPosHeight;
+    uint32_t        uiSizeTile;
+} PICBUF_COMP;
+
+typedef struct picBufSpec {
+    uint32_t        uiPicAddress;
+    PICBUF_COMP     lumaComp;
+    PICBUF_COMP     chromaComp;
+} PICBUF_SPEC;
+
 struct inputStats {
     std::string     sInputFile;
     RMuint32        profile;
@@ -121,14 +139,15 @@ struct inputStats {
 struct outputStats {
     bool            bSavingYUV;
     std::string     sYUVFile;
-    RMuint32        pic_address;
-    RMuint32        pic_luma_buffer;
-    RMuint32        pic_chroma_buffer;
-    RMuint32        pic_width;
-    RMuint32        pic_height;
+//    RMuint32        pic_address;
+//    RMuint32        pic_luma_buffer;
+//    RMuint32        pic_chroma_buffer;
+//    RMuint32        pic_width;
+//    RMuint32        pic_height;
     RMuint32        frame_count;
     double          save_time;
     FIFO            dispFifo;
+    PICBUF_SPEC     picInfo;
 };
 
 struct MicrocodeInbandParams {
@@ -277,6 +296,8 @@ protected:
     volatile std::atomic<taskSubstate>   task_substate;
 
     std::string             sXmlPath;
+
+    PICBUF_SPEC             picbufSpec;
 
 private:
     controlInterface*       pIF;

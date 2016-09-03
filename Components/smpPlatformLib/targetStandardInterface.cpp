@@ -850,13 +850,38 @@ RMstatus targetStandardIFTask::process_picture(RMuint32 picture_address)
 
     ts2 = std::chrono::high_resolution_clock::now();
 
+    outputStatMutex.lock();
+
     picture_w       = luma_position_in_buffer.width;
     picture_h       = luma_position_in_buffer.height;
     picture_count   = frame_count;
     picbuf_address  = picture_address;
 
+    picbufSpec.uiPicAddress             = picture_address;
+    picbufSpec.lumaComp.uiBufAddress    = luma_address;
+    picbufSpec.lumaComp.uiTotalWidth    = luma_ttl_wd;
+    picbufSpec.lumaComp.uiBufWidth      = luma_buf_width;
+    picbufSpec.lumaComp.uiBufHeight     = luma_buf_height;
+    picbufSpec.lumaComp.uiPosX          = luma_position_in_buffer.x;
+    picbufSpec.lumaComp.uiPosY          = luma_position_in_buffer.y;
+    picbufSpec.lumaComp.uiPosWidth      = luma_position_in_buffer.width;
+    picbufSpec.lumaComp.uiPosHeight     = luma_position_in_buffer.height;
+    picbufSpec.lumaComp.uiSizeTile      = luma_size_tile;
+
+    picbufSpec.chromaComp.uiBufAddress  = chroma_address;
+    picbufSpec.chromaComp.uiTotalWidth  = chroma_ttl_wd;
+    picbufSpec.chromaComp.uiBufWidth    = chroma_buf_width;
+    picbufSpec.chromaComp.uiBufHeight   = chroma_buf_height;
+    picbufSpec.chromaComp.uiPosX        = chroma_position_in_buffer.x;
+    picbufSpec.chromaComp.uiPosY        = chroma_position_in_buffer.y;
+    picbufSpec.chromaComp.uiPosWidth    = chroma_position_in_buffer.width;
+    picbufSpec.chromaComp.uiPosHeight   = chroma_position_in_buffer.height;
+    picbufSpec.chromaComp.uiSizeTile    = chroma_size_tile;
+
     ts3 = ts2 - ts1;
     save_time = ts3.count();
+
+    outputStatMutex.unlock();
 
     return result;
 }
@@ -1011,15 +1036,16 @@ void targetStandardIFTask::update_output_stats()
 {
     mutex_guard guard(outputStatMutex);
 
-    oStats.bSavingYUV        = (yuvfp != nullptr)?true:false;
-    oStats.sYUVFile          = outputYUVName;
-    oStats.pic_address       = picbuf_address;
-    oStats.pic_luma_buffer   = luma_address;
-    oStats.pic_chroma_buffer = chroma_address;
-    oStats.pic_width         = picture_w;
-    oStats.pic_height        = picture_h;
-    oStats.save_time         = save_time;
-    oStats.frame_count       = picture_count;
+    oStats.bSavingYUV       = (yuvfp != nullptr)?true:false;
+    oStats.sYUVFile         = outputYUVName;
+//    oStats.pic_address       = picbuf_address;
+//    oStats.pic_luma_buffer   = luma_address;
+//    oStats.pic_chroma_buffer = chroma_address;
+//    oStats.pic_width         = picture_w;
+//    oStats.pic_height        = picture_h;
+    oStats.picInfo          = picbufSpec;
+    oStats.save_time        = save_time;
+    oStats.frame_count      = picture_count;
 
     return;
 }
