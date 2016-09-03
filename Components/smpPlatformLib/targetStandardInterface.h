@@ -113,6 +113,9 @@ struct inputStats {
     std::string     sInputFile;
     RMuint32        profile;
     size_t          bytesRead;
+    RMuint32        pvtdb;
+    RMuint32        pvti;
+    FIFO            btsFifo;
 };
 
 struct outputStats {
@@ -125,6 +128,7 @@ struct outputStats {
     RMuint32        pic_height;
     RMuint32        frame_count;
     double          save_time;
+    FIFO            dispFifo;
 };
 
 struct MicrocodeInbandParams {

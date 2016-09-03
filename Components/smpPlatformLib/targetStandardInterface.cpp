@@ -639,6 +639,14 @@ void* targetStandardIFTask::fifoEmptyThreadFunc()
             // update FIFO read pointer
             gbus_fifo_incr_read_ptr(pIF->get_gbusptr(), (struct gbus_fifo*)display_fifo, 1);
 
+            outputStatMutex.lock();
+            oStats.dispFifo.uiFifoCont  = display_fifo;
+            oStats.dispFifo.uiFifoPtr   = fifo_base;
+            oStats.dispFifo.uiFifoSize  = fifo_size;
+            oStats.dispFifo.uiFifoRdPtr = rd;
+            oStats.dispFifo.uiFifoWrPtr = wr;
+            outputStatMutex.unlock();
+
             update_output_stats();
         }
 
@@ -675,6 +683,14 @@ RMuint32 targetStandardIFTask::write_data_in_circular_bts_fifo(RMuint8 *pBuf,
 
     RMDBGLOG((LOCALDBG, "FIFO @ 0x%08lX START 0x%08lX SIZE 0x%08lX RD = 0x%08lX WR = 0x%08lX\n",
             (unsigned long)bts_fifo, fifo_base, fifo_size, rd, wr));
+
+    inputStatMutex.lock();
+    iStats.btsFifo.uiFifoCont   = bts_fifo;
+    iStats.btsFifo.uiFifoPtr    = fifo_base;
+    iStats.btsFifo.uiFifoSize   = fifo_size;
+    iStats.btsFifo.uiFifoRdPtr  = rd;
+    iStats.btsFifo.uiFifoWrPtr  = wr;
+    inputStatMutex.unlock();
 
 	if ( rd > wr ) {
 		/* emptiness in one chunk */
@@ -981,6 +997,8 @@ void targetStandardIFTask::update_input_stats()
     iStats.sInputFile   = inputStreamName;
     iStats.profile      = decoderProfile;
     iStats.bytesRead    = total_bytes_read;
+    iStats.pvtdb        = pvtdb;
+    iStats.pvti         = pvti;
 
     return;
 }
