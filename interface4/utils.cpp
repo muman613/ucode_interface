@@ -16,69 +16,19 @@
 #include <errno.h>
 #include <assert.h>
 #include <sys/ioctl.h>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sys/types.h>
+#include <signal.h>
+
 #include "utils.h"
 //#include <unistd.h>
 #include <fcntl.h>
 
-#ifndef ENABLE_CURSES
-int _kbhit(void)
-{
-    static const int STDIN = 0;
-    static int initialized = 0;
-    int bytesWaiting;
 
-    if (initialized == 0)
-    {
-        // Use termios to turn off line buffering
-        struct termios term;
+#define FRAMEINSPECTOR_EXE      "/usr/local/bin/frameInspector"
 
-        tcgetattr(STDIN, &term);
-        term.c_lflag &= ~ICANON;
-        tcsetattr(STDIN, TCSANOW, &term);
-        setbuf(stdin, NULL);
-        initialized = 1;
-    }
-
-    ioctl(STDIN, FIONREAD, &bytesWaiting);
-    return bytesWaiting;
-}
-
-static struct termios orig_term_attr;
-
-void set_terminal_mode()
-{
-    struct termios new_term_attr;
-
-    tcgetattr(fileno(stdin), &orig_term_attr);
-    memcpy(&new_term_attr, &orig_term_attr, sizeof(struct termios));
-    new_term_attr.c_lflag &= ~(ECHO|ICANON);
-//    new_term_attr.c_lflag &= ~(ECHO);
-    tcsetattr(fileno(stdin), TCSANOW, &new_term_attr);
-
-    fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
-    printf("\e[?25l"); /* hide the cursor */
-
-    return;
-}
-
-void reset_terminal_mode()
-{
-    /* restore the original terminal attributes */
-    tcsetattr(fileno(stdin), TCSANOW, &orig_term_attr);
-    fcntl(fileno(stdin), F_SETFL, ~O_NONBLOCK);
-    printf("\e[?25h"); /* show the cursor */
-}
-
-int getkey()
-{
-    int character;
-
-    character = fgetc(stdin);
-
-    return character;
-}
-
-#endif // ENABLE_CURSES
 
 struct timespec difftimespec(struct timespec start, struct timespec end)
 {
@@ -100,60 +50,6 @@ double get_ts_seconds(struct timespec spec) {
 
     return secs;
 }
-
-#if 0
-struct profileEntry {
-    const char*     szIdent;
-    int             nProfile;
-};
-
-/**
- *  Table which relates abbreviation string to codec ID.
- */
-
-static struct profileEntry profileTable[] = {
-    { "mpeg2",  VideoProfileMPEG2, },
-    { "mpeg4",  VideoProfileMPEG4, },
-    { "h264",   VideoProfileH264, },
-    { "h265",   VideoProfileH265, },
-    { "hevc",   VideoProfileH265, },
-    { 0L, 0, },
-};
-
-/**
- *
- */
-
-RMint32 get_profile_id_from_string(const char* szCodecID) {
-    struct profileEntry *pCurEntry = profileTable;
-
-    while (pCurEntry->szIdent != NULL) {
-        if (stricmp(pCurEntry->szIdent, szCodecID) == 0) {
-            return pCurEntry->nProfile;
-        }
-        pCurEntry++;    // Advance to next profile entry...
-    }
-
-    return -1;
-}
-
-/**
- *
- */
-
-const char* get_profile_string_from_id(RMint32 codec_id) {
-    struct profileEntry *pCurEntry = profileTable;
-
-    while (pCurEntry->szIdent != NULL) {
-        if (pCurEntry->nProfile == codec_id) {
-            return pCurEntry->szIdent;
-        }
-        pCurEntry++;    // Advance to next profile entry...
-    }
-
-    return NULL;
-}
-#endif // 0
 
 /** c++ version */
 std::string generate_output_yuv(std::string sPath, std::string sInputName) {
@@ -191,8 +87,7 @@ std::string generate_output_yuv(std::string sPath, std::string sInputName) {
 // arg5 -c
 // arg6 1
 
-#ifdef ENABLE_CURSES
-void launch_viewer(CONTEXT* pCtx)
+void launch_viewer(const std::string sYUVFilename, int w, int h, int frame)
 {
     const char*         argv[8] = { FRAMEINSPECTOR_EXE,
                                     "-f",
@@ -205,17 +100,18 @@ void launch_viewer(CONTEXT* pCtx)
     char                szFilename[1024];
     char                szDimensions[32];
     char                szFrame[8];
-    pid_t               pid;
+    static pid_t        viewPid = 0;
+    pid_t               pid = 0;
 
-    if (pCtx->viewPid != 0) {
-        kill(pCtx->viewPid, SIGKILL);
-        pCtx->viewPid = 0;
+    if (viewPid != 0) {
+        kill(viewPid, SIGKILL);
+        viewPid = 0;
     }
 
-    if (pCtx->picture_count > 0) {
-        snprintf(szFilename, 1024, "%s", pCtx->file.sYUVFilename.c_str());
-        snprintf(szDimensions, 32, "%ldx%ld", (unsigned long)pCtx->picture_w, (unsigned long)pCtx->picture_h);
-        snprintf(szFrame, 8, "%ld", (unsigned long)pCtx->picture_count - 1);
+    if (frame > 0) {
+        snprintf(szFilename, 1024, "%s", sYUVFilename.c_str());
+        snprintf(szDimensions, 32, "%ldx%ld", (unsigned long)w, (unsigned long)h);
+        snprintf(szFrame, 8, "%ld", (unsigned long)frame - 1);
 
         argv[2] = szFilename;
         argv[4] = szDimensions;
@@ -224,13 +120,13 @@ void launch_viewer(CONTEXT* pCtx)
         if (posix_spawn(&pid, FRAMEINSPECTOR_EXE, NULL, NULL,
                         (char* const*)argv, environ) == 0)
         {
-            pCtx->viewPid = pid;
+            viewPid = pid;
         } else {
             fprintf(stderr, "ERROR: Unable to spawn (%s)\n", strerror(errno));
         }
     }
 }
-#endif // ENABLE_CURSES
+
 
 bool get_environment_string(const std::string sVarName, std::string& sValue) {
     const char* szValue = nullptr;
@@ -243,3 +139,42 @@ bool get_environment_string(const std::string sVarName, std::string& sValue) {
 
     return (sValue.empty()?false:true);
 }
+
+/**
+ *
+ */
+
+std::string diffTime(const std::chrono::system_clock::time_point& start,
+                     const std::chrono::system_clock::time_point& now)
+{
+    using namespace std::chrono;
+
+//    steady_clock::time_point start = /* Some point in time */;
+//    steady_clock::time_point now = steady_clock::now();
+
+    int hhh = duration_cast<hours>(now - start).count();
+    int mm = duration_cast<minutes>(now - start).count() % 60;
+    int ss = duration_cast<seconds>(now - start).count() % 60;
+
+    std::ostringstream stream;
+    stream << std::setfill('0') << std::setw(2) << hhh << "h " <<
+        std::setfill('0') << std::setw(2) << mm << "m " <<
+        std::setfill('0') << std::setw(2) << ss << "s";
+    std::string result = stream.str();
+
+    return result;
+}
+
+/**
+ *
+ */
+
+std::string asString(const std::chrono::system_clock::time_point& now) {
+    char        sTimeBuffer[256];
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::tm     tm = *std::localtime(&t);
+    std::strftime(sTimeBuffer, 256, "%r", &tm);
+    return std::string(sTimeBuffer);
+}
+
+

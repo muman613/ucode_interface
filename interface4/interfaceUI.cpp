@@ -8,20 +8,60 @@
 #include <panel.h>
 #include <signal.h>
 #include <unistd.h>
+#include <iomanip>
+#include <string>
 #include "dbgutils.h"
 #include "interfaceUI.h"
 
+template< typename T >
+std::string hexify(T i)
+{
+    std::stringbuf buf;
+    std::ostream os(&buf);
+
+
+    os << "0x" << std::setfill('0') << std::setw(sizeof(T) * 2)
+       << std::uppercase << std::hex << i;
+
+    return buf.str().c_str();
+}
+
+template <typename T>
+std::string to_string(T const& value) {
+    std::stringstream sstr;
+    sstr << value;
+    return sstr.str();
+}
+
+//template <typename T>
+std::string dbl_to_string(double const& value) {
+    std::stringstream sstr;
+    sstr << std::fixed << std::setprecision(3) << value;
+    return sstr.str();
+}
 
 static volatile bool bControlC = false;
+
+/**
+ *  Handle when user enters Control-C to break application.
+ */
 
 void _control_c_handler(int n) {
     D(debug("%s\n", __PRETTY_FUNCTION__));
     bControlC = true;
 }
 
-#define     SET_FLAG(x)     flags |= (x)
-#define     CLEAR_FLAG(x)   flags &= ~(x)
-#define     TEST_FLAG(x)    ((flags & (x)) != 0)
+std::string format_fifo_string(FIFO* pFifo)
+{
+    std::ostringstream  os;
+
+    os << "AT " << hexify(pFifo->uiFifoPtr) << " SIZE " <<
+          hexify(pFifo->uiFifoSize) << " RDPTR " << hexify(pFifo->uiFifoRdPtr) <<
+          " WRPTR " << hexify(pFifo->uiFifoWrPtr);
+
+    return os.str();
+}
+
 
 interfaceUI::interfaceUI()
 :   state(APP_STATE_UNKNOWN),
@@ -196,13 +236,60 @@ void interfaceUI::super_box(WINDOW* pWin, const char* sTitle, int colors)
 
 void interfaceUI::draw_input_panel()
 {
-//    char buffer[DRAW_BUFFER_SIZE];
-//    int y = 1;
-//    time_t now = time(NULL);
+
+    int y = 1;
+
+    auto DRAW_INPUT_FIELD_FIFO = [&](std::string text, FIFO* pFifo) {
+        text.resize(20);
+        mvwaddstr(input_window, y, 4, text.c_str());
+        mvwaddch(input_window, y, 25, ':');
+        mvwaddstr(input_window, y, 27, format_fifo_string(pFifo).c_str());
+        y++;
+    };
+    auto DRAW_INPUT_FIELD_HEX = [&](std::string text, uint32_t value) {
+        text.resize(20);
+        mvwaddstr(input_window, y, 4, text.c_str());
+        mvwaddch(input_window, y, 25, ':');
+        mvwaddstr(input_window, y, 27, hexify(value).c_str());
+        y++;
+    };
+
+    auto DRAW_INPUT_FIELD_STR = [&](std::string text, std::string value) {
+        text.resize(20);
+        mvwaddstr(input_window, y, 4, text.c_str());
+        mvwaddch(input_window, y, 25, ':');
+        mvwaddstr(input_window, y, 27, value.c_str());
+        y++;
+    };
+
+//    auto DRAW_INPUT_FIELD_DEC = [&](std::string text, uint32_t value) {
+////        std::ostringstream   os;
+////        os << std::setw(LABEL_WIDTH) << std::setfill(' ') << std::left << text << ": " << value;
+//        y++;
+////        return os.str();
+//    };
+
+    auto DRAW_INPUT_FIELD_TP = [&](std::string text, TIME_POINT tp) {
+        text.resize(20);
+        mvwaddstr(input_window, y, 4, text.c_str());
+        mvwaddch(input_window, y, 25, ':');
+        mvwaddstr(input_window, y, 27, asString(tp).c_str());
+        y++;
+    };
+
+    TIME_POINT now = std::chrono::system_clock::now();
 
     super_box( input_window, "Input", 4 );
 
-//    DRAW_INPUT_FIELD_TS  ( "Start Time",           pCtx->startTime, "%r", pCtx, y );
+    DRAW_INPUT_FIELD_TP  ( "Start Time",            start );
+    DRAW_INPUT_FIELD_TP  ( "Current Time",          now );
+    DRAW_INPUT_FIELD_STR ( "Input Bitstream",       inStats.sInputFile );
+    DRAW_INPUT_FIELD_STR ( "Codec Profile",         targetStandardInterface::get_profile_string_from_id(inStats.profile) );
+    DRAW_INPUT_FIELD_STR ( "Video Microcode",       pTarget->get_ucode_file() );
+    DRAW_INPUT_FIELD_HEX ( "Video Task Database",   inStats.pvtdb );
+    DRAW_INPUT_FIELD_HEX ( "Video Task Interface",  inStats.pvti );
+    DRAW_INPUT_FIELD_HEX ( "Bts FIFO Container",    inStats.btsFifo.uiFifoCont );
+    DRAW_INPUT_FIELD_FIFO( "Bitstream FIFO",        &inStats.btsFifo );
 //    DRAW_INPUT_FIELD_TS  ( "Current Time",         now, "%r", pCtx, y );
 //    DRAW_INPUT_FIELD_FLAG( "Status",               FLAG_FILLTHREAD_RUNNING, "Filling FIFO", "Done", pCtx, y);
 //    DRAW_INPUT_FIELD_STR ( "Input Bitstream",      pCtx->szPlayFile, pCtx, y );
@@ -230,14 +317,57 @@ void interfaceUI::draw_input_panel()
 void interfaceUI::draw_output_panel()
 {
 //    char buffer[DRAW_BUFFER_SIZE];
-//    int y = 1;
+    int y = 1;
+
+    auto DRAW_OUTPUT_FIELD_STR = [&](std::string text, std::string value) {
+        text.resize(20);
+        mvwaddstr(output_window, y, 4, text.c_str());
+        mvwaddch(output_window, y, 25, ':');
+        mvwaddstr(output_window, y, 27, value.c_str());
+        y++;
+    };
+
+    auto DRAW_OUTPUT_FIELD_DEC = [&](std::string text, uint32_t value) {
+        text.resize(20);
+        mvwaddstr(output_window, y, 4, text.c_str());
+        mvwaddch(output_window, y, 25, ':');
+        mvwaddstr(output_window, y, 27, std::to_string(value).c_str());
+        y++;
+    };
+
+    auto DRAW_OUTPUT_FIELD_FIFO = [&](std::string text, FIFO* pFifo) {
+        text.resize(20);
+        mvwaddstr(output_window, y, 4, text.c_str());
+        mvwaddch(output_window, y, 25, ':');
+        mvwaddstr(output_window, y, 27, format_fifo_string(pFifo).c_str());
+        y++;
+    };
+
+    auto DRAW_OUTPUT_FIELD_HEX = [&](std::string text, uint32_t value) {
+        text.resize(20);
+        mvwaddstr(output_window, y, 4, text.c_str());
+        mvwaddch(output_window, y, 25, ':');
+        mvwaddstr(output_window, y, 27, hexify(value).c_str());
+        y++;
+    };
+    auto DRAW_OUTPUT_FIELD_DBL = [&](std::string text, double value) {
+        text.resize(20);
+        mvwaddstr(output_window, y, 4, text.c_str());
+        mvwaddch(output_window, y, 25, ':');
+        mvwaddstr(output_window, y, 27, dbl_to_string(value).c_str());
+        y++;
+    };
 
     super_box( output_window, "Output", 5 );
 
-//    DRAW_OUTPUT_FIELD_STR ( "Capture File",          pCtx->szCapFile, pCtx, y );
-//    DRAW_OUTPUT_FIELD_HEX ( "DispFIFO Container",    pCtx->DispFifo.uiFifoCont, pCtx, y );
-//    DRAW_OUTPUT_FIELD_FIFO( "Display FIFO",          pCtx->DispFifo, pCtx, y );
-//    DRAW_OUTPUT_FIELD_DEC ( "Frame Count",           pCtx->frameCnt, pCtx, y );
+    DRAW_OUTPUT_FIELD_STR ( "Capture File",             outStats.bSavingYUV?outStats.sYUVFile:"N/A" );
+    DRAW_OUTPUT_FIELD_DEC ( "Frame Count",              outStats.frame_count );
+    DRAW_OUTPUT_FIELD_HEX ( "DispFIFO Container",       outStats.dispFifo.uiFifoCont );
+    DRAW_OUTPUT_FIELD_FIFO( "Display FIFO",             &outStats.dispFifo);
+
+    if (outStats.frame_count > 0) {
+        DRAW_OUTPUT_FIELD_DBL ( "Frame DL Time",            outStats.save_time );
+    }
 //
 //    if (pCtx->frameCnt > 0) {
 //#ifdef  ENABLE_PROFILING
@@ -263,9 +393,13 @@ void interfaceUI::draw_status_panel()
 
     super_box( status_window, "Application Status", 2);
 
-    snprintf(buffer, DRAW_BUFFER_SIZE, "Connected to %s @ %s",
-             "8758", "10.10.10.12:0");
-    center_string(status_window, 2, 2, buffer);
+    if (pTarget && pTarget->is_connected()) {
+        snprintf(buffer, DRAW_BUFFER_SIZE, "Connected to %s @ %s",
+                pTarget->get_chipid().c_str(),pTarget->get_targetid().c_str());
+        center_string(status_window, 2, 2, buffer);
+    } else {
+        center_string(status_window, 2, 2, "Not Connected");
+    }
 
     switch (state) {
         case APP_INITIALIZING:
@@ -328,7 +462,7 @@ int interfaceUI::update_user_interface()
                 sMsg = "Hit 'q' to quit";
             }
         } else {
-            sMsg = "Quitting application";
+            sMsg = ">>>>>>> Quitting application <<<<<<<";
         }
 
         center_string( stdscr, 1, screeny-1, sMsg.c_str());
@@ -402,6 +536,10 @@ bool interfaceUI::run()
 
     return bRes;
 }
+
+/**
+ *
+ */
 
 void interfaceUI::main_loop()
 {

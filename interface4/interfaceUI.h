@@ -108,6 +108,12 @@ class interfaceUI
     private:
 };
 
-#define DRAW_BUFFER_SIZE            512
+
+#define     SET_FLAG(x)     flags |= (x)
+#define     CLEAR_FLAG(x)   flags &= ~(x)
+#define     TEST_FLAG(x)    ((flags & (x)) != 0)
+
+
+#define     DRAW_BUFFER_SIZE            512
 
 #endif // __INTERFACEUI_H__
