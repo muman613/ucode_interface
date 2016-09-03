@@ -62,6 +62,21 @@ std::string format_fifo_string(FIFO* pFifo)
     return os.str();
 }
 
+std::string format_picbuf_string(PICBUF_COMP* comp, int line)
+{
+    std::ostringstream  os;
+
+    if (line == 0) {
+        os << "buffer @ " << hexify(comp->uiBufAddress) << " ttl_width " << hexify(comp->uiTotalWidth);
+    } else if (line == 1) {
+        os << "tiled dimensions ( " << comp->uiBufWidth << " x " << comp->uiBufHeight << " )";
+    } else if (line == 2) {
+        os << "position x " << comp->uiPosX << " y " << comp->uiPosY << " w " <<
+              comp->uiPosWidth << " h " << comp->uiPosHeight << " size_tile " << comp->uiSizeTile;
+    }
+
+    return os.str();
+}
 
 interfaceUI::interfaceUI()
 :   state(APP_STATE_UNKNOWN),
@@ -357,6 +372,13 @@ void interfaceUI::draw_output_panel()
         mvwaddstr(output_window, y, 27, dbl_to_string(value).c_str());
         y++;
     };
+    auto DRAW_OUTPUT_FIELD_PB = [&](std::string text, PICBUF_COMP* pb, int line) {
+        text.resize(20);
+        mvwaddstr(output_window, y, 4, text.c_str());
+        mvwaddch(output_window, y, 25, ':');
+        mvwaddstr(output_window, y, 27, format_picbuf_string(pb, line).c_str());
+        y++;
+    };
 
     super_box( output_window, "Output", 5 );
 
@@ -367,23 +389,21 @@ void interfaceUI::draw_output_panel()
 
     if (outStats.frame_count > 0) {
         DRAW_OUTPUT_FIELD_DBL ( "Frame DL Time",            outStats.save_time );
+        DRAW_OUTPUT_FIELD_PB  ( "Luma",                     &outStats.picInfo.lumaComp, 0 );
+        DRAW_OUTPUT_FIELD_PB  ( "Luma",                     &outStats.picInfo.lumaComp, 1 );
+        DRAW_OUTPUT_FIELD_PB  ( "Luma",                     &outStats.picInfo.lumaComp, 2 );
+
+        DRAW_OUTPUT_FIELD_PB  ( "Chroma",                   &outStats.picInfo.chromaComp, 0 );
+        DRAW_OUTPUT_FIELD_PB  ( "Chroma",                   &outStats.picInfo.chromaComp, 1 );
+        DRAW_OUTPUT_FIELD_PB  ( "Chroma",                   &outStats.picInfo.chromaComp, 2 );
     }
-//
-//    if (pCtx->frameCnt > 0) {
-//#ifdef  ENABLE_PROFILING
-//        DRAW_OUTPUT_FIELD_DBL( "Frame DL time",      pCtx->secsPerFrame, pCtx, y);
-//#endif // ENABLE_PROFILING
-//        DRAW_OUTPUT_FIELD_PB( "Luma",   &pCtx->picbuf.lumaComp, 0, pCtx, y);
-//        DRAW_OUTPUT_FIELD_PB( "Luma",   &pCtx->picbuf.lumaComp, 1, pCtx, y);
-//        DRAW_OUTPUT_FIELD_PB( "Luma",   &pCtx->picbuf.lumaComp, 2, pCtx, y);
-//
-//        DRAW_OUTPUT_FIELD_PB( "Chroma", &pCtx->picbuf.chromaComp, 0, pCtx, y);
-//        DRAW_OUTPUT_FIELD_PB( "Chroma", &pCtx->picbuf.chromaComp, 1, pCtx, y);
-//        DRAW_OUTPUT_FIELD_PB( "Chroma", &pCtx->picbuf.chromaComp, 2, pCtx, y);
-//    }
-//
+
     return;
 }
+
+/**
+ *  Draw status panel showing the overall status of the application.
+ */
 
 void interfaceUI::draw_status_panel()
 {
