@@ -1,0 +1,60 @@
+
+
+./bin/Debug/x86/interface2 -c 8760 -m r -s /media/elementary/mpeg2/test100.m2v -p mpeg2 -O /tmp
+
+./bin/Debug/x86/interface1 -b ../ucode/8758/release/video_microcode_SMP8758.bin -s /media/elementary/mpeg2/test100.m2v -p mpeg2
+
+./bin/Debug/x86/interface2 -c 8758 -m r -s /media/elementary/mpeg2/test100.m2v -p mpeg2 -O /tmp
+
+./bin/Release/x86/interface2 -c 8758 -m r -s /media/elementary/mpeg2/test100.m2v -p mpeg2 -O /tmp
+
+
+./bin/Debug/x86/testEngine --chip 8758 --stream /media/elementary/mpeg2/test100.m2v --decoder mpeg2 --yuv /tmp/capture1.yuv 2> log
+
+./bin/Debug/x86/testEngine --chip 8760 --stream /media/elementary/mpeg2/test100.m2v --decoder mpeg2 --yuv /tmp/capture2.yuv 2> log
+
+./bin/Debug/x86/testEngine --chip 8758 --stream /media/elementary/mpeg2/test100.m2v --decoder mpeg2 --yuv /tmp/capture2.yuv --engine 1 2> log
+
+./bin/Release/x86/testEngine --chip 8758 --stream /media/elementary/mpeg4/MP10_Striker_10mbps.mp4.m4v --decoder mpeg4 --yuv /tmp/striker.yuv
+
+./bin/Release/x86/testEngine --chip 8758 --stream /media/elementary/h264/elize.mkv.h264 --decoder h264 --yuv /tmp/elize.yuv
+
+./bin/Debug/x86/testEngine --chip 8758 --stream  /media/elementary/hevc/bbb.265 --decoder h265 --yuv /tmp/bbb.yuv 2> log
+
+./bin/Release/x86/testEngine --chip 8760 --stream  /media/elementary/hevc/bbb.265 --decoder h265 --yuv /tmp/bbb.yuv
+
+================================================================================
+Tested streams 8758
+================================================================================
+
+./bin/Release/x86/testEngine --chip 8758 --stream /media/elementary/hevc/bbb.265 --decoder h265 --yuv /tmp/bbb.yuv
+
+./bin/Release/x86/testEngine --chip 8758 --stream /media/elementary/h264/microsoft/microsoft.264/microsoft.264 --decoder h264 --yuv /tmp/microsoft.yuv
+
+./bin/Release/x86/testEngine --chip 8758 --stream /media/elementary/mpeg4/MP10_Striker_10mbps.mp4.m4v --decoder mpeg4 --yuv /tmp/striker.yuv
+
+./bin/Release/x86/testEngine -r 10.10.10.12:0 --chip 8758 --stream /media/elementary/mpeg2/test100.m2v --decoder mpeg2 --yuv /tmp/capture2.yuv
+
+./bin/Release/x86/testEngine -r 10.10.10.52:0 --chip 8756 --stream /media/elementary/mpeg2/test100.m2v --decoder mpeg2 --yuv /tmp/capture1.yuv
+
+
+[targetStandardInterface.cpp:324] pvti  = 0xA8088724
+[video_utils.cpp:220] video_set_vti_pointer pvdtb= 0xa8083be8 pvti= 0xa8088724
+
+
+run --chip 8758 --stream /media/elementary/mpeg2/test100.m2v
+
+run --chip 8758 --decoder hevc --stream /media/elementary/hevc/bbb.265
+
+INTERFACE4 NOTES:
+
+./bin/Debug/x86/interface4 --chip 8758 --decoder hevc --stream /media/elementary/hevc/bbb.265 2> log
+./bin/Debug/x86/interface4 --chip 8758 --decoder mpeg2 --stream /media/elementary/mpeg2/test100.m2v --yuv /tmp/test100.yuv -r 10.10.10.12:0 2> log
+./bin/Debug/x86/interface4 --chip 8760 --decoder mpeg2 --stream /media/elementary/mpeg2/test100.m2v --yuv /tmp/test100.yuv -r sizzle:3052 2> log
+
+./bin/Release/x86/interface4 --chip 8758 --decoder hevc --stream /media/elementary/hevc/bbb.265 --yuv /tmp/bbb.yuv -r 10.10.10.12:0
+./bin/Release/x86/interface4 --chip 8758 --decoder mpeg2 --stream /media/elementary/mpeg2/test100.m2v --yuv /tmp/test100.yuv -r 10.10.10.12:0
+./bin/Release/x86/interface4 --chip 8756 --decoder mpeg2 --stream /media/elementary/mpeg2/test100.m2v --yuv /tmp/test100.yuv -r 10.10.10.52:0
+./bin/Release/x86/interface4 --chip 8760 --decoder mpeg2 --stream /media/elementary/mpeg2/test100.m2v --yuv /tmp/test100.yuv -r sizzle:3052
+
+
