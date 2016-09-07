@@ -38,7 +38,9 @@ bool resolve_package(std::string sChipId, int engineId, bool bDebug,
             sPrefix += "/";
     }
 
-    if ((sChipId == "8758") && (engineId == 1)) {
+    if (((sChipId == "8758") || (sChipId == "8756")) &&
+        (engineId == 1))
+    {
         os << sPrefix + (std::string)"ucode/" << sChipId << (std::string)((bDebug == false)?"/release/":"/debug/") << (std::string)"video_microcode_SMP" << sChipId << "_h265.bin";
         pack.sBinFile = os.str();
         RESET_STREAM(os);
