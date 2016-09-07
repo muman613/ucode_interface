@@ -101,7 +101,8 @@ public:
     /*! Load microcode from file specified in sUcodeFilename string. */
     bool                load_ucode(std::string sUcodeFilename);
 
-    std::string         get_ucode_file(bool bFullPath = false);
+    std::string         get_ucode_file(bool bFullPath = false) const;
+    ucodeType           get_ucode_type() const;
 
     /* Engine control functions */
 

@@ -4,6 +4,8 @@
 #include <ncurses.h>
 #include <panel.h>
 #include <chrono>
+#include <iomanip>
+
 #include "targetEngine.h"
 #include "targetStandardInterface.h"
 #include "utils.h"
@@ -94,6 +96,9 @@ class interfaceUI
         void                draw_output_panel();
         void                main_loop();
 
+        std::string         get_debug_string() const;
+        std::string         get_debug_string(const debugStatus& status) const;
+
         optionPack          opts;
 
         TARGET_ENGINE_PTR   pTarget;
@@ -101,9 +106,9 @@ class interfaceUI
 
         inputStats          inStats;
         outputStats         outStats;
+        debugStatus         dbgStatus;
 
         TIME_POINT          start;
-//      std::chrono::time_point current;
 
     private:
 };
@@ -116,4 +121,23 @@ class interfaceUI
 
 #define     DRAW_BUFFER_SIZE            512
 
+
+template< typename T >
+std::string hexify(T i)
+{
+    std::stringbuf buf;
+    std::ostream os(&buf);
+
+    os << "0x" << std::setfill('0') << std::setw(sizeof(T) * 2)
+       << std::uppercase << std::hex << i;
+
+    return buf.str().c_str();
+}
+
+template <typename T>
+std::string to_string(T const& value) {
+    std::stringstream sstr;
+    sstr << value;
+    return sstr.str();
+}
 #endif // __INTERFACEUI_H__

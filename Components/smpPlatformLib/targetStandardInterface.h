@@ -127,23 +127,26 @@ typedef struct picBufSpec {
     PICBUF_COMP     chromaComp;
 } PICBUF_SPEC;
 
+/**
+ *  Input statistics structure.
+ */
+
 struct inputStats {
-    std::string     sInputFile;
-    RMuint32        profile;
+    std::string     sInputFile;             ///< Path to input file.
+    RMuint32        profile;                ///< Video codec profile.
     size_t          bytesRead;
-    RMuint32        pvtdb;
-    RMuint32        pvti;
+    RMuint32        pvtdb;                  ///< Pointer to video task database.
+    RMuint32        pvti;                   ///< Pointer to video task interface.
     FIFO            btsFifo;
 };
+
+/**
+ *  Output statistics structure.
+ */
 
 struct outputStats {
     bool            bSavingYUV;
     std::string     sYUVFile;
-//    RMuint32        pic_address;
-//    RMuint32        pic_luma_buffer;
-//    RMuint32        pic_chroma_buffer;
-//    RMuint32        pic_width;
-//    RMuint32        pic_height;
     RMuint32        frame_count;
     double          save_time;
     FIFO            dispFifo;
@@ -170,8 +173,43 @@ struct MicrocodeInbandCommand {
     RMuint32 params_ref_cnt; // 0 if free
 };
 
+/**
+ *
+ */
+
+struct debugStatus {
+    RMuint32    ra0;
+    RMuint32    ra1;
+    RMuint32    ra2;
+    RMuint32    ra3;
+    RMuint32    ra4;
+    RMuint32    ra5;
+    RMuint32    ra6;
+    RMuint32    ra7;
+    RMuint32    ra8;
+    RMuint32    ra9;
+    RMuint32    ra10;
+    RMuint32    ra11;
+    RMuint32    ra12;
+    RMuint32    ra13;
+    RMuint32    ra14;
+    RMuint32    ra15;
+    RMuint32    rsp;
+    RMuint32    rstat;
+    RMuint32    rpc;
+    RMuint32    posr;
+    RMuint32    chip;
+    RMuint32    rbp;
+    RMuint32    rbb;
+    RMuint32    rhp;
+    RMuint32    status1;
+    RMuint32    status2;
+};
 
 #define XFER_BUFFERSIZE              65536
+
+typedef volatile std::atomic<bool>          ATOMICBOOL;
+typedef volatile std::atomic<ATOMICBOOL*>   ATOMICBOOLPTR;
 
 /**
  *  Class representing a task in the microcode.
@@ -207,6 +245,7 @@ public:
         std::string             sXmlPath        = "../../xml/";
         controlInterface*       pIF             = nullptr;
         TARGET_ALLOC_PTR        pAlloc;
+        ATOMICBOOL*             pControlC       = nullptr;
     };
 
     targetStandardIFTask();
@@ -298,6 +337,8 @@ protected:
     std::string             sXmlPath;
 
     PICBUF_SPEC             picbufSpec;
+
+    ATOMICBOOL*             pControlC;
 
 private:
     controlInterface*       pIF;
@@ -394,10 +435,12 @@ public:
     targetStandardInterface(TARGET_ENGINE_PTR pEngine);
     virtual ~targetStandardInterface();
 
+    /* Dump related functions. */
     void                    enable_dump(const std::string& sPath = "/tmp/");
     void                    disable_dump();
     bool                    get_dump_info(std::string& sPath);
 
+    /* Play/Stop related functions. */
     bool                    play_stream(const std::string& sInputStreamName,
                                         const std::string& sOutputYUVName,
                                         RMuint32 profile = VideoProfileMPEG2,
@@ -408,6 +451,7 @@ public:
                                         RMuint32 taskID = 0);
     bool                    stop();
 
+    /* Profile getting/setting functions. */
     static RMint32          get_profile_id_from_string(const std::string& sCodecID);
     static std::string      get_profile_string_from_id(RMint32 codec_id);
     static void             get_profile_vector(PROFILE_VECTOR& pVec);
@@ -422,6 +466,10 @@ public:
                                            targetStandardIFTask::taskSubstate* pTaskSubstate);
     bool                    get_output_stats(RMuint32 taskID, outputStats& stats) const;
     bool                    get_input_stats(RMuint32 taskID, inputStats& stats) const;
+
+    bool                    get_debug_state(debugStatus& dbgState);
+
+    void                    set_controlc_var(ATOMICBOOL* pControlVar);
 
 protected:
 
@@ -449,8 +497,11 @@ protected:
                                              RMuint32 sProfile,
                                              RMuint32 taskID);
 
+//    volatile std::atomic<bool>* pControlC;
+    ATOMICBOOLPTR               pControlC;
+
 private:
-    mutable std::mutex      contextMutex;      ///< Mutex for access to class context variables.
+    mutable std::mutex          contextMutex;      ///< Mutex for access to class context variables.
 };
 
 #define VPTS_FIFO_ENTRY_SIZE	8 /* 8 bytes = PTS on 32 bits and byte counter on 32 bits */

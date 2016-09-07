@@ -84,7 +84,9 @@ bool optionPack::parse(int argc, char* argv[], HELPFUNC pHelpFunc) {
         }
     }
 
-    if ((chipID == "8758") && (profile == VideoProfileH265)) {
+    if (((chipID == "8758") || (chipID == "8756")) &&
+        (profile == VideoProfileH265))
+    {
         engineNo = 1;
     }
 

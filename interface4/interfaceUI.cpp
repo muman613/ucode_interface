@@ -13,26 +13,6 @@
 #include "dbgutils.h"
 #include "interfaceUI.h"
 
-template< typename T >
-std::string hexify(T i)
-{
-    std::stringbuf buf;
-    std::ostream os(&buf);
-
-
-    os << "0x" << std::setfill('0') << std::setw(sizeof(T) * 2)
-       << std::uppercase << std::hex << i;
-
-    return buf.str().c_str();
-}
-
-template <typename T>
-std::string to_string(T const& value) {
-    std::stringstream sstr;
-    sstr << value;
-    return sstr.str();
-}
-
 //template <typename T>
 std::string dbl_to_string(double const& value) {
     std::stringstream sstr;
@@ -40,10 +20,11 @@ std::string dbl_to_string(double const& value) {
     return sstr.str();
 }
 
-static volatile bool bControlC = false;
+volatile std::atomic<bool> bControlC; // = false;
 
 /**
  *  Handle when user enters Control-C to break application.
+ *  Set the global Control-C variable.
  */
 
 void _control_c_handler(int n) {
@@ -254,14 +235,14 @@ void interfaceUI::draw_input_panel()
 
     int y = 1;
 
-    auto DRAW_INPUT_FIELD_FIFO = [&](std::string text, FIFO* pFifo) {
+    auto DRAW_INPUT_FIELD_FIFO = [this,&y](std::string text, FIFO* pFifo) {
         text.resize(20);
         mvwaddstr(input_window, y, 4, text.c_str());
         mvwaddch(input_window, y, 25, ':');
         mvwaddstr(input_window, y, 27, format_fifo_string(pFifo).c_str());
         y++;
     };
-    auto DRAW_INPUT_FIELD_HEX = [&](std::string text, uint32_t value) {
+    auto DRAW_INPUT_FIELD_HEX = [this,&y](std::string text, uint32_t value) {
         text.resize(20);
         mvwaddstr(input_window, y, 4, text.c_str());
         mvwaddch(input_window, y, 25, ':');
@@ -269,7 +250,7 @@ void interfaceUI::draw_input_panel()
         y++;
     };
 
-    auto DRAW_INPUT_FIELD_STR = [&](std::string text, std::string value) {
+    auto DRAW_INPUT_FIELD_STR = [this,&y](std::string text, std::string value) {
         text.resize(20);
         mvwaddstr(input_window, y, 4, text.c_str());
         mvwaddch(input_window, y, 25, ':');
@@ -284,7 +265,7 @@ void interfaceUI::draw_input_panel()
 ////        return os.str();
 //    };
 
-    auto DRAW_INPUT_FIELD_TP = [&](std::string text, TIME_POINT tp) {
+    auto DRAW_INPUT_FIELD_TP = [this,&y](std::string text, TIME_POINT tp) {
         text.resize(20);
         mvwaddstr(input_window, y, 4, text.c_str());
         mvwaddch(input_window, y, 25, ':');
@@ -305,6 +286,12 @@ void interfaceUI::draw_input_panel()
     DRAW_INPUT_FIELD_HEX ( "Video Task Interface",  inStats.pvti );
     DRAW_INPUT_FIELD_HEX ( "Bts FIFO Container",    inStats.btsFifo.uiFifoCont );
     DRAW_INPUT_FIELD_FIFO( "Bitstream FIFO",        &inStats.btsFifo );
+
+    if (opts.type == targetEngine::UCODE_DEBUG) {
+        DRAW_INPUT_FIELD_STR( "Debug State",        get_debug_string());
+//        DRAW_INPUT_FIELD_HEX( "Debug Status1",      dbgStatus.status1);
+//        DRAW_INPUT_FIELD_HEX( "Debug Status2",      dbgStatus.status2);
+    }
 //    DRAW_INPUT_FIELD_TS  ( "Current Time",         now, "%r", pCtx, y );
 //    DRAW_INPUT_FIELD_FLAG( "Status",               FLAG_FILLTHREAD_RUNNING, "Filling FIFO", "Done", pCtx, y);
 //    DRAW_INPUT_FIELD_STR ( "Input Bitstream",      pCtx->szPlayFile, pCtx, y );
@@ -334,7 +321,7 @@ void interfaceUI::draw_output_panel()
 //    char buffer[DRAW_BUFFER_SIZE];
     int y = 1;
 
-    auto DRAW_OUTPUT_FIELD_STR = [&](std::string text, std::string value) {
+    auto DRAW_OUTPUT_FIELD_STR = [this,&y](std::string text, std::string value) {
         text.resize(20);
         mvwaddstr(output_window, y, 4, text.c_str());
         mvwaddch(output_window, y, 25, ':');
@@ -342,7 +329,7 @@ void interfaceUI::draw_output_panel()
         y++;
     };
 
-    auto DRAW_OUTPUT_FIELD_DEC = [&](std::string text, uint32_t value) {
+    auto DRAW_OUTPUT_FIELD_DEC = [this,&y](std::string text, uint32_t value) {
         text.resize(20);
         mvwaddstr(output_window, y, 4, text.c_str());
         mvwaddch(output_window, y, 25, ':');
@@ -350,7 +337,7 @@ void interfaceUI::draw_output_panel()
         y++;
     };
 
-    auto DRAW_OUTPUT_FIELD_FIFO = [&](std::string text, FIFO* pFifo) {
+    auto DRAW_OUTPUT_FIELD_FIFO = [this,&y](std::string text, FIFO* pFifo) {
         text.resize(20);
         mvwaddstr(output_window, y, 4, text.c_str());
         mvwaddch(output_window, y, 25, ':');
@@ -358,21 +345,21 @@ void interfaceUI::draw_output_panel()
         y++;
     };
 
-    auto DRAW_OUTPUT_FIELD_HEX = [&](std::string text, uint32_t value) {
+    auto DRAW_OUTPUT_FIELD_HEX = [this,&y](std::string text, uint32_t value) {
         text.resize(20);
         mvwaddstr(output_window, y, 4, text.c_str());
         mvwaddch(output_window, y, 25, ':');
         mvwaddstr(output_window, y, 27, hexify(value).c_str());
         y++;
     };
-    auto DRAW_OUTPUT_FIELD_DBL = [&](std::string text, double value) {
+    auto DRAW_OUTPUT_FIELD_DBL = [this,&y](std::string text, double value) {
         text.resize(20);
         mvwaddstr(output_window, y, 4, text.c_str());
         mvwaddch(output_window, y, 25, ':');
         mvwaddstr(output_window, y, 27, dbl_to_string(value).c_str());
         y++;
     };
-    auto DRAW_OUTPUT_FIELD_PB = [&](std::string text, PICBUF_COMP* pb, int line) {
+    auto DRAW_OUTPUT_FIELD_PB = [this,&y](std::string text, PICBUF_COMP* pb, int line) {
         text.resize(20);
         mvwaddstr(output_window, y, 4, text.c_str());
         mvwaddch(output_window, y, 25, ':');
@@ -535,6 +522,9 @@ bool interfaceUI::run()
                 if (pStdIF) {
                     D(debug("-- interface created --\n"));
 
+                    /* Set the Control-C atomic bool variable */
+                    pStdIF->set_controlc_var(&bControlC);
+
                     pStdIF->play_stream(opts.inputStream, opts.outputYUV, opts.profile);
 
                     main_loop();
@@ -576,6 +566,11 @@ void interfaceUI::main_loop()
         if (bControlC == true) {
             D(debug("-- user hit control-c!\n"));
             break;
+        }
+
+        if (opts.type == targetEngine::UCODE_DEBUG) {
+            pStdIF->get_debug_state(dbgStatus);
+            D(debug("state1 = %d state2 = %d\n", dbgStatus.status1, dbgStatus.status2));
         }
 
         if (ch != ERR) {
@@ -623,4 +618,35 @@ void interfaceUI::main_loop()
 
         usleep(5000);
     }
+
+    D(debug("-- exiting main_loop()\n"));
+
+    return;
+}
+
+std::string interfaceUI::get_debug_string() const
+{
+    return get_debug_string(dbgStatus);
+}
+
+/**
+ *  Return string representing the current debug state.
+ */
+
+std::string interfaceUI::get_debug_string(const debugStatus& status) const
+{
+    std::ostringstream  os;
+
+    if (status.status1 == status.status2) {
+        RMuint32 offset = (status.status1 != 4)?1:0;
+
+        os << "BREAKPOINT @ " << hexify(status.rpc - offset) <<
+              " stat " << hexify((RMuint16)status.rstat) <<
+              " a0 " << hexify((RMuint16)status.ra0) <<
+              " a1 " << hexify((RMuint16)status.ra1);
+    } else {
+        os << "RUNNING";
+    }
+
+    return os.str();
 }

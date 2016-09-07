@@ -30,7 +30,7 @@
 #define LOCALDBG    DISABLE
 #endif // _DEBUG
 
-#define ENABLE_EXTRA_DEBUG_INFO 1
+//#define ENABLE_EXTRA_DEBUG_INFO 1
 
 #define COMMAND_TIMEOUT         0xffffffff
 
@@ -47,6 +47,7 @@ using namespace video_utils;
 
 typedef std::lock_guard<std::mutex>     mutex_guard;
 
+static volatile std::atomic<bool>                tmpControlC;
 
 std::ostream& operator<<(std::ostream& os, const targetStandardIFTask& task)
 {
@@ -73,6 +74,7 @@ targetStandardIFTask::targetStandardIFTask()
     total_bytes_read(0),
     task_state(TASK_UNINITIALIZED),
     task_substate(TASK_SUBSTATE_UNKNOWN),
+    pControlC(&tmpControlC),
     pIF(nullptr),
     fifoFillRunning(false),
     fifoEmptyRunning(false),
@@ -99,6 +101,7 @@ targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
     total_bytes_read(0),
     task_state(TASK_UNINITIALIZED),
     task_substate(TASK_SUBSTATE_UNKNOWN),
+    pControlC(&tmpControlC),
     pIF(nullptr),
     fifoFillRunning(false),
     fifoEmptyRunning(false),
@@ -116,6 +119,7 @@ targetStandardIFTask::targetStandardIFTask(targetStdIfParms& parms)
     dump_y_uv       = parms.bDumpUntiled;
     dumpPath        = parms.sDumpPath;
     sXmlPath        = parms.sXmlPath;
+    pControlC       = parms.pControlC;
 
     init_parameters();
 
@@ -452,6 +456,9 @@ RMstatus targetStandardIFTask::set_video_codec()
     return RM_OK;
 }
 
+/**
+ *
+ */
 
 RMstatus targetStandardIFTask::send_video_command(enum VideoCommand cmd,
                                                   enum VideoStatus stat)
@@ -470,7 +477,8 @@ RMstatus targetStandardIFTask::send_video_command(enum VideoCommand cmd,
 
     started = gbus_utils::gbus_time_us(pIF->get_gbusptr());
 
-    while (1) {
+    /* Loop till the command is accepted or the user hits Control-C */
+    while (true && !(*pControlC)) {
         video_get_status(pIF, pvti, &VideoDecoderStatus);
 
         //printf("-- status %d\n", (int) VideoDecoderStatus);
@@ -1164,7 +1172,8 @@ void targetStandardIFTask::update_task_state(VideoCommand command, VideoStatus s
 targetStandardInterface::targetStandardInterface(TARGET_ENGINE_PTR pEngine)
 :   targetInterfaceBase(pEngine),
     bValid(false),
-    ifState(IF_UNINITIALIZED)
+    ifState(IF_UNINITIALIZED),
+    pControlC(&tmpControlC)
 {
     // ctor
     RMuint32 offset = 0;
@@ -1272,12 +1281,23 @@ void targetStandardInterface::disable_dump()
 
 bool targetStandardInterface::get_dump_info(std::string& sPath)
 {
-    mutex_guard guard(contextMutex);    // obtain the context mutex...
+   // obtain the context mutex...
     RMDBGLOG((LOCALDBG, "%s(%s)\n", __PRETTY_FUNCTION__));
 
     sPath = dumpPath;
 
     return dump_y_uv;
+}
+
+/**
+ *  Set control-c variable.
+ */
+
+void targetStandardInterface::set_controlc_var(ATOMICBOOL* pControlVar)
+{
+    mutex_guard guard(contextMutex);
+    RMDBGLOG((LOCALDBG, "%s(%p)\n", __PRETTY_FUNCTION__, pControlVar));
+    pControlC = pControlVar;
 }
 
 /**
@@ -1362,6 +1382,7 @@ bool targetStandardInterface::_play_stream(const std::string& sInputStreamName,
     parms.pAlloc            = m_pAlloc[0];
     parms.pIF               = dynamic_cast<controlInterface*>(m_pEngine[0].get());
     parms.sXmlPath          = OPTION_XML_PATH;
+    parms.pControlC         = pControlC;
 
     ifState = IF_COMMAND_PENDING;
 
@@ -1600,3 +1621,20 @@ bool targetStandardInterface::get_task_state(uint32_t taskID,
     return bRes;
 }
 
+/**
+ *
+ */
+
+bool targetStandardInterface::get_debug_state(debugStatus& dbgState)
+{
+    bool                    bRes        = false;
+    controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
+
+    RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+    if (pIF->get_target()->get_ucode_type() == targetEngine::UCODE_DEBUG) {
+        RMuint32    pDbgVars = pIF->get_engine()->get_pmBase() + (*pIF->get_symmgr())["DEBUG_VARS"];
+        pIF->get_gbusptr()->gbus_read_data8(pDbgVars, (RMuint8*)&dbgState, sizeof(debugStatus));
+    }
+
+    return bRes;
+}

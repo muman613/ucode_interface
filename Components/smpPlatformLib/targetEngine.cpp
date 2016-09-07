@@ -635,7 +635,7 @@ bool targetEngine::stop()
  *
  */
 
-std::string targetEngine::get_ucode_file(bool bFullPath)
+std::string targetEngine::get_ucode_file(bool bFullPath) const
 {
     std::string sUcodePath;
 
@@ -662,4 +662,8 @@ std::string targetEngine::get_ucode_file(bool bFullPath)
  *
  */
 
+ targetEngine::ucodeType targetEngine::get_ucode_type() const
+ {
+    return m_eType;
+ }
 
