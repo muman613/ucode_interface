@@ -1,0 +1,4 @@
+ARCH_ARRAY=( 'ARCH=x86_64' 'ARCH=x86' )
+DBG_ARRAY=( 'NDEBUG=1' 'DEBUG=1')
+TOUCH_FILES=( 'sc_lexer.h' 'sc_tcalc.hpp' )
+
