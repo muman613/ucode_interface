@@ -127,6 +127,9 @@ void launch_viewer(const std::string sYUVFilename, int w, int h, int frame)
     }
 }
 
+/**
+ *
+ */
 
 bool get_environment_string(const std::string sVarName, std::string& sValue) {
     const char* szValue = nullptr;

@@ -1,6 +1,10 @@
 #ifndef __INTERFACEUI_H__
 #define __INTERFACEUI_H__
 
+#if (__cplusplus < 201103L)
+#pragma GCC error "Must be compiled with C++11 support!"
+#endif
+
 #include <ncurses.h>
 #include <panel.h>
 #include <chrono>
@@ -54,7 +58,9 @@ class interfaceUI
 
     protected:
 
-        typedef std::chrono::time_point<std::chrono::system_clock> TIME_POINT;
+
+        using TIME_POINT =  std::chrono::time_point<std::chrono::system_clock>;
+//        typedef std::chrono::time_point<std::chrono::system_clock> TIME_POINT;
 
         typedef enum _flags {
             FLAG_SAVING_YUV          = (1L << 0),
@@ -80,17 +86,20 @@ class interfaceUI
         WINDOW*             output_window;
         PANEL*              output_panel;
 
-//      time_t          startTime;
+        void                host_interrupt();
+
+        /* User interface functions. */
         int                 init_user_interface();
         int                 uninit_user_interface();
         int                 update_user_interface();
 
+        /* Curses utility functions. */
         void                center_string(WINDOW* win, int pair,
                                           int y, const char* str);
         void                init_colors();
         void                super_box(WINDOW* pWin, const char* sTitle,
                                       int colors);
-
+        void                clear_line(WINDOW* pWin, int line);
         void                draw_status_panel();
         void                draw_input_panel();
         void                draw_output_panel();

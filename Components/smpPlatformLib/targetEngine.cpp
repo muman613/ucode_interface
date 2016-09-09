@@ -632,6 +632,36 @@ bool targetEngine::stop()
 }
 
 /**
+ *  Send the HOST Interrupt.
+ */
+
+ bool targetEngine::hostint() {
+    bool        bRes    = false;
+    auto        pBlock  = m_engine.get_parent();
+    RMuint32    dmBase  = m_engine.get_dmBase();
+
+    RMDBGLOG((LOCALDBG, "%s()\n",__PRETTY_FUNCTION__));
+
+    if (pBlock) {
+        const auto pRegVec = pBlock->get_hostint_vector();
+
+        for (auto regPair : pRegVec) {
+            RMuint32 regAddress = (dmBase + (regPair.first << 2));
+            RMuint32 regValue   = regPair.second;
+
+            RMDBGLOG((LOCALDBG, "-- writing %08X to MISC reg %08X\n",
+                      regAddress, regValue));
+
+            m_pGbus->gbus_write_uint32(regAddress, regValue);
+        }
+
+        bRes = true;
+    }
+
+    return bRes;
+ }
+
+/**
  *
  */
 

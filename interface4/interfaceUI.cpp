@@ -70,6 +70,7 @@ interfaceUI::~interfaceUI()
 {
     //dtor
 }
+
 /**
  *
  */
@@ -91,6 +92,24 @@ void interfaceUI::center_string(WINDOW* win, int pair,
 //	mvwaddstr(win, y, (screenx - strlen(str)) / 2, str);
     return;
 }
+
+/**
+ *
+ */
+
+void interfaceUI::clear_line(WINDOW* pWin, int line)
+{
+    int y,x;
+
+    assert(pWin != nullptr);
+    getyx(pWin, y, x);
+    wmove(pWin, line, 0);
+    wclrtoeol(pWin);
+    wmove(pWin, y, x);
+
+    return;
+}
+
 
 void interfaceUI::init_colors() {
 	if (has_colors()) {
@@ -398,7 +417,9 @@ void interfaceUI::draw_status_panel()
     char buffer[DRAW_BUFFER_SIZE];
     inputStats      inpStats;
 
-    super_box( status_window, "Application Status", 2);
+    super_box( status_window, "Interface4 Status", 2);
+
+//    center_string( status_window, 2, 1, "Interface4");
 
     if (pTarget && pTarget->is_connected()) {
         snprintf(buffer, DRAW_BUFFER_SIZE, "Connected to %s @ %s",
@@ -452,7 +473,7 @@ int interfaceUI::update_user_interface()
     draw_status_panel();
 
     if (state == APP_PLAYING) {
-        std::string sMsg;
+        std::string sMsg = "Hit 'q' to quit";
 
         if (panel_hidden(input_panel))
             show_panel( input_panel );
@@ -462,16 +483,19 @@ int interfaceUI::update_user_interface()
         draw_input_panel();
         draw_output_panel();
 
-        if (!TEST_FLAG(FLAG_QUIT_IN_PROGRESS)) {
-            if (outStats.bSavingYUV == true) {
-                sMsg = "Hit 'v' to view YUV/ Hit 'q' to quit";
-            } else {
-                sMsg = "Hit 'q' to quit";
-            }
+        if (TEST_FLAG(FLAG_QUIT_IN_PROGRESS)) {
+            sMsg = "> Quitting application <";
         } else {
-            sMsg = ">>>>>>> Quitting application <<<<<<<";
+            if (outStats.bSavingYUV == true) {
+                sMsg = "Hit 'v' to view YUV / " + sMsg;
+            }
+
+            if (opts.type == targetEngine::UCODE_DEBUG) {
+                sMsg = "Hit 'b' to break / " + sMsg;
+            }
         }
 
+        clear_line( stdscr, screeny - 1);
         center_string( stdscr, 1, screeny-1, sMsg.c_str());
     } else {
         hide_panel( input_panel );
@@ -570,7 +594,8 @@ void interfaceUI::main_loop()
 
         if (opts.type == targetEngine::UCODE_DEBUG) {
             pStdIF->get_debug_state(dbgStatus);
-            D(debug("state1 = %d state2 = %d\n", dbgStatus.status1, dbgStatus.status2));
+            D(debug("state1 = %d state2 = %d\n",
+                    dbgStatus.status1, dbgStatus.status2));
         }
 
         if (ch != ERR) {
@@ -580,9 +605,21 @@ void interfaceUI::main_loop()
                 break;
             }
 
-//            if ((toupper(ch) == 'V') && (pCtx->yuvfp != 0)) {
-//                launch_viewer(pCtx.get());
-//            }
+            if ((outStats.bSavingYUV == true) &&
+                (tolower(ch) == 'v'))
+            {
+                launch_viewer(outStats.sYUVFile,
+                              outStats.picInfo.lumaComp.uiPosWidth,
+                              outStats.picInfo.lumaComp.uiPosHeight,
+                              outStats.frame_count - 1 );
+            }
+
+            if ((opts.type == targetEngine::UCODE_DEBUG) &&
+                (tolower(ch) == 'b'))
+            {
+                D(debug("-- user hit 'b' to send host interrupt!\n"));
+                host_interrupt();
+            }
         }
 
         ifState = pStdIF->get_interface_state();
@@ -649,4 +686,17 @@ std::string interfaceUI::get_debug_string(const debugStatus& status) const
     }
 
     return os.str();
+}
+
+/**
+ *  Send host interrupt to target.
+ */
+
+void interfaceUI::host_interrupt() {
+
+    if (pTarget) {
+        pTarget->hostint();
+    }
+
+    return;
 }

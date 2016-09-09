@@ -108,9 +108,9 @@ public:
 
     bool                start();
     bool                stop();
+    bool                hostint();
 
     /* Control Interface functions */
-
     GBUS_PTR            get_gbusptr();
     structure_database* get_structdb();
     UcodeSymbolMgr*     get_symmgr();
@@ -118,18 +118,13 @@ public:
     std::mutex*         get_mutex();
     targetEngine*       get_target();
 
-//    void                test_function();
-
     void                get_ucode_offset(RMuint32* lo, RMuint32* hi);
-
     bool                set_dram_base(RMuint32 dram_base);
 
+    /* Get basic information about targetEngine. */
     std::string         get_chipid() const;
     std::string         get_blockid() const;
     std::string         get_targetid() const;
-
-//    std::string         get_xml_path() const;
-//    std::string         get_ucode_path() const;
 
     friend std::ostream& operator<<(std::ostream& os,const targetEngine& engine);
 
