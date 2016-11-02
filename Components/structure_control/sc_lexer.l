@@ -20,6 +20,7 @@ extern YYSTYPE yylval;
 %}
 
 %option noyywrap
+%option nounput
 
 delim         [ \t]
 whitesp       {delim}+
