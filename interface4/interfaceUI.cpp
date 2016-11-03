@@ -198,12 +198,12 @@ int interfaceUI::uninit_user_interface()
  *
  */
 
-bool interfaceUI::open(int argc, char* argv[])
+bool interfaceUI::open(int argc, char* argv[], HELPFUNC pFunc)
 {
     bool bRes = false;
 
     /* Parse arguments here... */
-    if (opts.parse(argc, argv)) {
+    if (opts.parse(argc, argv, pFunc)) {
         init_user_interface();
         signal(SIGINT, _control_c_handler);
         bRes = true;

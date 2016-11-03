@@ -4,8 +4,17 @@
 #	VERSION		:	2.0
 #	PROJECT		:	Microcode Interface Project
 #	DATE		:	August 10th, 2016
+#	LAST MOD	:	November 2nd, 2016
 #	PROGRAMMER	:	Michael A. Uman
 #	COPYRIGHT	:	(C) 2016 Sigma Designs
+################################################################################
+#
+#	Define the following before running the script...
+#
+#	RUAPATH		:	Set to the top-level path to the mrua project.
+#	CHIP		:	Chip # (i.e. 8756/8758/8760)
+#	BUILDTYPE	:	'debug' or 'release'
+#
 ################################################################################
 
 #	Determine the scripts full path in order to locate the destination dir
@@ -34,7 +43,7 @@ get_chip () {
 }
 
 ###
-#
+#	Get the RUAPATH from the user.
 ###
 
 get_ruapath () {
@@ -50,7 +59,7 @@ get_ruapath () {
 }
 
 ###
-#
+#	Get the build type from the user.
 ###
 
 get_buildtype () {
@@ -162,24 +171,36 @@ do_copy_files () {
 #	Start of main shell script
 ###
 
-RUAPATH=$(get_ruapath)
 if [ -z ${RUAPATH} ]; then
-#	echo "\$RUAPATH must be set to RUA path!"
-	exit
+	RUAPATH=$(get_ruapath)
+	if [ -z ${RUAPATH} ]; then
+	#	echo "\$RUAPATH must be set to RUA path!"
+		exit
+	fi
 fi
 
-CHIP=$(get_chip)
+echo ${RUAPATH} | grep > /dev/null "/$"
+if [ $? -eq 1 ]; then
+	RUAPATH="${RUAPATH}/"
+fi
+
+
 if [ -z ${CHIP} ]; then
-	clear
-	exit
+	CHIP=$(get_chip)
+	if [ -z ${CHIP} ]; then
+		clear
+		exit
+	fi
 fi
 
 FULLCHIP="SMP$CHIP"
 
-BUILDTYPE=$(get_buildtype)
-if [ -z "${BUILDTYPE}" ]; then
-	clear
-	exit
+if [ -z ${BUILDTYPE} ]; then
+	BUILDTYPE=$(get_buildtype)
+	if [ -z "${BUILDTYPE}" ]; then
+		clear
+		exit
+	fi
 fi
 
 if [ "$BUILDTYPE" != "release" ] && [ "$BUILDTYPE" != "debug" ] ; then

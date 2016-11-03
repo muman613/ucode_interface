@@ -65,7 +65,10 @@ bool optionPack::parse(int argc, char* argv[], HELPFUNC pHelpFunc) {
             }
             break;
         case 'h':
-            (*pHelpFunc)(argv[0]);
+            if (pHelpFunc != nullptr)
+                (*pHelpFunc)(argv[0]);
+            else
+                return false;
             break;
         case 'r':
             if (optarg != nullptr) {

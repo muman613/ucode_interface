@@ -52,7 +52,7 @@ class interfaceUI
         interfaceUI();
         virtual ~interfaceUI();
 
-        bool                open(int argc, char* argv[]);
+        bool                open(int argc, char* argv[], HELPFUNC pFunc = nullptr);
         bool                close();
         bool                run();
 
