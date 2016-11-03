@@ -1,0 +1,10 @@
+Run Debug Microcode
+
+./bin/Release/x86/interface4 --chip 8758 --decoder mpeg2 --stream /media/elementary/mpeg2/test100.m2v --yuv /tmp/test100.yuv -r 10.10.10.12:0 -m d
+
+./bin/Release/x86/interface4 --chip 8758 --decoder mpeg2 --stream /media/elementary/mpeg2/test100.m2v --yuv /tmp/test100.yuv -r 10.10.10.12:0 -m r
+
+./bin/Release/x86/interface4 --chip 8760 --decoder mpeg2 --stream /media/elementary/mpeg2/test100.m2v --yuv /tmp/test100.yuv -r 10.10.10.102:0 -m d
+
+
+
