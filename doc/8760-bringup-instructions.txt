@@ -1,0 +1,24 @@
+--------------------------------------------------------------------------------
+8760 Bringup Instructions
+--------------------------------------------------------------------------------
+
+mmc dev 0 0 ; mmc read 0x84001000 0x19800 0xd410; bootm 0x84001000
+
+#login as root
+udhcpc -B; telnetd; ifconfig
+
+cd /
+mount -o nolock 10.10.10.10:/local_repository/mrua-8760 /mnt/
+mount -o nolock 10.10.8.51:/export/media /media
+
+cd /mnt/
+source mrun.env
+fw_reload
+xkc pbusopen
+chipinterf -D
+nohup em8xxx_server &
+
+
+
+#setclock.bash
+
