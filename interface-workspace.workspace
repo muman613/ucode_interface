@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
-	<Workspace title="Workspace">
+	<Workspace title="Interface Workspace">
 		<Project filename="interface1/interface1.cbp" />
 		<Project filename="interface2/interface2.cbp" />
 		<Project filename="interface4/interface4.cbp" />
-		<Project filename="Components/smpPlatformLib/smpPlatformLib.cbp" />
-		<Project filename="Components/Samples/testEngine/testEngine.cbp" />
-		<Project filename="sandbox/tryui/tryui.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

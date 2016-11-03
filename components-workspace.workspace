@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="Workspace">
+		<Project filename="Components/fileresolver/fileresolver.cbp" />
+		<Project filename="Components/gbusfifolib/gbusfifolib.cbp" />
+		<Project filename="Components/platformDB/PlatformDB.cbp" />
+		<Project filename="Components/platformDB2/PlatformDB2.cbp" />
+		<Project filename="Components/remote_client/remote_client.cbp" />
+		<Project filename="Components/smpPlatformLib/smpPlatformLib.cbp" />
+		<Project filename="Components/structure_control/structure_control.cbp" />
+		<Project filename="Components/symbolmgr/symbolmgr.cbp" />
+		<Project filename="Components/targetOptions/targetOptions.cbp" />
+	</Workspace>
+</CodeBlocks_workspace_file>
