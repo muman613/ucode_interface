@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
@@ -563,6 +564,7 @@ bool interfaceUI::run()
             }
         } else {
             D(debug("ERROR: Unable to connect to target!\n"));
+            display_connection_error();
         }
     }
 
@@ -696,6 +698,70 @@ void interfaceUI::host_interrupt() {
 
     if (pTarget) {
         pTarget->hostint();
+    }
+
+    return;
+}
+
+/**
+ *  Display an error message to the user.
+ */
+
+void interfaceUI::display_connection_error() {
+    display_user_dialog(6, 48, "Connection Error",
+                        "Unable to connect to %s...",
+                        opts.serverStr.c_str());
+    return;
+}
+
+/**
+ *  Display an error message to the user.
+ */
+
+void interfaceUI::display_user_dialog(int h, int w, STRING sTitle, STRING sMsg, ...) {
+    WINDOW* pDlgWnd = nullptr;
+    PANEL*  pDlgPan = nullptr;
+    RECT    dlgRect;
+    STRING  sExit = "-- Hit 'q' to Exit --";
+    bool    bDone = false;
+    int     ch;
+    static char    fatBuffer[1024];
+
+    SET_RECT(dlgRect, (screenx - w) / 2, (screeny - h) / 2, w, h);
+
+    pDlgWnd = newwin( dlgRect.h, dlgRect.w, dlgRect.y, dlgRect.x );
+    pDlgPan  = new_panel( pDlgWnd );
+
+    show_panel( pDlgPan );
+
+    super_box( pDlgWnd, sTitle.c_str(), 4);
+
+    va_list list;
+
+    va_start(list, sMsg);
+    vsprintf(fatBuffer, sMsg.c_str(), list);
+    va_end(list);
+
+    mvwaddstr(pDlgWnd, 2, (dlgRect.w - strlen(fatBuffer)) /2, fatBuffer);
+    mvwaddstr(pDlgWnd, dlgRect.h - 2, (dlgRect.w - sExit.size()) / 2, sExit.c_str());
+
+    update_panels();
+
+    doupdate();
+
+    while (!bDone) {
+
+        ch = getch();
+
+        if (bControlC == true) {
+            D(debug("-- user hit control-c!\n"));
+            break;
+        }
+        if (ch != ERR) {
+            if (tolower(ch) == 'q') {
+                bDone = true;
+            }
+        }
     }
 
     return;

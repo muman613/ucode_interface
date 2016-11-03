@@ -78,7 +78,9 @@ struct sock *sock_create(RMuint16 port, RMuint32 queue_size)
 	h = (struct sock *) malloc(sizeof(struct sock));
 	h->sfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (h->sfd < 0) {
+#ifdef _DEBUG
 		perror("socket");
+#endif // _DEBUG
 		free(h);
 		return NULL;
 	}
@@ -92,7 +94,9 @@ struct sock *sock_create(RMuint16 port, RMuint32 queue_size)
 #endif
 
 	if (bind(h->sfd, (struct sockaddr *) &address, sizeof(address)) < 0) {
+#ifdef _DEBUG
 		perror("bind");
+#endif // _DEBUG
 #ifdef __WIN32__
 		closesocket(h->sfd);
 #else
@@ -146,7 +150,9 @@ struct sock *sock_connect(RMuint16 port, RMascii *netaddress)
 	setsockopt(h->sfd, SOL_TCP, TCP_NODELAY, (void *)&one, sizeof(one));
 #endif
 	if (connect(h->sfd, (struct sockaddr *) &address, sizeof(address)) < 0) {
+#ifdef _DEBUG
 		perror("connect");
+#endif // _DEBUG
 		return NULL;
 	}
 
@@ -164,7 +170,9 @@ struct sock *sock_wait_connection(struct sock *listening_sock)
 		/* Either a real error occured, or blocking was interrupted for
 		   some reason.  Only abort execution if a real error occured. */
 		if (errno != EINTR) {
+#ifdef _DEBUG
 			perror("accept");
+#endif // _DEBUG
 			free(h);
 			return NULL;
 		} else {
@@ -195,7 +203,9 @@ struct sock *sock_wait_connection_with_timeout(struct sock *listening_sock, RMui
     r = select(nfds, &readfds, &writefds, &exceptfds, &timeout);
     if (r < 0){
         if (errno != EINTR) {
+#ifdef _DEBUG
             perror("accept");
+#endif // _DEBUG
         }
         free(h);
         return NULL;

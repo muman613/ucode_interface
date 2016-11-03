@@ -105,6 +105,9 @@ class interfaceUI
         void                draw_output_panel();
         void                main_loop();
 
+        void                display_connection_error();
+        void                display_user_dialog(int h, int w, STRING sTitle, STRING sMsg, ...);
+
         std::string         get_debug_string() const;
         std::string         get_debug_string(const debugStatus& status) const;
 
