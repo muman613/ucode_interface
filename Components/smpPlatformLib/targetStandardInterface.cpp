@@ -1631,10 +1631,15 @@ bool targetStandardInterface::get_debug_state(debugStatus& dbgState)
     controlInterface*       pIF         = dynamic_cast<controlInterface*>(m_pEngine[0].get());
 
     RMDBGLOG((LOCALDBG, "%s()\n", __PRETTY_FUNCTION__));
+
+try {
     if (pIF->get_target()->get_ucode_type() == targetEngine::UCODE_DEBUG) {
         RMuint32    pDbgVars = pIF->get_engine()->get_pmBase() + (*pIF->get_symmgr())["DEBUG_VARS"];
         pIF->get_gbusptr()->gbus_read_data8(pDbgVars, (RMuint8*)&dbgState, sizeof(debugStatus));
     }
-
+}
+catch (std::out_of_range& ex) {
+    RMDBGLOG((LOCALDBG, "ERROR: Symbol 'DEBUG_VARS' is not defined!\n"));
+}
     return bRes;
 }
