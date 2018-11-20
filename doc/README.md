@@ -1,4 +1,4 @@
-#README
+# README
 
 Source `scripts/env.sh` to add scripts to the path.
 
@@ -12,7 +12,7 @@ Documentation can be found in the 'doc' sub-directory.
 
 Microcode used by the interface must be installed in the 'ucode' sub-directory.
 
-XML files such as the platform databaes are stored in the 'xml' sub-directory.
+XML files such as the platform databases are stored in the 'xml' sub-directory.
 
 Each sub-project has it's own 'Makefile' in it's directory. The build system is sensitive to a few ENVIRONMENT variables such as:
 
@@ -23,14 +23,14 @@ Each sub-project has a Bash script named 'makeall.sh' which will do a clean buil
 
 Helper scripts such as 'build.sh' which are in the path if the 'env.sh' script is sourced provide the Text UI for building.
 
-####HELPER SCRIPTS
+#### HELPER SCRIPTS
 
 	makeall.sh			-	Build all configurations.
 	CLEAN=1 makeall.sh 	-	Clean the project and rebuild it.
 	build.sh			-	Build all configurations in a text GUI.
 	CLEAN=1 build.sh	-	Clean the project and rebuild in a text GUI.
 
-####TO BUILD ALL CONFIGURATIONS:
+#### TO BUILD ALL CONFIGURATIONS:
 
 	CLEAN=1 build.sh	# Clean the project before building.
 
